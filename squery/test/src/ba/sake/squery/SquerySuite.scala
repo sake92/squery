@@ -8,10 +8,18 @@ class SquerySuite extends munit.FunSuite {
 
     val conn = ds.getConnection()
     List(
-      "CREATE TABLE users(id INTEGER, name VARCHAR)",
-      "INSERT INTO users VALUES(123, 'myuser')",
+      "PRAGMA foreign_keys = ON;",
+
+      // customers
+      "CREATE TABLE customers(id INTEGER PRIMARY KEY, name VARCHAR)",
+      "INSERT INTO customers VALUES(123, 'a_customer')",
+
       // phones
-      "CREATE TABLE phones(id INTEGER, user_id INTEGER, number VARCHAR)",
+      """CREATE TABLE phones(
+        id INTEGER PRIMARY KEY,
+        customer_id INTEGER REFERENCES customers(id),
+        number VARCHAR
+      )""",
       "INSERT INTO phones VALUES(1, 123, '061 123 456')",
       "INSERT INTO phones VALUES(2, 123, '062 225 883')"
     ).foreach { stmtString =>
@@ -23,20 +31,20 @@ class SquerySuite extends munit.FunSuite {
 
     run(ds) {
      /* assertEquals(
-        read[Int](Query("SELECT id FROM users")),
+        read[Int](Query("SELECT id FROM customers")),
         List(123)
       )
       assertEquals(
-        read[String](Query("SELECT name FROM users")),
-        List("myuser")
+        read[String](Query("SELECT name FROM customers")),
+        List("a_customer")
       )
 
-      val res = read.row[User](Query("SELECT id, name FROM users"))
+      val res = read.row[Customer](Query("SELECT id, name FROM customers"))
 */
-      val res2 = read.rows[UserWithPhone](Query("""
-        SELECT u.id "u.id", u.name "u.name", p.id "p.id", p.number "p.number"
-        FROM users u
-        JOIN phones p on p.user_id = u.id
+      val res2 = read.rows[CustomerWithPhone](Query("""
+        SELECT c.id "c.id", c.name "c.name", p.id "p.id", p.number "p.number"
+        FROM customers c
+        JOIN phones p on p.customer_id = c.id
       """))
       println(res2.mkString("\n"))
     }
@@ -45,11 +53,11 @@ class SquerySuite extends munit.FunSuite {
 
 }
 
-case class User(id: Int, name: String)
-object User {
-  given SqlReadRow[User] = new {
-    def readRow(jRes: java.sql.ResultSet, prefix: Option[String]): User = {
-      User(
+case class Customer(id: Int, name: String)
+object Customer {
+  given SqlReadRow[Customer] = new {
+    def readRow(jRes: java.sql.ResultSet, prefix: Option[String]): Customer = {
+      Customer(
         SqlRead[Int].readByName(jRes, prefix.map(_ + ".").getOrElse("") + "id"),
         SqlRead[String].readByName(jRes, prefix.map(_ + ".").getOrElse("") +"name")
       )
@@ -72,12 +80,12 @@ object Phone {
 }
 
 
-case class UserWithPhone(u: User, p: Phone)
-object UserWithPhone {
-  given SqlReadRow[UserWithPhone] = new {
-    def readRow(jRes: java.sql.ResultSet, prefix: Option[String]): UserWithPhone = {
-      UserWithPhone(
-        SqlReadRow[User].readRow(jRes, Some("u")),
+case class CustomerWithPhone(c: Customer, p: Phone)
+object CustomerWithPhone {
+  given SqlReadRow[CustomerWithPhone] = new {
+    def readRow(jRes: java.sql.ResultSet, prefix: Option[String]): CustomerWithPhone = {
+      CustomerWithPhone(
+        SqlReadRow[Customer].readRow(jRes, Some("c")),
         SqlReadRow[Phone].readRow(jRes, Some("p"))
       )
     }

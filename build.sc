@@ -10,6 +10,7 @@ object squery extends ScalaModule {
       ivy"org.scalameta::munit:1.0.0-M7",
       ivy"com.zaxxer:HikariCP:4.0.3",
       ivy"org.xerial:sqlite-jdbc:3.32.3.2"
+     
     )
   }
 }
