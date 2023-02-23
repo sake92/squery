@@ -2,7 +2,6 @@ package ba.sake.squery
 
 import ba.sake.squery.read.*
 
-
 class SquerySuite extends munit.FunSuite {
 
   test("SELECT simple types") {
@@ -37,14 +36,14 @@ class SquerySuite extends munit.FunSuite {
         read[Int](Query("SELECT id FROM customers")),
         List(123)
       )
-     /* 
+      /*
       assertEquals(
         read[String](Query("SELECT name FROM customers")),
         List("a_customer")
       )
 
-      
-*/
+
+       */
 
       val res2 = read.rows[CustomerWithPhone](Query("""
         SELECT c.id "c.id", c.name "c.name",
@@ -65,12 +64,12 @@ object Customer {
     def readRow(jRes: java.sql.ResultSet, prefix: Option[String]): Customer = {
       Customer(
         SqlRead[Int].readByName(jRes, prefix.map(_ + ".").getOrElse("") + "id"),
-        SqlRead[String].readByName(jRes, prefix.map(_ + ".").getOrElse("") +"name")
+        SqlRead[String]
+          .readByName(jRes, prefix.map(_ + ".").getOrElse("") + "name")
       )
     }
   }
 }
-
 
 case class Phone(id: Int, number: String)
 
@@ -78,18 +77,21 @@ object Phone {
   given SqlReadRow[Phone] = new {
     def readRow(jRes: java.sql.ResultSet, prefix: Option[String]): Phone = {
       Phone(
-        SqlRead[Int].readByName(jRes, prefix.map(_ + ".").getOrElse("") +"id"),
-        SqlRead[String].readByName(jRes, prefix.map(_ + ".").getOrElse("") +"number")
+        SqlRead[Int].readByName(jRes, prefix.map(_ + ".").getOrElse("") + "id"),
+        SqlRead[String]
+          .readByName(jRes, prefix.map(_ + ".").getOrElse("") + "number")
       )
     }
   }
 }
 
-
 case class CustomerWithPhone(c: Customer, p: Phone)
 object CustomerWithPhone {
   given SqlReadRow[CustomerWithPhone] = new {
-    def readRow(jRes: java.sql.ResultSet, prefix: Option[String]): CustomerWithPhone = {
+    def readRow(
+        jRes: java.sql.ResultSet,
+        prefix: Option[String]
+    ): CustomerWithPhone = {
       CustomerWithPhone(
         SqlReadRow[Customer].readRow(jRes, Some("c")),
         SqlReadRow[Phone].readRow(jRes, Some("p"))

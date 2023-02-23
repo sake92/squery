@@ -28,7 +28,3 @@ def rows[A](query: Query)(using c: Connection, r: SqlReadRow[A]): List[A] = {
     }
   }
 }
-
-
-
-

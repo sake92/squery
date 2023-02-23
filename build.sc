@@ -1,7 +1,7 @@
 import mill._
-import mill.scalalib._
+import mill.scalalib._, scalafmt._
 
-object squery extends ScalaModule {
+object squery extends SqueryCommonModule {
 
   def scalaVersion = "3.2.2"
 
@@ -13,7 +13,7 @@ object squery extends ScalaModule {
     coursier.maven.MavenRepository("https://jitpack.io")
   )}
 
-  object test extends Tests with TestModule.Munit {
+  object test extends Tests with TestModule.Munit with SqueryCommonModule {
     def ivyDeps = Agg(
       ivy"org.scalameta::munit:1.0.0-M7",
       ivy"com.zaxxer:HikariCP:4.0.3",
@@ -22,3 +22,6 @@ object squery extends ScalaModule {
   }
 }
 
+trait SqueryCommonModule extends ScalaModule with ScalafmtModule {
+
+}
