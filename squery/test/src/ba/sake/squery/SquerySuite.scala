@@ -1,5 +1,8 @@
 package ba.sake.squery
 
+import ba.sake.squery.read.*
+
+
 class SquerySuite extends munit.FunSuite {
 
   test("SELECT simple types") {
@@ -30,19 +33,22 @@ class SquerySuite extends munit.FunSuite {
     conn.close()
 
     run(ds) {
-     /* assertEquals(
+      assertEquals(
         read[Int](Query("SELECT id FROM customers")),
         List(123)
       )
+     /* 
       assertEquals(
         read[String](Query("SELECT name FROM customers")),
         List("a_customer")
       )
 
-      val res = read.row[Customer](Query("SELECT id, name FROM customers"))
+      
 */
+
       val res2 = read.rows[CustomerWithPhone](Query("""
-        SELECT c.id "c.id", c.name "c.name", p.id "p.id", p.number "p.number"
+        SELECT c.id "c.id", c.name "c.name",
+          p.id "p.id", p.number "p.number"
         FROM customers c
         JOIN phones p on p.customer_id = c.id
       """))
