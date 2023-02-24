@@ -41,7 +41,7 @@ class SquerySuite extends munit.FunSuite {
 
   test("SELECT simple types") {
     val ds = initDb()
-    
+
     run(ds) {
       assertEquals(
         read[Int](Query("SELECT id FROM customers")),
@@ -74,7 +74,6 @@ class SquerySuite extends munit.FunSuite {
       )
 
     }
-
   }
 
 }

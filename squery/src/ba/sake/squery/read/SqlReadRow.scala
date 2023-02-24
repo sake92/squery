@@ -5,8 +5,6 @@ import java.sql.ResultSet
 import scala.deriving.*
 import scala.compiletime.*
 
-type Pair[A, B]
-
 /** Reads a row (or just part of it if used in composition) */
 trait SqlReadRow[T]:
   def readRow(jRes: ResultSet, prefix: Option[String]): T
@@ -17,7 +15,7 @@ object SqlReadRow:
 
   inline given derived[T](using m: Mirror.Of[T]): SqlReadRow[T] =
     inline m match
-      case s: Mirror.SumOf[T]     => error("Sum types are not supported yet")
+      case s: Mirror.SumOf[T]     => error("Sum types are not supported")
       case p: Mirror.ProductOf[T] => deriveProduct(p)
 
   private inline def deriveProduct[T](
@@ -42,6 +40,9 @@ object SqlReadRow:
         val tuple = Tuple.fromArray(resTuple)
         p.fromTuple(tuple.asInstanceOf[p.MirroredElemTypes])
       }
+
+  // TODO a bit nicer recursive get-all-stuff
+  // https://github.com/lampepfl/dotty/blob/3.2.2/tests/pos-special/fatal-warnings/not-looping-implicit.scala#L12
 
   private inline def getReads[T <: Tuple]: Tuple =
     inline erasedValue[T] match
