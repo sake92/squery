@@ -1,7 +1,6 @@
 package ba.sake.squery.read
 
 import java.{sql => jsql}
-import scala.util.Using
 
 // reads a value from a column
 trait SqlRead[T]:

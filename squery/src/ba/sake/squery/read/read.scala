@@ -5,7 +5,7 @@ import scala.util.Using
 
 import ba.sake.squery.*
 
-def apply[A](query: Query)(using c: Connection, r: SqlRead[A]): List[A] = {
+def values[A](query: Query)(using c: Connection, r: SqlRead[A]): List[A] = {
   val elems = collection.mutable.ListBuffer.empty[A]
   Using.resource(Query.newPreparedStatement(query, c.underlying)) { stmt =>
     Using.resource(stmt.executeQuery()) { res =>

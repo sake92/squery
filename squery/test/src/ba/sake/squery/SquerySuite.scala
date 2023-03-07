@@ -39,28 +39,36 @@ class SquerySuite extends munit.FunSuite {
     ds
   }
 
-  test("SELECT simple types") {
+  test("SELECT plain values") {
     val ds = initDb()
 
     run(ds) {
       assertEquals(
-        read[Int](Query("SELECT id FROM customers")),
+        read.values[Int](sql"SELECT id FROM customers"),
         List(123)
       )
 
+      val phoneNum = "061 123 456"
       assertEquals(
-        read[Int](Query("SELECT id FROM phones")),
-        List(1, 2)
+        read.values[Int](sql"SELECT id FROM phones WHERE number = ${phoneNum}"),
+        List(1)
       )
+    }
+  }
+
+  test("SELECT rows") {
+    val ds = initDb()
+
+    run(ds) {
 
       // TODO parse + inject these aliases into query!
       assertEquals(
-        read.rows[CustomerWithPhone](Query("""
+        read.rows[CustomerWithPhone](sql"""
           SELECT c.id "c.id", c.name "c.name",
             p.id "p.id", p.number "p.number"
           FROM customers c
           JOIN phones p on p.customer_id = c.id
-        """)),
+        """),
         List(
           CustomerWithPhone(
             Customer(123, "a_customer"),
