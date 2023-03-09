@@ -15,6 +15,8 @@ extension (sc: StringContext) {
       buf.append("?")
       buf.append(strings.next())
 
+    // TODO parse + inject aliases
+
     Query(buf.toString, args.toSeq)
 
 }

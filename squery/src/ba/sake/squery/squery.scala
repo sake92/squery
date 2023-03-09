@@ -3,28 +3,33 @@ package ba.sake.squery
 import java.{sql => jsql}
 import scala.util.Using
 
-@annotation.implicitNotFound(
-  "No database connection found. Make sure to call this in a `run{ }` or `transaction{ }` block."
-)
-case class Connection(underlying: jsql.Connection)
+import ba.sake.squery.read.SqlRead
+import ba.sake.squery.read.SqlReadRow
 
-object run {
-
-  def apply[A](ds: javax.sql.DataSource)(fn: Connection ?=> A): A =
-    Using.resource(ds.getConnection()) { conn =>
-      conn.setAutoCommit(true)
-      fn(using Connection(conn))
-    }
-
-  object transaction {
-
-    def apply[A](ds: javax.sql.DataSource)(fn: Connection ?=> A): A =
-      Using.resource(ds.getConnection()) { conn =>
-        conn.setAutoCommit(false)
-        val res = fn(using Connection(conn))
-        conn.commit()
-        res
+def readValues[A](
+    query: Query
+)(using c: SqueryConnection, r: SqlRead[A]): List[A] = {
+  val elems = collection.mutable.ListBuffer.empty[A]
+  Using.resource(Query.newPreparedStatement(query, c.underlying)) { stmt =>
+    Using.resource(stmt.executeQuery()) { res =>
+      while (res.next()) {
+        elems += r.readByIdx(res, 1)
       }
+      elems.result()
+    }
+  }
+}
 
+def readRows[A](
+    query: Query
+)(using c: SqueryConnection, r: SqlReadRow[A]): List[A] = {
+  val elems = collection.mutable.ListBuffer.empty[A]
+  Using.resource(Query.newPreparedStatement(query, c.underlying)) { stmt =>
+    Using.resource(stmt.executeQuery()) { res =>
+      while (res.next()) {
+        elems += r.readRow(res, None)
+      }
+      elems.result()
+    }
   }
 }

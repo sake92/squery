@@ -6,7 +6,7 @@ import ba.sake.squery.read.*
 
 class SquerySuite extends munit.FunSuite {
 
-  def initDb(): DataSource = {
+  def initDb(): SqueryContext = {
     val ds = com.zaxxer.hikari.HikariDataSource()
     ds.setJdbcUrl("jdbc:sqlite::memory:")
 
@@ -36,34 +36,34 @@ class SquerySuite extends munit.FunSuite {
     }
     conn.close()
 
-    ds
+    new SqueryContext(ds)
   }
 
   test("SELECT plain values") {
-    val ds = initDb()
+    val ctx = initDb()
 
-    run(ds) {
+    ctx.run {
       assertEquals(
-        read.values[Int](sql"SELECT id FROM customers"),
+        readValues[Int](sql"SELECT id FROM customers"),
         List(123)
       )
 
       val phoneNum = "061 123 456"
       assertEquals(
-        read.values[Int](sql"SELECT id FROM phones WHERE number = ${phoneNum}"),
+        readValues[Int](sql"SELECT id FROM phones WHERE number = ${phoneNum}"),
         List(1)
       )
     }
   }
 
   test("SELECT rows") {
-    val ds = initDb()
+    val ctx = initDb()
 
-    run(ds) {
+    ctx.run {
 
       // TODO parse + inject these aliases into query!
       assertEquals(
-        read.rows[CustomerWithPhone](sql"""
+        readRows[CustomerWithPhone](sql"""
           SELECT c.id "c.id", c.name "c.name",
             p.id "p.id", p.number "p.number"
           FROM customers c
