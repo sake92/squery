@@ -6,17 +6,14 @@ import scala.util.Using
 import ba.sake.squery.write.SqlArgument
 
 case class Query(
-    sql: String,
+    sqlString: String,
     arguments: Seq[SqlArgument[?]]
-)
-
-object Query {
+) {
   def newPreparedStatement(
-      q: Query,
       c: jsql.Connection
   ): jsql.PreparedStatement = {
-    val stat = c.prepareStatement(q.sql, jsql.Statement.RETURN_GENERATED_KEYS)
-    q.arguments.zipWithIndex.foreach { (arg, i) =>
+    val stat = c.prepareStatement(sqlString, jsql.Statement.RETURN_GENERATED_KEYS)
+    arguments.zipWithIndex.foreach { (arg, i) =>
       arg.sqlWrite.write(stat, i + 1, arg.value)
     }
     stat
