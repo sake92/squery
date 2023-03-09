@@ -1,7 +1,6 @@
 package ba.sake.squery.read
 
 import java.{sql => jsql}
-import java.time.ZoneId
 import java.time.Instant
 import java.util.UUID
 
