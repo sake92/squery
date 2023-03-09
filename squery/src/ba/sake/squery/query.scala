@@ -12,7 +12,8 @@ case class Query(
   def newPreparedStatement(
       c: jsql.Connection
   ): jsql.PreparedStatement = {
-    val stat = c.prepareStatement(sqlString, jsql.Statement.RETURN_GENERATED_KEYS)
+    val stat =
+      c.prepareStatement(sqlString, jsql.Statement.RETURN_GENERATED_KEYS)
     arguments.zipWithIndex.foreach { (arg, i) =>
       arg.sqlWrite.write(stat, i + 1, arg.value)
     }
