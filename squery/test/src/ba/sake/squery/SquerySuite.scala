@@ -80,11 +80,10 @@ class SquerySuite extends munit.FunSuite {
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
       """)
 
-      // TODO parse + inject these aliases into query!
       assertEquals(
         readRows[CustomerWithPhone](sql"""
-          SELECT c.id "c.id", c.name "c.name",
-            p.id "p.id", p.number "p.number"
+          SELECT c.id, c.name,
+            p.id, p.number
           FROM customers c
           JOIN phones p on p.customer_id = c.id
         """),
