@@ -7,11 +7,39 @@ import ba.sake.squery.read.SqlRead
 import ba.sake.squery.read.SqlReadRow
 
 // simple INSERT/UPDATE/DELETE statements
-def update[A](
+def update(
     query: Query
 )(using c: SqueryConnection): Int = {
   Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
     stmt.executeUpdate()
+  }
+}
+
+def insertReturningValues[A](
+    query: Query
+)(using c: SqueryConnection, r: SqlRead[A]): List[A] = {
+  Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
+    stmt.executeUpdate()
+    val keysRes = stmt.getGeneratedKeys()
+    val elems = collection.mutable.ListBuffer.empty[A]
+    while (keysRes.next()) {
+      elems += r.readByIdx(keysRes, 1)
+    }
+    elems.result()
+  }
+}
+
+def insertReturningRows[A](
+    query: Query
+)(using c: SqueryConnection, r: SqlReadRow[A]): List[A] = {
+  Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
+    stmt.executeUpdate()
+    val keysRes = stmt.getGeneratedKeys()
+    val elems = collection.mutable.ListBuffer.empty[A]
+    while (keysRes.next()) {
+      elems += r.readRow(keysRes, None)
+    }
+    elems.result()
   }
 }
 

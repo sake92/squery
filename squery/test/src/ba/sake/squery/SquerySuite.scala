@@ -6,6 +6,10 @@ import ba.sake.squery.read.*
 
 class SquerySuite extends munit.FunSuite {
 
+  val customer1 = Customer(1, "a_customer")
+  val phone1 = Phone(1, "061 123 456")
+  val phone2 = Phone(2, "062 225 883")
+
   def initDb(): SqueryContext = {
     val ds = com.zaxxer.hikari.HikariDataSource()
     ds.setJdbcUrl("jdbc:sqlite::memory:")
@@ -14,30 +18,19 @@ class SquerySuite extends munit.FunSuite {
     ctx.run {
       update(sql"PRAGMA foreign_keys = ON;")
 
-      // customers
       update(sql"""
         CREATE TABLE customers(
-          id INTEGER PRIMARY KEY,
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
           name VARCHAR
         )
       """)
-      update(sql"""
-        INSERT INTO customers(id, name) VALUES(123, 'a_customer')
-      """)
 
-      // phones
       update(sql"""
         CREATE TABLE phones(
-          id INTEGER PRIMARY KEY,
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
           customer_id INTEGER REFERENCES customers(id),
           number VARCHAR
         )
-      """)
-      update(sql"""
-        INSERT INTO phones(id, customer_id, number) VALUES(1, 123, '061 123 456')
-      """)
-      update(sql"""
-        INSERT INTO phones(id, customer_id, number) VALUES(2, 123, '062 225 883')
       """)
     }
 
@@ -48,15 +41,27 @@ class SquerySuite extends munit.FunSuite {
     val ctx = initDb()
 
     ctx.run {
+      val customerIds = insertReturningValues[Int](sql"""
+        INSERT INTO customers(name) VALUES(${customer1.name})
+      """)
+      val customerId1 = customerIds.head
+      update(sql"""
+        INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
+      """)
+      update(sql"""
+        INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
+      """)
+
       assertEquals(
-        readValues[Int](sql"SELECT id FROM customers"),
-        List(123)
+        readValues[String](sql"SELECT name FROM customers"),
+        List(customer1.name)
       )
 
-      val phoneNum = "061 123 456"
       assertEquals(
-        readValues[Int](sql"SELECT id FROM phones WHERE number = ${phoneNum}"),
-        List(1)
+        readValues[String](
+          sql"SELECT number FROM phones WHERE customer_id = ${customer1.id}"
+        ),
+        List(phone1.number, phone2.number)
       )
     }
   }
@@ -65,6 +70,17 @@ class SquerySuite extends munit.FunSuite {
     val ctx = initDb()
 
     ctx.run {
+
+      val customerIds = insertReturningValues[Int](sql"""
+        INSERT INTO customers(name) VALUES(${customer1.name})
+      """)
+      val customerId1 = customerIds.head
+      update(sql"""
+        INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
+      """)
+      update(sql"""
+        INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
+      """)
 
       // TODO parse + inject these aliases into query!
       assertEquals(
@@ -75,14 +91,8 @@ class SquerySuite extends munit.FunSuite {
           JOIN phones p on p.customer_id = c.id
         """),
         List(
-          CustomerWithPhone(
-            Customer(123, "a_customer"),
-            Phone(1, "061 123 456")
-          ),
-          CustomerWithPhone(
-            Customer(123, "a_customer"),
-            Phone(2, "062 225 883")
-          )
+          CustomerWithPhone(customer1, phone1),
+          CustomerWithPhone(customer1, phone2)
         )
       )
 
