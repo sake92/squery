@@ -39,7 +39,7 @@ class SquerySuite extends munit.FunSuite {
     val ctx = initDb()
 
     ctx.run {
-      val customerIds = insertReturningValues[Int](sql"""
+      val customerIds = insertReturningKeys[Int](sql"""
         INSERT INTO customers(name) VALUES(${customer1.name})
       """)
       val customerId1 = customerIds.head
@@ -69,7 +69,7 @@ class SquerySuite extends munit.FunSuite {
 
     ctx.run {
 
-      val customerIds = insertReturningValues[Int](sql"""
+      val customerIds = insertReturningKeys[Int](sql"""
         INSERT INTO customers(name) VALUES(${customer1.name})
       """)
       val customerId1 = customerIds.head
@@ -102,7 +102,7 @@ class SquerySuite extends munit.FunSuite {
 
     ctx.run {
 
-      val customerIds = insertReturningValues[Int](sql"""
+      val customerIds = insertReturningKeys[Int](sql"""
         INSERT INTO customers(name)
         VALUES ('abc'), ('def'), ('ghi')
       """)

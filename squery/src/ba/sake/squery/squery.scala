@@ -15,7 +15,25 @@ def update(
   }
 }
 
-def insertReturningValues[A](
+/* INSERT */
+// QOL insert function
+def insert(
+    query: Query
+)(using c: SqueryConnection): Unit =
+  update(query)
+
+/** Inserts values and returns generated keys.
+  *
+  * @param query
+  *   SQL query to execute
+  * @param c
+  *   implicit Squery connection
+  * @param r
+  *   implicit Sql read for the return type (generated key types)
+  * @return
+  *   generated keys
+  */
+def insertReturningKeys[A](
     query: Query
 )(using c: SqueryConnection, r: SqlRead[A]): List[A] = {
   Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
@@ -29,20 +47,7 @@ def insertReturningValues[A](
   }
 }
 
-def insertReturningRows[A](
-    query: Query
-)(using c: SqueryConnection, r: SqlReadRow[A]): List[A] = {
-  Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
-    stmt.executeUpdate()
-    val keysRes = stmt.getGeneratedKeys()
-    val elems = collection.mutable.ListBuffer.empty[A]
-    while (keysRes.next()) {
-      elems += r.readRow(keysRes, None)
-    }
-    elems.result()
-  }
-}
-
+/* SELECT */
 // read single column (unnamed)
 def readValues[A](
     query: Query
