@@ -99,15 +99,28 @@ class SquerySuite extends munit.FunSuite {
 
   test("INSERT returning generated keys") {
     val ctx = initDb()
-
     ctx.run {
-
       val customerIds = insertReturningKeys[Int](sql"""
         INSERT INTO customers(name)
         VALUES ('abc'), ('def'), ('ghi')
       """)
-
       assertEquals(customerIds.toSet, Set(1, 2, 3))
+    }
+  }
+
+  test("UPDATE should return number of affected rows") {
+    val ctx = initDb()
+    ctx.run {
+      val customerIds = insertReturningKeys[Int](sql"""
+        INSERT INTO customers(name)
+        VALUES ('a_1'), ('a_2'), ('b_1')
+      """)
+      val affected = update(sql"""
+        UPDATE customers
+        SET name = 'whatever'
+        WHERE name LIKE 'a_%'
+      """)
+      assertEquals(affected, 2)
     }
   }
 
