@@ -12,22 +12,20 @@ class SquerySuite extends munit.FunSuite {
 
   def initDb(): SqueryContext = {
     val ds = com.zaxxer.hikari.HikariDataSource()
-    ds.setJdbcUrl("jdbc:sqlite::memory:")
+    ds.setJdbcUrl("jdbc:h2:mem:")
     val ctx = new SqueryContext(ds)
 
     ctx.run {
-      update(sql"PRAGMA foreign_keys = ON;")
-
       update(sql"""
         CREATE TABLE customers(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          id INTEGER PRIMARY KEY AUTO_INCREMENT,
           name VARCHAR
         )
       """)
 
       update(sql"""
         CREATE TABLE phones(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          id INTEGER PRIMARY KEY AUTO_INCREMENT,
           customer_id INTEGER REFERENCES customers(id),
           number VARCHAR
         )
@@ -96,6 +94,20 @@ class SquerySuite extends munit.FunSuite {
         )
       )
 
+    }
+  }
+
+  test("INSERT returning generated keys") {
+    val ctx = initDb()
+
+    ctx.run {
+
+      val customerIds = insertReturningValues[Int](sql"""
+        INSERT INTO customers(name)
+        VALUES ('abc'), ('def'), ('ghi')
+      """)
+
+      assertEquals(customerIds.toSet, Set(1, 2, 3))
     }
   }
 

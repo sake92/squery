@@ -9,7 +9,9 @@ object squery extends SqueryCommonModule {
     def ivyDeps = Agg(
       ivy"org.scalameta::munit:1.0.0-M7",
       ivy"com.zaxxer:HikariCP:4.0.3",
-      ivy"org.xerial:sqlite-jdbc:3.32.3.2"
+      ivy"com.h2database:h2:2.1.214"
+
+      //ivy"org.xerial:sqlite-jdbc:3.32.3.2"
     )
   }
 }
