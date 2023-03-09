@@ -6,6 +6,17 @@ import scala.util.Using
 import ba.sake.squery.read.SqlRead
 import ba.sake.squery.read.SqlReadRow
 
+// simple update statements
+def update[A](
+    query: Query
+)(using c: SqueryConnection): Int = {
+  Using.resource(Query.newPreparedStatement(query, c.underlying)) { stmt =>
+    stmt.executeUpdate()
+  }
+}
+
+
+// read single column (unnamed)
 def readValues[A](
     query: Query
 )(using c: SqueryConnection, r: SqlRead[A]): List[A] = {
@@ -20,6 +31,7 @@ def readValues[A](
   }
 }
 
+// read case class (named columns)
 def readRows[A](
     query: Query
 )(using c: SqueryConnection, r: SqlReadRow[A]): List[A] = {

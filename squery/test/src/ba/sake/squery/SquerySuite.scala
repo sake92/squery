@@ -9,34 +9,39 @@ class SquerySuite extends munit.FunSuite {
   def initDb(): SqueryContext = {
     val ds = com.zaxxer.hikari.HikariDataSource()
     ds.setJdbcUrl("jdbc:sqlite::memory:")
+    val ctx = new SqueryContext(ds)
 
-    val conn = ds.getConnection()
-    List(
-      "PRAGMA foreign_keys = ON;",
+    ctx.run {
+      update(sql"PRAGMA foreign_keys = ON;")
 
       // customers
-      """CREATE TABLE customers(
+      update(sql"""
+        CREATE TABLE customers(
           id INTEGER PRIMARY KEY,
           name VARCHAR
-      )""",
-      "INSERT INTO customers VALUES(123, 'a_customer')",
+        )
+      """)
+      update(sql"""
+        INSERT INTO customers(id, name) VALUES(123, 'a_customer')
+      """)
 
       // phones
-      """CREATE TABLE phones(
-        id INTEGER PRIMARY KEY,
-        customer_id INTEGER REFERENCES customers(id),
-        number VARCHAR
-      )""",
-      "INSERT INTO phones VALUES(1, 123, '061 123 456')",
-      "INSERT INTO phones VALUES(2, 123, '062 225 883')"
-    ).foreach { stmtString =>
-      val stmt = conn.prepareStatement(stmtString)
-      stmt.execute()
-      stmt.close()
+      update(sql"""
+        CREATE TABLE phones(
+          id INTEGER PRIMARY KEY,
+          customer_id INTEGER REFERENCES customers(id),
+          number VARCHAR
+        )
+      """)
+      update(sql"""
+        INSERT INTO phones(id, customer_id, number) VALUES(1, 123, '061 123 456')
+      """)
+      update(sql"""
+        INSERT INTO phones(id, customer_id, number) VALUES(2, 123, '062 225 883')
+      """)
     }
-    conn.close()
 
-    new SqueryContext(ds)
+    ctx
   }
 
   test("SELECT plain values") {
