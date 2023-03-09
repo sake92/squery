@@ -43,10 +43,10 @@ class SquerySuite extends munit.FunSuite {
         INSERT INTO customers(name) VALUES(${customer1.name})
       """)
       val customerId1 = customerIds.head
-      update(sql"""
+      insert(sql"""
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
       """)
-      update(sql"""
+      insert(sql"""
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
       """)
 
@@ -73,10 +73,10 @@ class SquerySuite extends munit.FunSuite {
         INSERT INTO customers(name) VALUES(${customer1.name})
       """)
       val customerId1 = customerIds.head
-      update(sql"""
+      insert(sql"""
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
       """)
-      update(sql"""
+      insert(sql"""
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
       """)
 
@@ -94,6 +94,13 @@ class SquerySuite extends munit.FunSuite {
         )
       )
 
+    }
+  }
+
+  test("INSERT throws if statement is wrong") {
+    val ctx = initDb()
+    intercept[SqueryException] {
+      ctx.run { insert(sql"") }
     }
   }
 

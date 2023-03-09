@@ -20,7 +20,9 @@ def update(
 def insert(
     query: Query
 )(using c: SqueryConnection): Unit =
-  update(query)
+  val affected = update(query)
+  if affected == 0 then
+    throw new SqueryException("Insert failed")
 
 /** Inserts values and returns generated keys.
   *
