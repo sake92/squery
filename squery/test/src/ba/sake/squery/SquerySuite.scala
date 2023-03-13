@@ -3,6 +3,8 @@ package ba.sake.squery
 import javax.sql.DataSource
 
 import ba.sake.squery.read.*
+import java.util.UUID
+import java.time.Instant
 
 class SquerySuite extends munit.FunSuite {
 
@@ -37,7 +39,6 @@ class SquerySuite extends munit.FunSuite {
 
   test("SELECT plain values") {
     val ctx = initDb()
-
     ctx.run {
       val customerIds = insertReturningKeys[Int](sql"""
         INSERT INTO customers(name) VALUES(${customer1.name})
@@ -66,9 +67,7 @@ class SquerySuite extends munit.FunSuite {
 
   test("SELECT rows") {
     val ctx = initDb()
-
     ctx.run {
-
       val customerIds = insertReturningKeys[Int](sql"""
         INSERT INTO customers(name) VALUES(${customer1.name})
       """)
@@ -130,6 +129,34 @@ class SquerySuite extends munit.FunSuite {
     }
   }
 
+  test("Data types") {
+    val ctx = initDb()
+    ctx.run {
+      // note that Insant has NANOseconds precision!
+      update(sql"""
+        CREATE TABLE datatypes(
+          uuid UUID,
+          tstz TIMESTAMP(9) WITH TIME ZONE
+        )
+      """)
+      val uuid = UUID.randomUUID()
+      val tstz = Instant.now()
+      insert(sql"""
+        INSERT INTO datatypes(uuid, tstz)
+        VALUES ($uuid, $tstz)
+      """)
+
+      val storedRow = readRows[Datatypes](sql"""
+        SELECT uuid, tstz
+        FROM datatypes
+      """).head
+      assertEquals(
+        storedRow,
+        Datatypes(uuid, tstz)
+      )
+    }
+  }
+
 }
 
 case class Customer(id: Int, name: String) derives SqlReadRow
@@ -137,3 +164,8 @@ case class Customer(id: Int, name: String) derives SqlReadRow
 case class Phone(id: Int, number: String) derives SqlReadRow
 
 case class CustomerWithPhone(c: Customer, p: Phone) derives SqlReadRow
+
+case class Datatypes(
+    uuid: UUID,
+    tstz: Instant
+) derives SqlReadRow
