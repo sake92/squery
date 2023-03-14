@@ -42,7 +42,7 @@ def insertReturningKeys[A](
     val keysRes = stmt.getGeneratedKeys()
     val elems = collection.mutable.ListBuffer.empty[A]
     while (keysRes.next()) {
-      elems += r.readByIdx(keysRes, 1)
+      elems += r.readByIdx(keysRes, 1).get // TODO
     }
     elems.result()
   }
@@ -57,7 +57,7 @@ def readValues[A](
   Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
     Using.resource(stmt.executeQuery()) { res =>
       while (res.next()) {
-        elems += r.readByIdx(res, 1)
+        elems += r.readByIdx(res, 1).get // TODO
       }
       elems.result()
     }

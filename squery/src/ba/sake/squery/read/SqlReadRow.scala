@@ -29,7 +29,7 @@ object SqlReadRow:
         val resTuple = labels.zip(reads).map { (label, r) =>
           r match {
             case read: SqlRead[_] =>
-              read.readByName(jRes, prefix.map(_ + ".").getOrElse("") + label)
+              read.readByName(jRes, prefix.map(_ + ".").getOrElse("") + label).get // TODO
             case read: SqlReadRow[_] =>
               read
                 .readRow(jRes, Some(prefix.map(_ + ".").getOrElse("") + label))

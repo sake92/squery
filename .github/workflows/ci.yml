@@ -17,4 +17,4 @@ jobs:
       - uses: olafurpg/setup-scala@v13
         with:
           java-version: ${{ matrix.java }}
-      - run: ./mill -i squery.__.test
+      - run: ./mill -i squery.test

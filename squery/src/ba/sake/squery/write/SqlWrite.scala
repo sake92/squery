@@ -9,6 +9,7 @@ trait SqlWrite[T]:
   def write(ps: jsql.PreparedStatement, idx: Int, value: T): Unit
 
 object SqlWrite:
+
   def apply[T](using sqlWrite: SqlWrite[T]): SqlWrite[T] = sqlWrite
 
   given SqlWrite[String] = new {
@@ -29,4 +30,9 @@ object SqlWrite:
   given SqlWrite[UUID] = new {
     def write(ps: jsql.PreparedStatement, idx: Int, value: UUID): Unit =
       ps.setObject(idx, value)
+  }
+
+  given [T](using sw: SqlWrite[T]): SqlWrite[Option[T]] = new {
+    def write(ps: jsql.PreparedStatement, idx: Int, value: Option[T]): Unit =
+      sw.write(ps, idx, value.orNull.asInstanceOf[T])
   }

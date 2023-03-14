@@ -143,16 +143,19 @@ class SquerySuite extends munit.FunSuite {
       val tstz = Instant.now()
       insert(sql"""
         INSERT INTO datatypes(uuid, tstz)
-        VALUES ($uuid, $tstz)
+        VALUES ($uuid, $tstz),  ($uuid, NULL)
       """)
 
-      val storedRow = readRows[Datatypes](sql"""
+      val storedRows = readRows[Datatypes](sql"""
         SELECT uuid, tstz
         FROM datatypes
-      """).head
+      """)
       assertEquals(
-        storedRow,
-        Datatypes(uuid, tstz)
+        storedRows,
+        List(
+          Datatypes(uuid, Some(tstz)),
+          Datatypes(uuid, None)
+        )
       )
     }
   }
@@ -167,5 +170,5 @@ case class CustomerWithPhone(c: Customer, p: Phone) derives SqlReadRow
 
 case class Datatypes(
     uuid: UUID,
-    tstz: Instant
+    tstz: Option[Instant]
 ) derives SqlReadRow
