@@ -5,6 +5,7 @@ import javax.sql.DataSource
 import ba.sake.squery.read.*
 import java.util.UUID
 import java.time.Instant
+import ba.sake.squery.write.SqlArgument
 
 class SquerySuite extends munit.FunSuite {
 
@@ -18,20 +19,20 @@ class SquerySuite extends munit.FunSuite {
     val ctx = new SqueryContext(ds)
 
     ctx.run {
-      update(sql"""
+      sql"""
         CREATE TABLE customers(
           id INTEGER PRIMARY KEY AUTO_INCREMENT,
           name VARCHAR
         )
-      """)
+      """.update()
 
-      update(sql"""
+      sql"""
         CREATE TABLE phones(
           id INTEGER PRIMARY KEY AUTO_INCREMENT,
           customer_id INTEGER REFERENCES customers(id),
           number VARCHAR
         )
-      """)
+      """.update()
     }
 
     ctx
@@ -40,26 +41,25 @@ class SquerySuite extends munit.FunSuite {
   test("SELECT plain values") {
     val ctx = initDb()
     ctx.run {
-      val customerIds = insertReturningKeys[Int](sql"""
+      val customerIds = sql"""
         INSERT INTO customers(name) VALUES(${customer1.name})
-      """)
+      """.insertReturningValues[Int]()
       val customerId1 = customerIds.head
-      insert(sql"""
+      sql"""
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
-      """)
-      insert(sql"""
+      """.insert()
+      sql"""
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
-      """)
+      """.insert()
 
       assertEquals(
-        readValues[String](sql"SELECT name FROM customers"),
+        sql"SELECT name FROM customers".readValues[String](),
         List(customer1.name)
       )
 
       assertEquals(
-        readValues[String](
-          sql"SELECT number FROM phones WHERE customer_id = ${customer1.id}"
-        ),
+        sql"SELECT number FROM phones WHERE customer_id = ${customer1.id}"
+          .readValues[String](),
         List(phone1.number, phone2.number)
       )
     }
@@ -68,24 +68,24 @@ class SquerySuite extends munit.FunSuite {
   test("SELECT rows") {
     val ctx = initDb()
     ctx.run {
-      val customerIds = insertReturningKeys[Int](sql"""
+      val customerIds = sql"""
         INSERT INTO customers(name) VALUES(${customer1.name})
-      """)
+      """.insertReturningValues[Int]()
       val customerId1 = customerIds.head
-      insert(sql"""
+      sql"""
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
-      """)
-      insert(sql"""
+      """.insert()
+      sql"""
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
-      """)
+      """.insert()
 
       assertEquals(
-        readRows[CustomerWithPhone](sql"""
+        sql"""
           SELECT c.id, c.name,
             p.id, p.number
           FROM customers c
           JOIN phones p on p.customer_id = c.id
-        """),
+        """.readRows[CustomerWithPhone](),
         List(
           CustomerWithPhone(customer1, phone1),
           CustomerWithPhone(customer1, phone2)
@@ -98,17 +98,17 @@ class SquerySuite extends munit.FunSuite {
   test("INSERT throws if statement is wrong") {
     val ctx = initDb()
     intercept[SqueryException] {
-      ctx.run { insert(sql"") }
+      ctx.run { sql"".insert() }
     }
   }
 
   test("INSERT returning generated keys") {
     val ctx = initDb()
     ctx.run {
-      val customerIds = insertReturningKeys[Int](sql"""
+      val customerIds = sql"""
         INSERT INTO customers(name)
         VALUES ('abc'), ('def'), ('ghi')
-      """)
+      """.insertReturningValues[Int]()
       assertEquals(customerIds.toSet, Set(1, 2, 3))
     }
   }
@@ -116,15 +116,15 @@ class SquerySuite extends munit.FunSuite {
   test("UPDATE should return number of affected rows") {
     val ctx = initDb()
     ctx.run {
-      val customerIds = insertReturningKeys[Int](sql"""
+      val customerIds = sql"""
         INSERT INTO customers(name)
         VALUES ('a_1'), ('a_2'), ('b_1')
-      """)
-      val affected = update(sql"""
+      """.insertReturningValues[Int]()
+      val affected = sql"""
         UPDATE customers
         SET name = 'whatever'
         WHERE name LIKE 'a_%'
-      """)
+      """.update()
       assertEquals(affected, 2)
     }
   }
@@ -133,23 +133,23 @@ class SquerySuite extends munit.FunSuite {
     val ctx = initDb()
     ctx.run {
       // note that Insant has NANOseconds precision!
-      update(sql"""
+      sql"""
         CREATE TABLE datatypes(
           uuid UUID,
           tstz TIMESTAMP(9) WITH TIME ZONE
         )
-      """)
+      """.update()
       val uuid = UUID.randomUUID()
       val tstz = Instant.now()
-      insert(sql"""
+      sql"""
         INSERT INTO datatypes(uuid, tstz)
         VALUES ($uuid, $tstz),  ($uuid, NULL)
-      """)
+      """.insert()
 
-      val storedRows = readRows[Datatypes](sql"""
+      val storedRows = sql"""
         SELECT uuid, tstz
         FROM datatypes
-      """)
+      """.readRows[Datatypes]()
       assertEquals(
         storedRows,
         List(
@@ -157,6 +157,25 @@ class SquerySuite extends munit.FunSuite {
           Datatypes(uuid, None)
         )
       )
+    }
+  }
+
+  test("Query concat") {
+    val ctx = initDb()
+    ctx.run {
+
+      val p1 = "a_customer"
+      val q1 = sql"""SELECT id FROM customers WHERE name = $p1"""
+
+      val p2 = "a_customer2"
+      val q2 = sql"""OR name = ${p2}"""
+
+      val q = q1 ++ q2
+      assertEquals(
+        q.sqlString,
+        """SELECT id FROM customers WHERE name = ? OR name = ?"""
+      )
+      assertEquals(q.arguments, Seq(p1, p2).map(SqlArgument(_)))
     }
   }
 

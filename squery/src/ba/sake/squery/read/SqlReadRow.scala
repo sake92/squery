@@ -4,6 +4,7 @@ import java.sql.ResultSet
 
 import scala.deriving.*
 import scala.compiletime.*
+import ba.sake.squery.SqueryException
 
 /** Reads a row (or just part of it if used in composition) */
 trait SqlReadRow[T]:
@@ -29,7 +30,10 @@ object SqlReadRow:
         val resTuple = labels.zip(reads).map { (label, r) =>
           r match {
             case read: SqlRead[_] =>
-              read.readByName(jRes, prefix.map(_ + ".").getOrElse("") + label).get // TODO
+              val colName = prefix.map(_ + ".").getOrElse("") + label
+              read.readByName(jRes, colName).getOrElse{
+                throw new SqueryException(s"Column with name '$colName' is null")
+              }
             case read: SqlReadRow[_] =>
               read
                 .readRow(jRes, Some(prefix.map(_ + ".").getOrElse("") + label))
