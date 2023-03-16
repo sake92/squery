@@ -6,8 +6,13 @@ import scala.util.Using
 import ba.sake.squery.read.SqlRead
 import ba.sake.squery.read.SqlReadRow
 
-// ext methods coz overloadinggggggggg
+type SqlRead[T] = ba.sake.squery.read.SqlRead[T]
+val SqlRead = ba.sake.squery.read.SqlRead
 
+type SqlReadRow[T] = ba.sake.squery.read.SqlReadRow[T]
+val SqlReadRow = ba.sake.squery.read.SqlReadRow
+
+// ext methods coz overloadinggggggggg
 extension (query: Query) {
 
   // simple INSERT/UPDATE/DELETE statements
