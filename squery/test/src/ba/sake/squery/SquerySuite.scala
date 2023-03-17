@@ -4,7 +4,10 @@ import javax.sql.DataSource
 import java.util.UUID
 import java.time.Instant
 
+import org.testcontainers.containers.PostgreSQLContainer
+
 import ba.sake.squery.write.SqlArgument
+import java.time.temporal.ChronoUnit
 
 class SquerySuite extends munit.FunSuite {
 
@@ -12,45 +15,63 @@ class SquerySuite extends munit.FunSuite {
   val phone1 = Phone(1, "061 123 456")
   val phone2 = Phone(2, "062 225 883")
 
-  def initDb(): SqueryContext = {
-    val ds = com.zaxxer.hikari.HikariDataSource()
-    ds.setJdbcUrl("jdbc:h2:mem:")
-    val ctx = new SqueryContext(ds)
+  val initDb = new Fixture[SqueryContext]("database") {
+    private var ctx: SqueryContext = null
+    private var container: PostgreSQLContainer[?] = null
 
-    ctx.run {
-      sql"""
-        CREATE TABLE customers(
-          id INTEGER PRIMARY KEY AUTO_INCREMENT,
-          name VARCHAR
-        )
-      """.update()
+    def apply() = ctx
 
-      sql"""
-        CREATE TABLE phones(
-          id INTEGER PRIMARY KEY AUTO_INCREMENT,
-          customer_id INTEGER REFERENCES customers(id),
-          number VARCHAR
-        )
-      """.update()
+    override def beforeAll(): Unit = {
+      val container = new PostgreSQLContainer()
+      container.start()
+
+      val ds = com.zaxxer.hikari.HikariDataSource()
+      ds.setJdbcUrl(container.getJdbcUrl())
+      ds.setUsername(container.getUsername())
+      ds.setPassword(container.getPassword())
+
+      ctx = new SqueryContext(ds)
+
+      ctx.run {
+        sql"""
+          CREATE TABLE customers(
+            id SERIAL PRIMARY KEY,
+            name VARCHAR
+          )
+        """.update()
+
+        sql"""
+          CREATE TABLE phones(
+            id SERIAL PRIMARY KEY,
+            customer_id INTEGER REFERENCES customers(id),
+            number VARCHAR
+          )
+        """.update()
+
+        val customerIds = sql"""
+          INSERT INTO customers(name) VALUES(${customer1.name})
+        """.insertReturningGenKeys[Int]()
+        val customerId1 = customerIds.head
+        sql"""
+          INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
+        """.insert()
+        sql"""
+          INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
+        """.insert()
+      }
     }
+    override def afterAll(): Unit =
+      if container != null then container.close()
 
-    ctx
   }
+
+  override def munitFixtures = List(initDb)
+
+  /* TESTS */
 
   test("SELECT plain values") {
     val ctx = initDb()
     ctx.run {
-      val customerIds = sql"""
-        INSERT INTO customers(name) VALUES(${customer1.name})
-      """.insertReturningGenKeys[Int]()
-      val customerId1 = customerIds.head
-      sql"""
-        INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
-      """.insert()
-      sql"""
-        INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
-      """.insert()
-
       assertEquals(
         sql"SELECT name FROM customers".readValues[String](),
         List(customer1.name)
@@ -67,16 +88,6 @@ class SquerySuite extends munit.FunSuite {
   test("SELECT rows") {
     val ctx = initDb()
     ctx.run {
-      val customerIds = sql"""
-        INSERT INTO customers(name) VALUES(${customer1.name})
-      """.insertReturningGenKeys[Int]()
-      val customerId1 = customerIds.head
-      sql"""
-        INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
-      """.insert()
-      sql"""
-        INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
-      """.insert()
 
       assertEquals(
         sql"""
@@ -108,21 +119,21 @@ class SquerySuite extends munit.FunSuite {
         INSERT INTO customers(name)
         VALUES ('abc'), ('def'), ('ghi')
       """.insertReturningGenKeys[Int]()
-      assertEquals(customerIds.toSet, Set(1, 2, 3))
+      assertEquals(customerIds.toSet, Set(2, 3, 4))
     }
   }
 
   test("UPDATE should return number of affected rows") {
     val ctx = initDb()
     ctx.run {
-      val customerIds = sql"""
+      sql"""
         INSERT INTO customers(name)
-        VALUES ('a_1'), ('a_2'), ('b_1')
-      """.insertReturningGenKeys[Int]()
+        VALUES ('xyz_1'), ('xyz_2'), ('b_1')
+      """.insert()
       val affected = sql"""
         UPDATE customers
         SET name = 'whatever'
-        WHERE name LIKE 'a_%'
+        WHERE name LIKE 'xyz_%'
       """.update()
       assertEquals(affected, 2)
     }
@@ -131,16 +142,17 @@ class SquerySuite extends munit.FunSuite {
   test("Data types") {
     val ctx = initDb()
     ctx.run {
-      // note that Insant has NANOseconds precision!
+      // note that Instant has NANOseconds precision!
+      // postgres has MICROseconds precision
       sql"""
         CREATE TABLE datatypes(
           int INTEGER,
           long BIGINT,
-          double DOUBLE,
+          double DOUBLE PRECISION,
           boolean BOOLEAN,
           string VARCHAR(255),
           uuid UUID,
-          tstz TIMESTAMP(9) WITH TIME ZONE
+          tstz TIMESTAMPTZ
         )
       """.update()
       val dt1 = Datatypes(
@@ -150,7 +162,7 @@ class SquerySuite extends munit.FunSuite {
         Some(true),
         Some("abc"),
         Some(UUID.randomUUID),
-        Some(Instant.now)
+        Some(Instant.now.truncatedTo(ChronoUnit.MICROS))
       )
       val dt2 = Datatypes(None, None, None, None, None, None, None)
       sql"""

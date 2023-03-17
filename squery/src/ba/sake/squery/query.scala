@@ -31,7 +31,8 @@ class Query(
     val stat =
       c.prepareStatement(
         enrichedQueryString,
-        if retGenKeys then jsql.Statement.RETURN_GENERATED_KEYS else jsql.Statement.NO_GENERATED_KEYS
+        if retGenKeys then jsql.Statement.RETURN_GENERATED_KEYS
+        else jsql.Statement.NO_GENERATED_KEYS
       )
     arguments.zipWithIndex.foreach { (arg, i) =>
       arg.sqlWrite.write(stat, i + 1, Option(arg.value))

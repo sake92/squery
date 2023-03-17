@@ -16,7 +16,9 @@ object squery extends SqueryPublishModule {
     def ivyDeps = Agg(
       ivy"org.scalameta::munit:1.0.0-M7",
       ivy"com.zaxxer:HikariCP:4.0.3",
-      ivy"com.h2database:h2:2.1.214"
+      ivy"org.postgresql:postgresql:42.5.4",
+      ivy"org.testcontainers:testcontainers:1.17.6",
+      ivy"org.testcontainers:postgresql:1.17.6"
     )
   }
 }
