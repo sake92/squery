@@ -21,7 +21,8 @@ class Query(
     )
 
   private[squery] def newPreparedStatement(
-      c: jsql.Connection
+      c: jsql.Connection,
+      retGenKeys: Boolean = false
   ): jsql.PreparedStatement = {
     val enrichedQueryString = Query.enrichSqlQuery(sqlString)
     // TODO slf4j
@@ -30,7 +31,7 @@ class Query(
     val stat =
       c.prepareStatement(
         enrichedQueryString,
-        jsql.Statement.RETURN_GENERATED_KEYS
+        if retGenKeys then jsql.Statement.RETURN_GENERATED_KEYS else jsql.Statement.NO_GENERATED_KEYS
       )
     arguments.zipWithIndex.foreach { (arg, i) =>
       arg.sqlWrite.write(stat, i + 1, Option(arg.value))

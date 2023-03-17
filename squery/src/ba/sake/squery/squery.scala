@@ -41,11 +41,13 @@ extension (query: Query) {
     * @return
     *   generated keys
     */
-  def insertReturningValues[A]()(using
+  def insertReturningGenKeys[A]()(using
       c: SqueryConnection,
       r: SqlRead[A]
   ): List[A] =
-    Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
+    Using.resource(
+      query.newPreparedStatement(c.underlying, retGenKeys = true)
+    ) { stmt =>
       stmt.executeUpdate()
       val keysRes = stmt.getGeneratedKeys()
       val elems = collection.mutable.ListBuffer.empty[A]
@@ -57,33 +59,25 @@ extension (query: Query) {
       elems.result()
     }
 
+  // TODO same for UPDATE.. ?
   def insertReturningRows[A]()(using
       c: SqueryConnection,
       r: SqlReadRow[A]
   ): List[A] =
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
-      stmt.executeUpdate()
-      val keysRes = stmt.getGeneratedKeys()
-      val elems = collection.mutable.ListBuffer.empty[A]
-      while (keysRes.next()) {
-        elems += r.readRow(keysRes, None)
+      Using.resource(stmt.executeQuery()) { res =>
+        val elems = collection.mutable.ListBuffer.empty[A]
+        while (res.next()) {
+          elems += r.readRow(res, None)
+        }
+        elems.result()
       }
-      elems.result()
     }
 
-  // TODO same for UPDATE.. ?
   def insertReturningRow[A]()(using c: SqueryConnection, r: SqlReadRow[A]): A =
-    Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
-      stmt.executeUpdate()
-      val keysRes = stmt.getGeneratedKeys()
-      val elems = collection.mutable.ListBuffer.empty[A]
-      while (keysRes.next()) {
-        elems += r.readRow(keysRes, None)
-      }
-      elems.result.headOption.getOrElse(
-        throw SqueryException("No value returned from query")
-      )
-    }
+    insertReturningRows().headOption.getOrElse(
+      throw SqueryException("No value returned from query")
+    )
 
   /* SELECT */
   // read single column (unnamed)

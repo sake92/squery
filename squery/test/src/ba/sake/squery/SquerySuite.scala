@@ -42,7 +42,7 @@ class SquerySuite extends munit.FunSuite {
     ctx.run {
       val customerIds = sql"""
         INSERT INTO customers(name) VALUES(${customer1.name})
-      """.insertReturningValues[Int]()
+      """.insertReturningGenKeys[Int]()
       val customerId1 = customerIds.head
       sql"""
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
@@ -69,7 +69,7 @@ class SquerySuite extends munit.FunSuite {
     ctx.run {
       val customerIds = sql"""
         INSERT INTO customers(name) VALUES(${customer1.name})
-      """.insertReturningValues[Int]()
+      """.insertReturningGenKeys[Int]()
       val customerId1 = customerIds.head
       sql"""
         INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
@@ -107,7 +107,7 @@ class SquerySuite extends munit.FunSuite {
       val customerIds = sql"""
         INSERT INTO customers(name)
         VALUES ('abc'), ('def'), ('ghi')
-      """.insertReturningValues[Int]()
+      """.insertReturningGenKeys[Int]()
       assertEquals(customerIds.toSet, Set(1, 2, 3))
     }
   }
@@ -118,7 +118,7 @@ class SquerySuite extends munit.FunSuite {
       val customerIds = sql"""
         INSERT INTO customers(name)
         VALUES ('a_1'), ('a_2'), ('b_1')
-      """.insertReturningValues[Int]()
+      """.insertReturningGenKeys[Int]()
       val affected = sql"""
         UPDATE customers
         SET name = 'whatever'
