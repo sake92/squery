@@ -18,11 +18,11 @@ import net.sf.jsqlparser.expression.Alias
 import net.sf.jsqlparser.statement.select.SelectItem
 import net.sf.jsqlparser.parser.SimpleNode
 /*
-Dbs usually strip away the prefixes, for example: `SELECT u.id, p.id FROM users u JOIN phones p ..` would return 2 columns called "id".  
-This makes it impossible to map the result in any meaningful way to our case classes...  
-Thus, we inject the aliases for each column, so that SELECT from above would actually run `SELECT u.id AS "u.id", p.id AS "p.id"`,  
+Dbs usually strip away the prefixes, for example: `SELECT u.id, p.id FROM users u JOIN phones p ..` would return 2 columns called "id".
+This makes it impossible to map the result in any meaningful way to our case classes...
+Thus, we inject the aliases for each column, so that SELECT from above would actually run `SELECT u.id AS "u.id", p.id AS "p.id"`,
 so we are back in the game!
-*/
+ */
 
 // adapted from AddAliasesVisitor
 // https://github.com/JSQLParser/JSqlParser/blob/388b7c3afff4f500d23880e4e1c491637eb0bfb3/src/main/java/net/sf/jsqlparser/util/AddAliasesVisitor.java

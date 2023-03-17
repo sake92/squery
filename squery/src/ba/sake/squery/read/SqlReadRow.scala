@@ -31,8 +31,10 @@ object SqlReadRow:
           r match {
             case read: SqlRead[_] =>
               val colName = prefix.map(_ + ".").getOrElse("") + label
-              read.readByName(jRes, colName).getOrElse{
-                throw new SqueryException(s"Column with name '$colName' is null")
+              read.readByName(jRes, colName).getOrElse {
+                throw new SqueryException(
+                  s"Column with name '$colName' is null"
+                )
               }
             case read: SqlReadRow[_] =>
               read

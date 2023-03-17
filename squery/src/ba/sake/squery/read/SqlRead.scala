@@ -19,11 +19,32 @@ object SqlRead:
       Option(jRes.getString(colIdx))
   }
 
+  given SqlRead[Boolean] = new {
+    def readByName(jRes: jsql.ResultSet, colName: String): Option[Boolean] =
+      Option(jRes.getBoolean(colName)).filterNot(_ => jRes.wasNull())
+    def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Boolean] =
+      Option(jRes.getBoolean(colIdx)).filterNot(_ => jRes.wasNull())
+  }
+
   given SqlRead[Int] = new {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Int] =
-      Option(jRes.getInt(colName))
+      Option(jRes.getInt(colName)).filterNot(_ => jRes.wasNull())
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Int] =
-      Option(jRes.getInt(colIdx))
+      Option(jRes.getInt(colIdx)).filterNot(_ => jRes.wasNull())
+  }
+
+  given SqlRead[Long] = new {
+    def readByName(jRes: jsql.ResultSet, colName: String): Option[Long] =
+      Option(jRes.getLong(colName)).filterNot(_ => jRes.wasNull())
+    def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Long] =
+      Option(jRes.getLong(colIdx)).filterNot(_ => jRes.wasNull())
+  }
+
+  given SqlRead[Double] = new {
+    def readByName(jRes: jsql.ResultSet, colName: String): Option[Double] =
+      Option(jRes.getDouble(colName)).filterNot(_ => jRes.wasNull())
+    def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Double] =
+      Option(jRes.getDouble(colIdx)).filterNot(_ => jRes.wasNull())
   }
 
   given SqlRead[Instant] = new {

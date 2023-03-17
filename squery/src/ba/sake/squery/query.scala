@@ -9,10 +9,9 @@ import net.sf.jsqlparser.JSQLParserException
 
 import ba.sake.squery.write.SqlArgument
 
-// TODO normal class, package private fields..
-case class Query(
-    sqlString: String,
-    arguments: Seq[SqlArgument[?]]
+class Query(
+    private[squery] val sqlString: String,
+    private[squery] val arguments: Seq[SqlArgument[?]]
 ) {
 
   def ++(other: Query): Query =
@@ -25,17 +24,21 @@ case class Query(
       c: jsql.Connection
   ): jsql.PreparedStatement = {
     val enrichedQueryString = Query.enrichSqlQuery(sqlString)
-    println("enriched: " + enrichedQueryString)
+    // TODO slf4j
+    // TODO reorder enriched issue..
+    // println("enriched: " + enrichedQueryString)
     val stat =
       c.prepareStatement(
         enrichedQueryString,
         jsql.Statement.RETURN_GENERATED_KEYS
       )
     arguments.zipWithIndex.foreach { (arg, i) =>
-      arg.sqlWrite.write(stat, i + 1, arg.value)
+      arg.sqlWrite.write(stat, i + 1, Option(arg.value))
     }
     stat
   }
+
+  override def toString(): String = sqlString
 }
 
 object Query {

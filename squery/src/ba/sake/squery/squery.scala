@@ -12,6 +12,9 @@ val SqlRead = ba.sake.squery.read.SqlRead
 type SqlReadRow[T] = ba.sake.squery.read.SqlReadRow[T]
 val SqlReadRow = ba.sake.squery.read.SqlReadRow
 
+type SqlWrite[T] = ba.sake.squery.write.SqlWrite[T]
+val SqlWrite = ba.sake.squery.write.SqlWrite
+
 // ext methods coz overloadinggggggggg
 extension (query: Query) {
 
@@ -47,7 +50,9 @@ extension (query: Query) {
       val keysRes = stmt.getGeneratedKeys()
       val elems = collection.mutable.ListBuffer.empty[A]
       while (keysRes.next()) {
-        elems += r.readByIdx(keysRes, 1).get // TODO
+        elems += r
+          .readByIdx(keysRes, 1)
+          .getOrElse(throw SqueryException("No value returned from query"))
       }
       elems.result()
     }
@@ -66,7 +71,7 @@ extension (query: Query) {
       elems.result()
     }
 
-  // TODO same for UPDATE..
+  // TODO same for UPDATE.. ?
   def insertReturningRow[A]()(using c: SqueryConnection, r: SqlReadRow[A]): A =
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
       stmt.executeUpdate()
@@ -75,7 +80,9 @@ extension (query: Query) {
       while (keysRes.next()) {
         elems += r.readRow(keysRes, None)
       }
-      elems.result.head // TODO
+      elems.result.headOption.getOrElse(
+        throw SqueryException("No value returned from query")
+      )
     }
 
   /* SELECT */
@@ -85,7 +92,9 @@ extension (query: Query) {
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
       Using.resource(stmt.executeQuery()) { res =>
         while (res.next()) {
-          elems += r.readByIdx(res, 1).get // TODO
+          elems += r
+            .readByIdx(res, 1)
+            .getOrElse(throw SqueryException("No values returned from query"))
         }
         elems.result()
       }
@@ -95,7 +104,9 @@ extension (query: Query) {
     query.readValues().headOption
 
   def readValue[A]()(using c: SqueryConnection, r: SqlRead[A]): A =
-    query.readValues().head // TODO
+    readValueOpt().getOrElse(
+      throw SqueryException("No value returned from query")
+    )
 
   // read case class (named columns)
   def readRows[A]()(using c: SqueryConnection, r: SqlReadRow[A]): List[A] =
@@ -113,6 +124,8 @@ extension (query: Query) {
     query.readRows().headOption
 
   def readRow[A]()(using c: SqueryConnection, r: SqlReadRow[A]): A =
-    query.readRows().head // TODO
+    readRowOpt().getOrElse(
+      throw SqueryException("No value returned from query")
+    )
 
 }

@@ -1,10 +1,9 @@
 package ba.sake.squery
 
 import javax.sql.DataSource
-
-import ba.sake.squery.read.*
 import java.util.UUID
 import java.time.Instant
+
 import ba.sake.squery.write.SqlArgument
 
 class SquerySuite extends munit.FunSuite {
@@ -135,27 +134,38 @@ class SquerySuite extends munit.FunSuite {
       // note that Insant has NANOseconds precision!
       sql"""
         CREATE TABLE datatypes(
+          int INTEGER,
+          long BIGINT,
+          double DOUBLE,
+          boolean BOOLEAN,
+          string VARCHAR(255),
           uuid UUID,
           tstz TIMESTAMP(9) WITH TIME ZONE
         )
       """.update()
-      val uuid = UUID.randomUUID()
-      val tstz = Instant.now()
+      val dt1 = Datatypes(
+        Some(123),
+        Some(Int.MaxValue + 100),
+        Some(0.54543),
+        Some(true),
+        Some("abc"),
+        Some(UUID.randomUUID),
+        Some(Instant.now)
+      )
+      val dt2 = Datatypes(None, None, None, None, None, None, None)
       sql"""
-        INSERT INTO datatypes(uuid, tstz)
-        VALUES ($uuid, $tstz),  ($uuid, NULL)
+        INSERT INTO datatypes(int, long, double, boolean, string, uuid, tstz)
+        VALUES (${dt1.int}, ${dt1.long}, ${dt1.double}, ${dt1.boolean}, ${dt1.string}, ${dt1.uuid}, ${dt1.tstz}), 
+               (${dt2.int}, ${dt2.long}, ${dt2.double}, ${dt2.boolean}, ${dt2.string}, ${dt2.uuid}, ${dt2.tstz})
       """.insert()
 
       val storedRows = sql"""
-        SELECT uuid, tstz
+        SELECT int, long, double, boolean, string, uuid, tstz
         FROM datatypes
       """.readRows[Datatypes]()
       assertEquals(
         storedRows,
-        List(
-          Datatypes(uuid, Some(tstz)),
-          Datatypes(uuid, None)
-        )
+        List(dt1, dt2)
       )
     }
   }
@@ -188,6 +198,11 @@ case class Phone(id: Int, number: String) derives SqlReadRow
 case class CustomerWithPhone(c: Customer, p: Phone) derives SqlReadRow
 
 case class Datatypes(
-    uuid: UUID,
+    int: Option[Int],
+    long: Option[Long],
+    double: Option[Double],
+    boolean: Option[Boolean],
+    string: Option[String],
+    uuid: Option[UUID],
     tstz: Option[Instant]
 ) derives SqlReadRow
