@@ -5,9 +5,24 @@ Simple SQL queries in Scala 3
 Inspired by [simplesql](https://github.com/jodersky/simplesql) and [doobie](https://tpolecat.github.io/doobie/).
 
 ---
-Get some examples in squery [tests](https://github.com/sake92/squery/blob/main/squery/test/src/ba/sake/squery/SquerySuite.scala).
+Get some examples in squery [tests](https://github.com/sake92/squery/blob/main/squery/test/src/ba/sake/squery/SquerySuite.scala).  
+There is also the `examples` folder.
 
 The docs are below.
+
+## Setup
+
+```scala
+// sbt
+libraryDependencies ++= Seq(
+  ivy"ba.sake::squery:0.0.5"
+)
+
+// mill
+def ivyDeps = Agg(
+  ivy"ba.sake::squery:0.0.5"
+)
+```
 
 ## Context
 
@@ -218,11 +233,11 @@ enum SortCustomersField:
     case id, name
 
 def customers(sortBy: SortCustomersField): List[Customer] = ctx.run {
-  val query = sql"SELECT id, name FROM customers" ++ getSortBy(sortBy)
+  val query = sql"SELECT id, name FROM customers" ++ sortBy(sortBy)
   query.readRows[Customer]()
 }
 
 def sortBy(sortBy: SortCustomersField): Query = sortBy match
-  case id =>   sql"ORDER BY id DESC"
-  case name => sql"ORDER BY name DESC"
+  case SortCustomersField.id   => sql"ORDER BY id DESC"
+  case SortCustomersField.name => sql"ORDER BY name DESC"
 ```
