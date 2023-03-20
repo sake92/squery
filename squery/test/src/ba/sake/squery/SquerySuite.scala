@@ -94,7 +94,7 @@ class SquerySuite extends munit.FunSuite {
           SELECT c.id, c.name,
             p.id, p.number
           FROM customers c
-          JOIN phones p on p.customer_id = c.id
+          JOIN phones p ON p.customer_id = c.id
         """.readRows[CustomerWithPhone](),
         Seq(
           CustomerWithPhone(customer1, phone1),

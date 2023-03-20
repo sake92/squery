@@ -2,6 +2,8 @@
 
 Simple SQL queries in Scala 3
 
+Inspired by [simplesql](https://github.com/jodersky/simplesql) and [doobie](https://tpolecat.github.io/doobie/).
+
 ## Context
 
 First, we need to initialize a `SqueryContext` with a standard JDBC `DataSource`:
@@ -13,7 +15,7 @@ ds.setPassword(..)
 
 ctx = new SqueryContext(ds)
 ```
-You would usually propagate it as a singleton, globally.
+You would usually propagate it to your DAOs.
 
 Then we can run queries inside it:
 ```scala
@@ -36,7 +38,7 @@ thanks to scala 3's context functions! <3
 
 ## Reading data
 
-Queries are written in plain SQL.
+Queries are written as plain SQL strings.
 
 ### Reading one-column values
 
@@ -68,13 +70,40 @@ def customers: List[Customer] = ctx.run {
 }
 ```
 
-
-
 There are also varations that return a single result, depending if you want an `Option[T]` or `T`:
 ```scala
 sql"SELECT ...".readRowOpt : Option[T]
 sql"SELECT ...".readRow : T
 ```
+
+---
+
+### Reading joined tables
+
+These are usually a bit involved and cumbersome in all SQL libraries/frameworks.  
+In most of scala ones they use tuples, but here we use case classes.  
+Case class variables like `c: Customer` are expected to have corresponding column names like `c.id` and `c.name` in the query.  
+The final query is a composition of `Customer` and `Phone`, so it maps nicely in your head, it is easier to read and manipulate.  
+You could have additional columns like a `COUNT`/`SUM` or whatever you need in `CustomerWithPhone` query result. :)
+
+```scala
+import ba.sake.squery.*
+
+case class Customer(id: Int, name: String) derives SqlReadRow
+case class Phone(id: Int, number: String) derives SqlReadRow
+
+case class CustomerWithPhone(c: Customer, p: Phone) derives SqlReadRow
+
+def customerwithPhones: List[CustomerWithPhone] = ctx.run {
+  sql"""
+    SELECT c.id, c.name,
+           p.id, p.number
+    FROM customers c
+    JOIN phones p ON p.customer_id = c.id
+  """.readRows[CustomerWithPhone]()
+}
+```
+
 
 ---
 ---
