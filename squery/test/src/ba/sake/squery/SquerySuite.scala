@@ -247,8 +247,7 @@ case class Customer(id: Int, name: String) derives SqlReadRow
 case class Phone(id: Int, number: String) derives SqlReadRow
 
 case class CustomerWithPhone(c: Customer, p: Phone) derives SqlReadRow
-case class CustomerWithPhoneOpt(c: Customer, p: Option[Phone])
-    derives SqlReadRow
+case class CustomerWithPhoneOpt(c: Customer, p: Option[Phone]) derives SqlReadRow
 
 case class Datatypes(
     int: Option[Int],

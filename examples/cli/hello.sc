@@ -12,11 +12,9 @@ val ctx = new SqueryContext(ds)
 
 ctx.run {
 
-  /** **************
-    */
-  /* create tables */
-  /** **************
-    */
+  ///////////////////
+  // create tables
+  ///////////////////
   sql"""
     CREATE TABLE customers(
       id SERIAL PRIMARY KEY,
@@ -35,11 +33,9 @@ ctx.run {
   val c1 = Customer(1, "my_customer")
   val c2 = Customer(1, "other_customer")
 
-  /** ************
-    */
-  /* insert data */
-  /** ************
-    */
+  ///////////////////
+  // insert data
+  ///////////////////
   val insertedCustomersCount = sql"""
     INSERT INTO customers(name)
     VALUES (${c1.name}), (${c2.name})
@@ -52,11 +48,9 @@ ctx.run {
   """.insertReturningGenKeys[Int]()
   pprint.pprintln(s"Inserted phoneIds: " + phoneIds)
 
-  /** **********
-    */
-  /* read data */
-  /** **********
-    */
+  ///////////////////
+  // read data
+  ///////////////////
   pprint.pprintln(
     sql"SELECT id FROM customers".readValues[Int]()
   )
@@ -80,6 +74,9 @@ ctx.run {
     """.readRows[CustomerWithPhoneOpt]()
   )
 
+  ///////////////////
+  // dynamic
+  ///////////////////
   val dynQuery = sql"SELECT id, name FROM customers" ++ sortBy(SortCustomersField.name)
   pprint.pprintln(
     dynQuery.readRows[Customer]()
