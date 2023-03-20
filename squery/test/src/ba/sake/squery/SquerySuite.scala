@@ -74,13 +74,13 @@ class SquerySuite extends munit.FunSuite {
     ctx.run {
       assertEquals(
         sql"SELECT name FROM customers".readValues[String](),
-        List(customer1.name)
+        Seq(customer1.name)
       )
 
       assertEquals(
         sql"SELECT number FROM phones WHERE customer_id = ${customer1.id}"
           .readValues[String](),
-        List(phone1.number, phone2.number)
+        Seq(phone1.number, phone2.number)
       )
     }
   }
@@ -96,7 +96,7 @@ class SquerySuite extends munit.FunSuite {
           FROM customers c
           JOIN phones p on p.customer_id = c.id
         """.readRows[CustomerWithPhone](),
-        List(
+        Seq(
           CustomerWithPhone(customer1, phone1),
           CustomerWithPhone(customer1, phone2)
         )
@@ -120,6 +120,18 @@ class SquerySuite extends munit.FunSuite {
         VALUES ('abc'), ('def'), ('ghi')
       """.insertReturningGenKeys[Int]()
       assertEquals(customerIds.toSet, Set(2, 3, 4))
+    }
+  }
+
+  test("INSERT returning columns") {
+    val ctx = initDb()
+    ctx.run {
+      val customers = sql"""
+        INSERT INTO customers(name)
+        VALUES ('abc'), ('def'), ('ghi')
+        RETURNING id, name
+      """.insertReturningRows[Customer]()
+      assertEquals(customers.map(_.name).toSet, Set("abc", "def", "ghi"))
     }
   }
 
@@ -177,7 +189,7 @@ class SquerySuite extends munit.FunSuite {
       """.readRows[Datatypes]()
       assertEquals(
         storedRows,
-        List(dt1, dt2)
+        Seq(dt1, dt2)
       )
     }
   }

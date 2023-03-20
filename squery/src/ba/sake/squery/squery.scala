@@ -45,7 +45,7 @@ extension (query: Query) {
   def insertReturningGenKeys[A]()(using
       c: SqueryConnection,
       r: SqlRead[A]
-  ): List[A] =
+  ): Seq[A] =
     Using.resource(
       query.newPreparedStatement(c.underlying, retGenKeys = true)
     ) { stmt =>
@@ -60,11 +60,25 @@ extension (query: Query) {
       elems.result()
     }
 
+  def insertReturningGenKeyOpt[A]()(using
+      c: SqueryConnection,
+      r: SqlRead[A]
+  ): Option[A] =
+    insertReturningGenKeys().headOption
+
+  def insertReturningGenKey[A]()(using
+      c: SqueryConnection,
+      r: SqlRead[A]
+  ): A =
+    insertReturningGenKeyOpt().getOrElse(
+      throw SqueryException("No value returned from query")
+    )
+
   // TODO same for UPDATE.. ?
   def insertReturningRows[A]()(using
       c: SqueryConnection,
       r: SqlReadRow[A]
-  ): List[A] =
+  ): Seq[A] =
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
       Using.resource(stmt.executeQuery()) { res =>
         val elems = collection.mutable.ListBuffer.empty[A]
@@ -82,7 +96,7 @@ extension (query: Query) {
 
   /* SELECT */
   // read single column (unnamed)
-  def readValues[A]()(using c: SqueryConnection, r: SqlRead[A]): List[A] =
+  def readValues[A]()(using c: SqueryConnection, r: SqlRead[A]): Seq[A] =
     val elems = collection.mutable.ListBuffer.empty[A]
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
       Using.resource(stmt.executeQuery()) { res =>
@@ -104,7 +118,7 @@ extension (query: Query) {
     )
 
   // read case class (named columns)
-  def readRows[A]()(using c: SqueryConnection, r: SqlReadRow[A]): List[A] =
+  def readRows[A]()(using c: SqueryConnection, r: SqlReadRow[A]): Seq[A] =
     val elems = collection.mutable.ListBuffer.empty[A]
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
       Using.resource(stmt.executeQuery()) { res =>
