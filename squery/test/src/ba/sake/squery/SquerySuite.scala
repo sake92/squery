@@ -11,9 +11,13 @@ import java.time.temporal.ChronoUnit
 
 class SquerySuite extends munit.FunSuite {
 
-  val customer1 = Customer(1, "a_customer")
-  val phone1 = Phone(1, "061 123 456")
-  val phone2 = Phone(2, "062 225 883")
+  var customer1 = Customer(1, "a_customer")
+  var customer2 = Customer(1, "b_customer")
+  val customers = Seq(customer1, customer2)
+
+  var phone1 = Phone(1, "061 123 456")
+  var phone2 = Phone(1, "062 225 883")
+  val phones = Seq(phone1, phone2)
 
   val initDb = new Fixture[SqueryContext]("database") {
     private var ctx: SqueryContext = null
@@ -49,15 +53,19 @@ class SquerySuite extends munit.FunSuite {
         """.update()
 
         val customerIds = sql"""
-          INSERT INTO customers(name) VALUES(${customer1.name})
+          INSERT INTO customers(name)
+          VALUES (${customer1.name}), (${customer2.name})
         """.insertReturningGenKeys[Int]()
-        val customerId1 = customerIds.head
-        sql"""
-          INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone1.number})
-        """.insert()
-        sql"""
-          INSERT INTO phones(customer_id, number) VALUES($customerId1, ${phone2.number})
-        """.insert()
+        customer1 = customer1.copy(id = customerIds(0))
+        customer2 = customer2.copy(id = customerIds(1))
+
+        val phoneIds = sql"""
+          INSERT INTO phones(customer_id, number) VALUES
+            (${customer1.id}, ${phone1.number}),
+            (${customer1.id}, ${phone2.number})
+        """.insertReturningGenKeys[Int]()
+        phone1 = phone1.copy(id = phoneIds(0))
+        phone2 = phone2.copy(id = phoneIds(1))
       }
     }
     override def afterAll(): Unit =
@@ -74,13 +82,13 @@ class SquerySuite extends munit.FunSuite {
     ctx.run {
       assertEquals(
         sql"SELECT name FROM customers".readValues[String](),
-        Seq(customer1.name)
+        customers.map(_.name)
       )
 
       assertEquals(
         sql"SELECT number FROM phones WHERE customer_id = ${customer1.id}"
           .readValues[String](),
-        Seq(phone1.number, phone2.number)
+        phones.map(_.number)
       )
     }
   }
@@ -88,17 +96,33 @@ class SquerySuite extends munit.FunSuite {
   test("SELECT rows") {
     val ctx = initDb()
     ctx.run {
-
+      // full join
       assertEquals(
         sql"""
           SELECT c.id, c.name,
             p.id, p.number
           FROM customers c
           JOIN phones p ON p.customer_id = c.id
+          WHERE c.id = ${customer1.id}
         """.readRows[CustomerWithPhone](),
         Seq(
           CustomerWithPhone(customer1, phone1),
           CustomerWithPhone(customer1, phone2)
+        )
+      )
+
+      // outer/optional join
+      assertEquals(
+        sql"""
+          SELECT c.id, c.name,
+            p.id, p.number
+          FROM customers c
+          LEFT JOIN phones p ON p.customer_id = c.id
+        """.readRows[CustomerWithPhoneOpt](),
+        Seq(
+          CustomerWithPhoneOpt(customer1, Some(phone1)),
+          CustomerWithPhoneOpt(customer1, Some(phone2)),
+          CustomerWithPhoneOpt(customer2, None)
         )
       )
 
@@ -119,7 +143,10 @@ class SquerySuite extends munit.FunSuite {
         INSERT INTO customers(name)
         VALUES ('abc'), ('def'), ('ghi')
       """.insertReturningGenKeys[Int]()
-      assertEquals(customerIds.toSet, Set(2, 3, 4))
+      assertEquals(
+        customerIds.toSet,
+        (customer2.id + 1 to customer2.id + 3).toSet
+      )
     }
   }
 
@@ -220,6 +247,8 @@ case class Customer(id: Int, name: String) derives SqlReadRow
 case class Phone(id: Int, number: String) derives SqlReadRow
 
 case class CustomerWithPhone(c: Customer, p: Phone) derives SqlReadRow
+case class CustomerWithPhoneOpt(c: Customer, p: Option[Phone])
+    derives SqlReadRow
 
 case class Datatypes(
     int: Option[Int],

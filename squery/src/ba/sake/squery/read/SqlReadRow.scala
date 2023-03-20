@@ -8,11 +8,16 @@ import ba.sake.squery.SqueryException
 
 /** Reads a row (or just part of it if used in composition) */
 trait SqlReadRow[T]:
-  def readRow(jRes: ResultSet, prefix: Option[String]): T
+  def readRow(jRes: ResultSet, prefix: Option[String]): Option[T]
 
 object SqlReadRow:
 
   def apply[T](using sqlReadRow: SqlReadRow[T]): SqlReadRow[T] = sqlReadRow
+
+  given [T](using srr: SqlReadRow[T]): SqlReadRow[Option[T]] = new {
+    def readRow(jRes: ResultSet, prefix: Option[String]): Option[Option[T]] =
+      Some(srr.readRow(jRes, prefix))
+  }
 
   inline given derived[T](using m: Mirror.Of[T]): SqlReadRow[T] =
     inline m match
@@ -25,26 +30,23 @@ object SqlReadRow:
     val labels = constValueTuple[p.MirroredElemLabels].toArray.map(_.toString)
     val reads = getReads[p.MirroredElemTypes].toArray
     new SqlReadRow[T]:
-      def readRow(jRes: ResultSet, prefix: Option[String]): T = {
+      def readRow(jRes: ResultSet, prefix: Option[String]): Option[T] = {
 
         val resTuple = labels.zip(reads).map { (label, r) =>
+          val colName = prefix.map(_ + ".").getOrElse("") + label
           r match {
             case read: SqlRead[_] =>
-              val colName = prefix.map(_ + ".").getOrElse("") + label
-              read.readByName(jRes, colName).getOrElse {
-                throw new SqueryException(
-                  s"Column with name '$colName' is null"
-                )
-              }
+              read.readByName(jRes, colName)
             case read: SqlReadRow[_] =>
-              read
-                .readRow(jRes, Some(prefix.map(_ + ".").getOrElse("") + label))
+              read.readRow(jRes, Some(colName))
           }
         }
-        // hackery gibberish
-        // compiletime ops are a mistery still
-        val tuple = Tuple.fromArray(resTuple)
-        p.fromTuple(tuple.asInstanceOf[p.MirroredElemTypes])
+
+        // if all columns are NULL -> left join's result -> None
+        if resTuple.forall(_.isEmpty) then None
+        else
+          val tuple = Tuple.fromArray(resTuple.flatten)
+          Some(p.fromTuple(tuple.asInstanceOf[p.MirroredElemTypes]))
       }
 
   // TODO a bit nicer recursive get-all-stuff

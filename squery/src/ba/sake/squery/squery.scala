@@ -83,7 +83,11 @@ extension (query: Query) {
       Using.resource(stmt.executeQuery()) { res =>
         val elems = collection.mutable.ListBuffer.empty[A]
         while (res.next()) {
-          elems += r.readRow(res, None)
+          elems += r
+            .readRow(res, None)
+            .getOrElse(
+              throw SqueryException("No value returned from query")
+            )
         }
         elems.result()
       }
@@ -123,7 +127,11 @@ extension (query: Query) {
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
       Using.resource(stmt.executeQuery()) { res =>
         while (res.next()) {
-          elems += r.readRow(res, None)
+          elems += r
+            .readRow(res, None)
+            .getOrElse(
+              throw SqueryException("No value returned from query")
+            )
         }
         elems.result()
       }

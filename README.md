@@ -104,6 +104,18 @@ def customerwithPhones: List[CustomerWithPhone] = ctx.run {
 }
 ```
 
+### Reading outer (LEFT/RIGHT) joined tables
+
+Only thing you need to do is to make the optional table field `Option[T]`:
+```scala
+case class CustomerWithPhoneOpt(c: Customer, p: Option[Phone]) derives SqlReadRow
+
+def customerwithPhones: List[CustomerWithPhone] = ctx.run {
+  sql"SELECT ...".readRows[CustomerWithPhoneOpt]()
+}
+```
+
+It would return `None` if all returned columns are `NULL`.
 
 ---
 ---
@@ -129,7 +141,8 @@ def insertCustomer: Int = ctx.run {
 
 ---
 ### Insert returning inserted values
-This method inserts the rows and returns columns you want from inserted rows. This is not supported by all databases unfortunately.
+This method inserts the rows and returns columns you want from inserted rows.  
+This is not supported by all databases unfortunately.
 ```scala
 def insertCustomers: List[String] = ctx.run {
   sql"""
@@ -180,8 +193,8 @@ You can use any JDBC-writable value in your queries.
 val customerId = 123
 val phoneNumber = "123456"
 sql"""
-    INSERT INTO phones(customer_id, number)
-    VALUES($customerId, $phoneNumber)
+  INSERT INTO phones(customer_id, number)
+  VALUES($customerId, $phoneNumber)
 """.insert()
 ```
 
@@ -205,6 +218,6 @@ def customers(sortBy: SortCustomersField): List[Customer] = ctx.run {
 }
 
 def sortBy(sortBy: SortCustomersField): Query = sortBy match
-  case id =>   sql"ORDER BY id desc"
-  case name => sql"ORDER BY name desc"
+  case id =>   sql"ORDER BY id DESC"
+  case name => sql"ORDER BY name DESC"
 ```
