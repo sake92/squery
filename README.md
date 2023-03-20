@@ -4,6 +4,11 @@ Simple SQL queries in Scala 3
 
 Inspired by [simplesql](https://github.com/jodersky/simplesql) and [doobie](https://tpolecat.github.io/doobie/).
 
+---
+Get some examples in squery [tests](https://github.com/sake92/squery/blob/main/squery/test/src/ba/sake/squery/SquerySuite.scala).
+
+The docs are below.
+
 ## Context
 
 First, we need to initialize a `SqueryContext` with a standard JDBC `DataSource`:
