@@ -115,7 +115,7 @@ def customerwithPhones: List[CustomerWithPhone] = ctx.run {
 }
 ```
 
-It would return `None` if all returned columns are `NULL`.
+It would return `None` for `p: Option[Phone]` if all its returned columns are `NULL`.
 
 ---
 ---
