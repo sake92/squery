@@ -9,11 +9,14 @@ object squery extends SqueryPublishModule {
   def scalaVersion = "3.2.2"
 
   def ivyDeps = Agg(
+    ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
     ivy"com.github.jsqlparser:jsqlparser:4.6"
   )
 
   object test extends Tests with TestModule.Munit with SqueryCommonModule {
     def ivyDeps = Agg(
+      // https://mvnrepository.com/artifact/org.slf4j/slf4j-simple
+      ivy"org.slf4j:slf4j-simple:2.0.7",
       ivy"org.scalameta::munit:1.0.0-M7",
       ivy"com.zaxxer:HikariCP:4.0.3",
       ivy"org.postgresql:postgresql:42.5.4",

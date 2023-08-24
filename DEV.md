@@ -8,7 +8,7 @@
 
 ./mill __.reformat
 
-./mill squery.__.test
+./mill squery.test
 
 ./mill examples.runMain bla
 

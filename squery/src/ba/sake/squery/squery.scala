@@ -18,6 +18,12 @@ val SqlWrite = ba.sake.squery.write.SqlWrite
 // ext methods coz overloadinggggggggg
 extension (query: Query) {
 
+  // for generic statements like creating stored procedures
+  def execute()(using c: SqueryConnection): Unit =
+    Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
+      stmt.execute()
+    }
+
   // simple INSERT/UPDATE/DELETE statements
   def update()(using c: SqueryConnection): Int =
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>

@@ -11,8 +11,8 @@ import java.time.temporal.ChronoUnit
 
 class SquerySuite extends munit.FunSuite {
 
-  var customer1 = Customer(1, "a_customer")
-  var customer2 = Customer(1, "b_customer")
+  var customer1 = Customer(1, "a_customer", None)
+  var customer2 = Customer(1, "b_customer", Some("str1"))
   val customers = Seq(customer1, customer2)
 
   var phone1 = Phone(1, "061 123 456")
@@ -26,7 +26,7 @@ class SquerySuite extends munit.FunSuite {
     def apply() = ctx
 
     override def beforeAll(): Unit = {
-      val container = new PostgreSQLContainer()
+      container = new PostgreSQLContainer("postgres:9.6.12")
       container.start()
 
       val ds = com.zaxxer.hikari.HikariDataSource()
@@ -40,7 +40,8 @@ class SquerySuite extends munit.FunSuite {
         sql"""
           CREATE TABLE customers(
             id SERIAL PRIMARY KEY,
-            name VARCHAR
+            name VARCHAR NOT NULL,
+            street VARCHAR(20)
           )
         """.update()
 
@@ -53,8 +54,9 @@ class SquerySuite extends munit.FunSuite {
         """.update()
 
         val customerIds = sql"""
-          INSERT INTO customers(name)
-          VALUES (${customer1.name}), (${customer2.name})
+          INSERT INTO customers(name, street)
+          VALUES (${customer1.name}, ${customer1.street}),
+                 (${customer2.name}, ${customer2.street})
         """.insertReturningGenKeys[Int]()
         customer1 = customer1.copy(id = customerIds(0))
         customer2 = customer2.copy(id = customerIds(1))
@@ -99,7 +101,7 @@ class SquerySuite extends munit.FunSuite {
       // full join
       assertEquals(
         sql"""
-          SELECT c.id, c.name,
+          SELECT c.id, c.name, c.street,
             p.id, p.number
           FROM customers c
           JOIN phones p ON p.customer_id = c.id
@@ -114,7 +116,7 @@ class SquerySuite extends munit.FunSuite {
       // outer/optional join
       assertEquals(
         sql"""
-          SELECT c.id, c.name,
+          SELECT c.id, c.name, c.street,
             p.id, p.number
           FROM customers c
           LEFT JOIN phones p ON p.customer_id = c.id
@@ -126,6 +128,19 @@ class SquerySuite extends munit.FunSuite {
         )
       )
 
+    }
+  }
+
+  test("BAD SELECT throws") {
+    val ctx = initDb()
+    intercept[SqueryException] {
+      // street is nullable, but CustomerBad says it's mandatory
+      ctx.run {
+        sql"""
+          SELECT id, name, street
+          FROM customers
+        """.insertReturningRows[CustomerBad]()
+      }
     }
   }
 
@@ -156,7 +171,7 @@ class SquerySuite extends munit.FunSuite {
       val customers = sql"""
         INSERT INTO customers(name)
         VALUES ('abc'), ('def'), ('ghi')
-        RETURNING id, name
+        RETURNING id, name, street
       """.insertReturningRows[Customer]()
       assertEquals(customers.map(_.name).toSet, Set("abc", "def", "ghi"))
     }
@@ -240,9 +255,34 @@ class SquerySuite extends munit.FunSuite {
     }
   }
 
+  test("Log warnings") {
+    val ctx = initDb()
+    ctx.run {
+      // custom squery warnings
+      sql"UPDATE customers SET name='bla'".update()
+
+      intercept[Exception] {
+        sql"DELETE FROM customers".update()
+      }
+
+      // JDBC warning
+      // TODO not triggering...
+      sql"""
+        CREATE OR REPLACE FUNCTION test_fun_warn() RETURNS integer AS $$$$
+        BEGIN
+          RAISE NOTICE 'this is a warningue!';
+          RETURN 42;
+        END;
+        $$$$ LANGUAGE plpgsql;
+      """.execute()
+      sql"SELECT * FROM test_fun_warn()".readValue[Int]()
+    }
+  }
+
 }
 
-case class Customer(id: Int, name: String) derives SqlReadRow
+case class Customer(id: Int, name: String, street: Option[String]) derives SqlReadRow
+case class CustomerBad(id: Int, name: String, street: String) derives SqlReadRow
 
 case class Phone(id: Int, number: String) derives SqlReadRow
 

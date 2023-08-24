@@ -69,8 +69,8 @@ private class SqueryAddAliasesVisitor extends SelectVisitor, SelectItemVisitor {
     }
   }
 
-  override def visit(withItem: WithItem): Unit = ???
-  override def visit(allColumns: AllColumns): Unit = ???
-  override def visit(aThis: ValuesStatement): Unit = ???
+  override def visit(withItem: WithItem): Unit = {}
+  override def visit(allColumns: AllColumns): Unit = {}
+  override def visit(aThis: ValuesStatement): Unit = {}
 
 }

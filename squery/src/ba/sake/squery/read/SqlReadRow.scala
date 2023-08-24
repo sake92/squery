@@ -45,7 +45,12 @@ object SqlReadRow:
         // if all columns are NULL -> left join's result -> None
         if resTuple.forall(_.isEmpty) then None
         else
-          val tuple = Tuple.fromArray(resTuple.flatten)
+          val flattened = resTuple.flatten
+          if flattened.size < labels.size then
+            throw new SqueryException(
+              s"Result is missing a mandatory value, maybe some columns are optional but you forgot to use Option[T]?"
+            )
+          val tuple = Tuple.fromArray(flattened)
           Some(p.fromTuple(tuple.asInstanceOf[p.MirroredElemTypes]))
       }
 
