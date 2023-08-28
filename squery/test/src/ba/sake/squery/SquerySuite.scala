@@ -274,7 +274,7 @@ class SquerySuite extends munit.FunSuite {
           RETURN 42;
         END;
         $$$$ LANGUAGE plpgsql;
-      """.execute()
+      """.update()
       sql"SELECT * FROM test_fun_warn()".readValue[Int]()
     }
   }

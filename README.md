@@ -5,22 +5,21 @@ Simple SQL queries in Scala 3
 Inspired by [simplesql](https://github.com/jodersky/simplesql) and [doobie](https://tpolecat.github.io/doobie/).
 
 ---
-Get some examples in squery [tests](https://github.com/sake92/squery/blob/main/squery/test/src/ba/sake/squery/SquerySuite.scala).  
-There is also the `examples` folder.
-
-The docs are below.
+You can find some examples:
+- in squery [tests](https://github.com/sake92/squery/blob/main/squery/test/src/ba/sake/squery/SquerySuite.scala).  
+- in the [examples](/examples) folder.
 
 ## Setup
 
 ```scala
 // sbt
 libraryDependencies ++= Seq(
-  ivy"ba.sake::squery:0.0.5"
+  ivy"ba.sake::squery:0.0.6"
 )
 
 // mill
 def ivyDeps = Agg(
-  ivy"ba.sake::squery:0.0.5"
+  ivy"ba.sake::squery:0.0.6"
 )
 ```
 
@@ -35,7 +34,6 @@ ds.setPassword(..)
 
 ctx = new SqueryContext(ds)
 ```
-You would usually propagate it to your DAOs.
 
 Then we can run queries inside it:
 ```scala
@@ -50,7 +48,7 @@ ctx.runTransaction {
 }
 ```
 
-It actually provides an implicit JDBC connection under the cover,  
+There is an implicit JDBC connection under the cover,  
 thanks to scala 3's context functions! <3
 
 ---
@@ -100,8 +98,8 @@ sql"SELECT ...".readRow : T
 
 ### Reading joined tables
 
-These are usually a bit involved and cumbersome in all SQL libraries/frameworks.  
-In most of scala ones they use tuples, but here we use case classes.  
+These are usually a bit involved in all SQL libraries/frameworks.  
+In most of scala ones they use tuples, but here we compose case classes.  
 Case class variables like `c: Customer` are expected to have corresponding column names like `c.id` and `c.name` in the query.  
 The final query is a composition of `Customer` and `Phone`, so it maps nicely in your head, it is easier to read and manipulate.  
 You could have additional columns like a `COUNT`/`SUM` or whatever you need in `CustomerWithPhone` query result. :)
@@ -164,7 +162,7 @@ def insertCustomer: Int = ctx.run {
 This method inserts the rows and returns columns you want from inserted rows.  
 This is not supported by all databases unfortunately.
 ```scala
-def insertCustomers: List[String] = ctx.run {
+def insertCustomers: List[Customer] = ctx.run {
   sql"""
     INSERT INTO customers(name)
     VALUES ('abc'), ('def'), ('ghi')
@@ -219,14 +217,13 @@ sql"""
 ```
 
 Actually, the type of value needs to have a `SqlWrite[T]` typeclass instance implemented.  
-So if something is missing from squery, you can add it to your codebase, and contribute back to squery! :)
+Please contribute back to squery when you find something is missing! :)
 
 
 ## Dynamic queries
 
-Of course, in the real world, you will need to compose queries dynamically in runtime.  
+Of course, in the real world, you will need to compose queries dynamically at runtime.  
 A common example on the web is when you have a sorting functionality.  
-You usually have an enum of sortable fields and based on it you sort the result.
 
 ```scala
 enum SortCustomersField:
