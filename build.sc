@@ -1,8 +1,8 @@
 import mill._
 import mill.scalalib._, publish._, scalafmt._
 
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.1.4`
-import de.tobiasroeser.mill.vcs.version.VcsVersion
+import $ivy.`io.chris-kipp::mill-ci-release::0.1.9`
+import io.kipp.mill.ci.release.CiReleaseModule
 
 object squery extends SqueryPublishModule {
 
@@ -13,7 +13,7 @@ object squery extends SqueryPublishModule {
     ivy"com.github.jsqlparser:jsqlparser:4.6"
   )
 
-  object test extends Tests with TestModule.Munit with SqueryCommonModule {
+  object test extends ScalaTests with TestModule.Munit with SqueryCommonModule {
     def ivyDeps = Agg(
       // https://mvnrepository.com/artifact/org.slf4j/slf4j-simple
       ivy"org.slf4j:slf4j-simple:2.0.7",
@@ -28,10 +28,9 @@ object squery extends SqueryPublishModule {
 
 trait SqueryCommonModule extends ScalaModule with ScalafmtModule
 
-trait SqueryPublishModule extends SqueryCommonModule with PublishModule {
-  def artifactName = "squery"
+trait SqueryPublishModule extends SqueryCommonModule with CiReleaseModule {
 
-  override def publishVersion: T[String] = VcsVersion.vcsState().format()
+  def artifactName = "squery"
 
   def pomSettings = PomSettings(
     organization = "ba.sake",
