@@ -25,6 +25,5 @@ git push origin $VERSION
 
 # TODOs
 
-- sql parser reorder OFFSET LIMIT ???
-- release SNAPSHOTs
-
+- test more databases
+- sql parser reorders OFFSET LIMIT ???

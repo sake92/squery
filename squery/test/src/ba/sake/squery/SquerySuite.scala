@@ -144,13 +144,6 @@ class SquerySuite extends munit.FunSuite {
     }
   }
 
-  test("INSERT throws if statement is wrong") {
-    val ctx = initDb()
-    intercept[SqueryException] {
-      ctx.run { sql"".insert() }
-    }
-  }
-
   test("INSERT returning generated keys") {
     val ctx = initDb()
     ctx.run {

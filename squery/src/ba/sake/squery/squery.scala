@@ -31,11 +31,9 @@ extension (query: Query) {
     }
 
   /* INSERT */
-  // QOL insert function
+  // same as update..
   def insert()(using c: SqueryConnection): Int =
-    val affected = query.update()
-    if affected == 0 then throw SqueryException("Insert failed")
-    affected
+    update()
 
   /** Inserts values and returns generated keys.
     *
