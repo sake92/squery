@@ -2,8 +2,6 @@
 
 Simple SQL queries in Scala 3
 
-Inspired by [simplesql](https://github.com/jodersky/simplesql) and [doobie](https://tpolecat.github.io/doobie/).
-
 ---
 You can find some examples:
 - in squery [tests](https://github.com/sake92/squery/blob/main/squery/test/src/ba/sake/squery/SquerySuite.scala).  
