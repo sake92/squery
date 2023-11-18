@@ -33,6 +33,7 @@ class Query(
     val enrichedQueryString = Query.enrichSqlQuery(sqlString)
     // TODO reorder enriched issue..
     // println("enriched: " + enrichedQueryString)
+    logger.debug(s"Executing statement: $enrichedQueryString")
     val stat =
       c.prepareStatement(
         enrichedQueryString,

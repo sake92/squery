@@ -1,7 +1,7 @@
 package ba.sake.squery.read
 
 import java.{sql => jsql}
-import java.time.Instant
+import java.time.*
 import java.util.UUID
 
 // reads a value from a column
@@ -55,6 +55,14 @@ object SqlRead:
       Option(jRes.getTimestamp(colIdx)).map(_.toInstant)
   }
 
+  given SqlRead[LocalDate] = new {
+    def readByName(jRes: jsql.ResultSet, colName: String): Option[LocalDate] =
+      Option(jRes.getObject(colName, classOf[LocalDate]))
+
+    def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[LocalDate] =
+      Option(jRes.getObject(colIdx, classOf[LocalDate]))
+  }
+
   given SqlRead[UUID] = new {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[UUID] =
       Option(jRes.getObject(colName, classOf[UUID]))
@@ -66,9 +74,9 @@ object SqlRead:
 
   given [T](using sr: SqlRead[T]): SqlRead[Option[T]] = new {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Option[T]] =
-      Some(sr.readByName(jRes, colName))
+      sr.readByName(jRes, colName).map(Some(_))
 
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Option[T]] =
-      Some(sr.readByIdx(jRes, colIdx))
+      sr.readByIdx(jRes, colIdx).map(Some(_))
 
   }
