@@ -72,11 +72,12 @@ object SqlRead:
 
   }
 
+  // this "cannot fail"
   given [T](using sr: SqlRead[T]): SqlRead[Option[T]] = new {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Option[T]] =
-      sr.readByName(jRes, colName).map(Some(_))
+      Some(sr.readByName(jRes, colName))
 
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Option[T]] =
-      sr.readByIdx(jRes, colIdx).map(Some(_))
+      Some(sr.readByIdx(jRes, colIdx))
 
   }

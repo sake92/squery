@@ -14,6 +14,7 @@ object SqlReadRow:
 
   def apply[T](using sqlReadRow: SqlReadRow[T]): SqlReadRow[T] = sqlReadRow
 
+  // cannot fail, it will *at least* give you a None
   given [T](using srr: SqlReadRow[T]): SqlReadRow[Option[T]] = new {
     def readRow(jRes: ResultSet, prefix: Option[String]): Option[Option[T]] =
       Some(srr.readRow(jRes, prefix))
@@ -32,24 +33,43 @@ object SqlReadRow:
     new SqlReadRow[T]:
       def readRow(jRes: ResultSet, prefix: Option[String]): Option[T] = {
 
-        val resTuple = labels.zip(reads).map { (label, r) =>
+        var allScalar = true
+        val resTuple = labels.zip(reads).map { (label, readTypeclass) =>
           val colName = prefix.map(_ + ".").getOrElse("") + label
-          r match {
+          readTypeclass match {
             case read: SqlRead[_] =>
               read.readByName(jRes, colName)
             case read: SqlReadRow[_] =>
+              allScalar = false
               read.readRow(jRes, Some(colName))
           }
         }
 
-        // if all columns are NULL -> left join's result -> None
-        if resTuple.forall(_.isEmpty) then None
-        else
-          val flattened = resTuple.flatten
-          if flattened.size < labels.size then
-            throw new SqueryException(
-              s"Result is missing a mandatory value, maybe some columns are optional but you forgot to use Option[T]?"
+        // ugly but works.. :/
+        // issue with returning an Option[Option[T]]
+        // we dont know if it was null, or just a dummy Some(None) value returned by squery
+        // TODO try to find a more elegant way
+        val allColsEmpty = resTuple
+          .map {
+            case None       => true
+            case Some(None) => true
+            case _          => false
+          }
+          .forall(identity)
+
+        val flattened = resTuple.flatten
+
+        // if all SCALAR columns are NULL (e.g. LEFT JOIN result) -> None
+        if allScalar then
+          if allColsEmpty then None
+          else if flattened.size < labels.size then
+            throw SqueryException(
+              s"Result set for ${p} is missing a mandatory value, maybe some columns are optional but you forgot to use Option[T]?"
             )
+          else
+            val tuple = Tuple.fromArray(flattened)
+            Some(p.fromTuple(tuple.asInstanceOf[p.MirroredElemTypes]))
+        else
           val tuple = Tuple.fromArray(flattened)
           Some(p.fromTuple(tuple.asInstanceOf[p.MirroredElemTypes]))
       }

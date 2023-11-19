@@ -19,6 +19,10 @@ class SquerySuite extends munit.FunSuite {
   var phone2 = Phone(1, "062 225 883")
   val phones = Seq(phone1, phone2)
 
+  var address1 = Address(1, Some("a1"))
+  var address2 = Address(1, None)
+  val addresses = Seq(address1, address2)
+
   val initDb = new Fixture[SqueryContext]("database") {
     private var ctx: SqueryContext = null
     private var container: PostgreSQLContainer[?] = null
@@ -53,6 +57,21 @@ class SquerySuite extends munit.FunSuite {
           )
         """.update()
 
+        sql"""
+          CREATE TABLE addresses(
+            id SERIAL PRIMARY KEY,
+            name VARCHAR
+          )
+        """.update()
+
+        sql"""
+          CREATE TABLE customer_address(
+            customer_id INTEGER REFERENCES customers(id),
+            address_id INTEGER REFERENCES addresses(id),
+            PRIMARY KEY (customer_id, address_id)
+          )
+        """.update()
+
         val customerIds = sql"""
           INSERT INTO customers(name, street)
           VALUES (${customer1.name}, ${customer1.street}),
@@ -68,6 +87,21 @@ class SquerySuite extends munit.FunSuite {
         """.insertReturningGenKeys[Int]()
         phone1 = phone1.copy(id = phoneIds(0))
         phone2 = phone2.copy(id = phoneIds(1))
+
+        val addressIds = sql"""
+          INSERT INTO addresses(name) VALUES
+            (${address1.name}),
+            (${address2.name})
+        """.insertReturningGenKeys[Int]()
+        address1 = address1.copy(id = addressIds(0))
+        address2 = address2.copy(id = addressIds(1))
+
+        sql"""
+          INSERT INTO customer_address(customer_id, address_id)
+          VALUES
+            (${customer1.id}, ${address1.id}),
+            (${customer1.id}, ${address2.id})
+        """.insert()
       }
     }
     override def afterAll(): Unit =
@@ -78,7 +112,6 @@ class SquerySuite extends munit.FunSuite {
   override def munitFixtures = List(initDb)
 
   /* TESTS */
-
   test("SELECT plain values") {
     val ctx = initDb()
     ctx.run {
@@ -125,6 +158,22 @@ class SquerySuite extends munit.FunSuite {
           CustomerWithPhoneOpt(customer1, Some(phone1)),
           CustomerWithPhoneOpt(customer1, Some(phone2)),
           CustomerWithPhoneOpt(customer2, None)
+        )
+      )
+
+      // outer/optional join with many-to-many
+      assertEquals(
+        sql"""
+          SELECT c.id, c.name, c.street,
+            a.id, a.name
+          FROM customers c
+          LEFT JOIN customer_address ca ON ca.customer_id = c.id
+          LEFT JOIN addresses a ON a.id = ca.address_id
+        """.readRows[CustomerWithAddressOpt](),
+        Seq(
+          CustomerWithAddressOpt(customer1, Some(address1)),
+          CustomerWithAddressOpt(customer1, Some(address2)),
+          CustomerWithAddressOpt(customer2, None)
         )
       )
 
@@ -224,7 +273,7 @@ class SquerySuite extends munit.FunSuite {
       """.readRows[Datatypes]()
       assertEquals(
         storedRows,
-        Seq(dt1, dt2)
+        Seq(dt1)
       )
     }
   }
@@ -277,10 +326,15 @@ class SquerySuite extends munit.FunSuite {
 case class Customer(id: Int, name: String, street: Option[String]) derives SqlReadRow
 case class CustomerBad(id: Int, name: String, street: String) derives SqlReadRow
 
+// customer:phone 1:many
 case class Phone(id: Int, number: String) derives SqlReadRow
 
 case class CustomerWithPhone(c: Customer, p: Phone) derives SqlReadRow
 case class CustomerWithPhoneOpt(c: Customer, p: Option[Phone]) derives SqlReadRow
+
+// customer:address many:many
+case class Address(id: Int, name: Option[String]) derives SqlReadRow
+case class CustomerWithAddressOpt(c: Customer, a: Option[Address]) derives SqlReadRow
 
 case class Datatypes(
     int: Option[Int],

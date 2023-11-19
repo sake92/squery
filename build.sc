@@ -15,8 +15,7 @@ object squery extends SqueryPublishModule {
 
   object test extends ScalaTests with TestModule.Munit with SqueryCommonModule {
     def ivyDeps = Agg(
-      // https://mvnrepository.com/artifact/org.slf4j/slf4j-simple
-      ivy"org.slf4j:slf4j-simple:2.0.7",
+      ivy"ch.qos.logback:logback-classic:1.4.6",
       ivy"org.scalameta::munit:1.0.0-M7",
       ivy"com.zaxxer:HikariCP:4.0.3",
       ivy"org.postgresql:postgresql:42.5.4",

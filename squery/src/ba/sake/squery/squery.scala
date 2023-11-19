@@ -104,6 +104,7 @@ extension (query: Query) {
 
   /* SELECT */
   // read single column (unnamed)
+  // TODO merge readValues and readRows as SELECT
   def readValues[A]()(using c: SqueryConnection, r: SqlRead[A]): Seq[A] =
     val elems = collection.mutable.ListBuffer.empty[A]
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
@@ -131,11 +132,7 @@ extension (query: Query) {
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
       Using.resource(stmt.executeQuery()) { res =>
         while (res.next()) {
-          elems += r
-            .readRow(res, None)
-            .getOrElse(
-              throw SqueryException("No value returned from query")
-            )
+          r.readRow(res, None).foreach(elems += _)
         }
         elems.result()
       }
