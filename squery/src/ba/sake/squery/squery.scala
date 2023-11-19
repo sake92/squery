@@ -104,7 +104,6 @@ extension (query: Query) {
 
   /* SELECT */
   // read single column (unnamed)
-  // TODO merge readValues and readRows as SELECT
   def readValues[A]()(using c: SqueryConnection, r: SqlRead[A]): Seq[A] =
     val elems = collection.mutable.ListBuffer.empty[A]
     Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
