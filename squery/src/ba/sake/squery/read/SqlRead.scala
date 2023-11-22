@@ -57,10 +57,18 @@ object SqlRead:
 
   given SqlRead[LocalDate] = new {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[LocalDate] =
-      Option(jRes.getObject(colName, classOf[LocalDate]))
+      Option(jRes.getDate(colName).toLocalDate())
 
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[LocalDate] =
-      Option(jRes.getObject(colIdx, classOf[LocalDate]))
+      Option(jRes.getDate(colIdx).toLocalDate())
+  }
+
+  given SqlRead[LocalDateTime] = new {
+    def readByName(jRes: jsql.ResultSet, colName: String): Option[LocalDateTime] =
+      Option(jRes.getTimestamp(colName).toLocalDateTime())
+
+    def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[LocalDateTime] =
+      Option(jRes.getTimestamp(colIdx).toLocalDateTime())
   }
 
   given SqlRead[UUID] = new {

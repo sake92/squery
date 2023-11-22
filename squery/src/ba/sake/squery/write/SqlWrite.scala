@@ -5,6 +5,9 @@ import java.time.Instant
 import java.sql.Timestamp
 import java.util.UUID
 import java.sql.JDBCType
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 trait SqlWrite[T]:
   def write(ps: jsql.PreparedStatement, idx: Int, valueOpt: Option[T]): Unit
@@ -71,6 +74,35 @@ object SqlWrite:
     ): Unit = valueOpt match
       case Some(value) => ps.setTimestamp(idx, Timestamp.from(value))
       case None        => ps.setNull(idx, jsql.Types.TIMESTAMP_WITH_TIMEZONE)
+  }
+
+  given SqlWrite[LocalDate] = new {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[LocalDate]
+    ): Unit = valueOpt match
+      case Some(value) => ps.setDate(idx, java.sql.Date.valueOf(value))
+      case None        => ps.setNull(idx, jsql.Types.DATE)
+  }
+
+  given SqlWrite[LocalDateTime] = new {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[LocalDateTime]
+    ): Unit = valueOpt match
+      case Some(value) =>
+        ps.setDate(
+          idx,
+          java.sql.Date(
+            value
+              .atZone(ZoneId.systemDefault())
+              .toInstant()
+              .toEpochMilli()
+          )
+        )
+      case None => ps.setNull(idx, jsql.Types.TIMESTAMP)
   }
 
   given SqlWrite[UUID] = new {
