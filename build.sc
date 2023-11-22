@@ -6,11 +6,11 @@ import io.kipp.mill.ci.release.CiReleaseModule
 
 object squery extends SqueryPublishModule {
 
-  def scalaVersion = "3.2.2"
+  def scalaVersion = "3.3.1"
 
   def ivyDeps = Agg(
     ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
-    ivy"com.github.jsqlparser:jsqlparser:4.6"
+    ivy"com.github.jsqlparser:jsqlparser:4.7"
   )
 
   object test extends ScalaTests with TestModule.Munit with SqueryCommonModule {

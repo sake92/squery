@@ -58,7 +58,13 @@ class Query(
 object Query {
   private val logger = Logger(getClass.getName)
 
-  private def enrichSqlQuery(query: String): String = try {
+  private def enrichSqlQuery(query: String): String =
+    logger.trace(s"""Enriching query: $query""")
+    val res = doEnrichSqlQuery(query)
+    logger.trace(s"""Enriched query: $res""")
+    res
+
+  private def doEnrichSqlQuery(query: String): String = try {
     val stmt = CCJSqlParserUtil.parse(query)
     stmt match
       case selectStmt: Select =>
@@ -81,6 +87,8 @@ object Query {
       case other => query
   } catch {
     // do nothing if can't parse, db will throw anyways
-    case _: JSQLParserException => query
+    case _: JSQLParserException =>
+      logger.warn(s"""Could not parse query but will run it anyways: $query""")
+      query
   }
 }
