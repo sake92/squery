@@ -1,5 +1,5 @@
 //> using scala "3"
-//> using dep "ba.sake::squery:0.0.5"
+//> using dep "ba.sake::squery:0.0.13"
 //> using dep "com.h2database:h2:2.1.214"
 //> using dep "com.lihaoyi::pprint:0.8.1"
 

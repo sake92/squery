@@ -12,12 +12,12 @@ You can find some examples:
 ```scala
 // sbt
 libraryDependencies ++= Seq(
-  ivy"ba.sake::squery:0.0.6"
+  ivy"ba.sake::squery:0.0.13"
 )
 
 // mill
 def ivyDeps = Agg(
-  ivy"ba.sake::squery:0.0.6"
+  ivy"ba.sake::squery:0.0.13"
 )
 ```
 
