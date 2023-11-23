@@ -52,12 +52,10 @@ private class SqueryAddAliasesVisitor extends SelectVisitor, SelectItemVisitor {
   override def visit(selectExpressionItem: SelectItem[?]): Unit =
     if selectExpressionItem.getExpression.isInstanceOf[AllColumns] then return
     if firstRun then
-      if selectExpressionItem.getAlias() != null then
-        usedAliases += selectExpressionItem.getAlias().getName()
+      if selectExpressionItem.getAlias() != null then usedAliases += selectExpressionItem.getAlias().getName()
     else if selectExpressionItem.getAlias() == null then
       val alias = s""" "$selectExpressionItem" """.trim
-      if usedAliases.contains(alias) then
-        throw SqueryException(s"Alias '$alias' is already used in this query.")
+      if usedAliases.contains(alias) then throw SqueryException(s"Alias '$alias' is already used in this query.")
       usedAliases += alias
       selectExpressionItem.setAlias(new Alias(alias))
 
