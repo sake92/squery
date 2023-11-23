@@ -55,6 +55,15 @@ object SqlRead:
       Option(jRes.getTimestamp(colIdx)).map(_.toInstant)
   }
 
+  given SqlRead[OffsetDateTime] = new {
+    def readByName(jRes: jsql.ResultSet, colName: String): Option[OffsetDateTime] =
+      Option(jRes.getObject(colName, classOf[OffsetDateTime]))
+
+    def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[OffsetDateTime] =
+      Option(jRes.getObject(colIdx, classOf[OffsetDateTime]))
+
+  }
+
   given SqlRead[LocalDate] = new {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[LocalDate] =
       Option(jRes.getDate(colName)).map(_.toLocalDate())

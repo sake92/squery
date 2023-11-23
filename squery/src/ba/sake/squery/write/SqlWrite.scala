@@ -8,6 +8,7 @@ import java.sql.JDBCType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.OffsetDateTime
 
 trait SqlWrite[T]:
   def write(ps: jsql.PreparedStatement, idx: Int, valueOpt: Option[T]): Unit
@@ -73,6 +74,16 @@ object SqlWrite:
         valueOpt: Option[Instant]
     ): Unit = valueOpt match
       case Some(value) => ps.setTimestamp(idx, Timestamp.from(value))
+      case None        => ps.setNull(idx, jsql.Types.TIMESTAMP_WITH_TIMEZONE)
+  }
+
+  given SqlWrite[OffsetDateTime] = new {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[OffsetDateTime]
+    ): Unit = valueOpt match
+      case Some(value) => ps.setObject(idx, value)
       case None        => ps.setNull(idx, jsql.Types.TIMESTAMP_WITH_TIMEZONE)
   }
 
