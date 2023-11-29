@@ -4,37 +4,50 @@ import scala.collection.mutable
 
 extension [T](seq: Seq[T]) {
 
-  /** group by id, preserving sequence order, aka "poor-man's ORM"
-    * @param ID
-    *   id to group by
-    * @param A
-    *   extracted value, not necessarily the whole row
-    * @param extractFun
-    *   function that extracts ID and a value
+  /** Group by key, preserving sequence order, *immutable* ~ORM. Usually used for LEFT JOIN results.
+    * @param K
+    *   key to group by
+    * @param extractKey
+    *   function that extracts key
+    * @param extractValue
+    *   function that extracts optional value
     * @return
     *   map of grouped items, with order preserved
     */
-  def groupByOrderedOpt[ID, A](extractFun: T => Option[(ID, A)]): Map[ID, (A, Seq[T])] =
-    val resMap = mutable.LinkedHashMap.empty[ID, (A, Seq[T])]
-    seq.foreach { item =>
-      extractFun(item).foreach { case (id, extracted) =>
-        val (_, groupRows) = resMap.getOrElse(id, (extracted, Seq.empty))
-        resMap(id) = (extracted, groupRows.appended(item))
+  def groupByOrderedOpt[K, V](extractKey: T => K, extractValue: T => Option[V]): Map[K, Seq[V]] =
+    val resMap = mutable.LinkedHashMap.empty[K, Seq[V]]
+    seq.foreach { row =>
+      val key = extractKey(row)
+      // insert empty seq if not there
+      resMap.getOrElseUpdate(key, Seq.empty)
+      extractValue(row).foreach { value =>
+        val groupRows = resMap(key)
+        resMap(key) = groupRows.appended(value)
       }
     }
     resMap.toMap
 
-    /** group by id, preserving sequence order, aka "poor-man's ORM"
-      * @param ID
-      *   id to group by
-      * @param A
-      *   extracted value, not necessarily the whole row
-      * @param extractFun
-      *   function that extracts ID and a value
-      * @return
-      *   map of grouped items, with order preserved
-      */
-  def groupByOrdered[ID, A](extractFun: T => (ID, A)): Map[ID, (A, Seq[T])] =
-    groupByOrderedOpt(x => Some(extractFun(x)))
+  /** Group by key, preserving sequence order, *immutable* ~ORM. Usually used for (INNER/FULL) JOIN results.
+    * @param K
+    *   key to group by
+    * @param extractKey
+    *   function that extracts key
+    * @param extractValue
+    *   function that extracts value
+    * @return
+    *   map of grouped items, with order preserved
+    */
+  def groupByOrdered[K, V](extractKey: T => K, extractValue: T => V): Map[K, Seq[V]] =
+    groupByOrderedOpt(extractKey, x => Some(extractValue(x)))
 
+  /** Group by key, preserving sequence order, *immutable* ~ORM. Usually used for JOIN results.
+    * @param K
+    *   key to group by
+    * @param extractKey
+    *   function that extracts key
+    * @return
+    *   map of grouped items, with order preserved
+    */
+  def groupByOrdered[K, V](extractKey: T => K): Map[K, Seq[T]] =
+    groupByOrdered(extractKey, identity)
 }

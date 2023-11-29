@@ -94,7 +94,7 @@ sql"SELECT ...".readRow : T
 
 ---
 
-### Reading joined tables
+### Reading (INNER/FULL) joined tables
 
 These are usually a bit involved in all SQL libraries/frameworks.  
 In most of scala ones they use tuples, but here we compose case classes.  
