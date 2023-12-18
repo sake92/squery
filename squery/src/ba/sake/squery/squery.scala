@@ -78,7 +78,7 @@ extension (query: Query) {
       throw SqueryException("No value returned from query")
     )
 
-  // TODO same for UPDATE.. ?
+  // TODO same for UPDATE RETURNING.. ?
   def insertReturningRows[A]()(using
       c: SqueryConnection,
       r: SqlReadRow[A]

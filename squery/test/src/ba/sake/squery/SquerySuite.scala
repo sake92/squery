@@ -1,13 +1,10 @@
 package ba.sake.squery
 
-import javax.sql.DataSource
 import java.util.UUID
 import java.time.Instant
-
-import org.testcontainers.containers.PostgreSQLContainer
-
-import ba.sake.squery.write.SqlArgument
 import java.time.temporal.ChronoUnit
+import org.testcontainers.containers.PostgreSQLContainer
+import ba.sake.squery.write.SqlArgument
 
 class SquerySuite extends munit.FunSuite {
 

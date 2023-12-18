@@ -1,19 +1,19 @@
-import mill._
-import mill.scalalib._, publish._, scalafmt._
-
 import $ivy.`io.chris-kipp::mill-ci-release::0.1.9`
+import $ivy.`ba.sake::mill-hepek::0.0.2`
+
+import mill._, mill.scalalib._, publish._, scalafmt._
+
 import io.kipp.mill.ci.release.CiReleaseModule
+import ba.sake.millhepek.MillHepekModule
 
-object squery extends SqueryPublishModule {
-
-  def scalaVersion = "3.3.1"
+object squery extends CommonScalaModule with SqueryPublishModule {
 
   def ivyDeps = Agg(
     ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
     ivy"com.github.jsqlparser:jsqlparser:4.7"
   )
 
-  object test extends ScalaTests with TestModule.Munit with SqueryCommonModule {
+  object test extends ScalaTests with TestModule.Munit {
     def ivyDeps = Agg(
       ivy"ch.qos.logback:logback-classic:1.4.6",
       ivy"org.scalameta::munit:1.0.0-M7",
@@ -25,9 +25,18 @@ object squery extends SqueryPublishModule {
   }
 }
 
-trait SqueryCommonModule extends ScalaModule with ScalafmtModule
+object docs extends CommonScalaModule with MillHepekModule {
 
-trait SqueryPublishModule extends SqueryCommonModule with CiReleaseModule {
+  def ivyDeps = Agg(
+    ivy"ba.sake::hepek:0.22.0"
+  )
+}
+
+trait CommonScalaModule extends ScalaModule with ScalafmtModule {
+  def scalaVersion = "3.3.1"
+}
+
+trait SqueryPublishModule extends CiReleaseModule {
 
   def artifactName = "squery"
 

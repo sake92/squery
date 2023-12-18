@@ -13,8 +13,8 @@ object SqlRead:
   def apply[T](using sqlRead: SqlRead[T]): SqlRead[T] = sqlRead
 
   // TODO derived for simple enums
-  /* 
-  
+  /*
+
 import java.sql.ResultSet
 import ba.sake.squery.read.SqlRead
 import ba.sake.sharaf.petclinic.common.PetType
