@@ -3,6 +3,7 @@ package ba.sake.squery
 import java.util.UUID
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import scala.collection.decorators._
 import org.testcontainers.containers.PostgreSQLContainer
 import ba.sake.squery.write.SqlArgument
 
@@ -261,10 +262,14 @@ class PostgresSuite extends munit.FunSuite {
         Some(Instant.now.truncatedTo(ChronoUnit.MICROS))
       )
       val dt2 = Datatypes(None, None, None, None, None, None, None)
+
+      val values = Seq(dt1, dt2)
+        .map(dt => sql"(${dt.int}, ${dt.long}, ${dt.double}, ${dt.boolean}, ${dt.string}, ${dt.uuid}, ${dt.tstz})")
+        .intersperse(sql",")
+        .reduce(_ ++ _)
       sql"""
         INSERT INTO datatypes(int, long, double, boolean, string, uuid, tstz)
-        VALUES (${dt1.int}, ${dt1.long}, ${dt1.double}, ${dt1.boolean}, ${dt1.string}, ${dt1.uuid}, ${dt1.tstz}), 
-               (${dt2.int}, ${dt2.long}, ${dt2.double}, ${dt2.boolean}, ${dt2.string}, ${dt2.uuid}, ${dt2.tstz})
+        VALUES ${values}
       """.insert()
 
       val storedRows = sql"""

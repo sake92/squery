@@ -3,8 +3,6 @@ package ba.sake.squery
 import ba.sake.squery.write.SqlArgument
 import scala.collection.mutable.ListBuffer
 
-// TODO interpolate Seq[SqlArgument] ?
-
 // arg can be a simple value
 // or another query
 type SqlInterpolatorArg = SqlArgument[?] | Query
@@ -19,11 +17,12 @@ extension (sc: StringContext) {
     val argsIter = args.iterator
     var sb = new StringBuilder(stringPartsIter.next())
     val allArgs = ListBuffer.empty[SqlArgument[?]]
+
     while stringPartsIter.hasNext do {
       argsIter.next() match
-        case simple: SqlArgument[?] =>
+        case sqlArg: SqlArgument[?] =>
           sb.append("?")
-          allArgs += simple
+          allArgs += sqlArg
         case nestedQuery: Query =>
           sb.append(nestedQuery.sqlString)
           allArgs ++= nestedQuery.arguments

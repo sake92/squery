@@ -4,6 +4,7 @@ package utils
 import scala.collection.decorators._
 
 extension [T](seq: Seq[Option[Query]]) {
+
   def concatenate(sep: Query, default: Query): Query =
     val conds = seq.flatten
     if conds.isEmpty then default
