@@ -239,6 +239,10 @@ class PostgresSuite extends munit.FunSuite {
   test("Data types") {
     val ctx = initDb()
     ctx.run {
+      // enum
+      sql"""
+        CREATE TYPE color AS ENUM ('red', 'green', 'blue')
+      """.update()
       // note that Instant has NANOseconds precision!
       // postgres has MICROseconds precision
       sql"""
@@ -249,7 +253,8 @@ class PostgresSuite extends munit.FunSuite {
           boolean BOOLEAN,
           string VARCHAR(255),
           uuid UUID,
-          tstz TIMESTAMPTZ
+          tstz TIMESTAMPTZ,
+          clr color
         )
       """.update()
       val dt1 = Datatypes(
@@ -259,21 +264,22 @@ class PostgresSuite extends munit.FunSuite {
         Some(true),
         Some("abc"),
         Some(UUID.randomUUID),
-        Some(Instant.now.truncatedTo(ChronoUnit.MICROS))
+        Some(Instant.now.truncatedTo(ChronoUnit.MICROS)),
+        Some(Color.red)
       )
-      val dt2 = Datatypes(None, None, None, None, None, None, None)
+      val dt2 = Datatypes(None, None, None, None, None, None, None, None)
 
       val values = Seq(dt1, dt2)
-        .map(dt => sql"(${dt.int}, ${dt.long}, ${dt.double}, ${dt.boolean}, ${dt.string}, ${dt.uuid}, ${dt.tstz})")
+        .map(dt => sql"(${dt.int}, ${dt.long}, ${dt.double}, ${dt.boolean}, ${dt.string}, ${dt.uuid}, ${dt.tstz}, ${dt.clr})")
         .intersperse(sql",")
         .reduce(_ ++ _)
       sql"""
-        INSERT INTO datatypes(int, long, double, boolean, string, uuid, tstz)
+        INSERT INTO datatypes(int, long, double, boolean, string, uuid, tstz, clr)
         VALUES ${values}
       """.insert()
 
       val storedRows = sql"""
-        SELECT int, long, double, boolean, string, uuid, tstz
+        SELECT int, long, double, boolean, string, uuid, tstz, clr
         FROM datatypes
       """.readRows[Datatypes]()
       assertEquals(

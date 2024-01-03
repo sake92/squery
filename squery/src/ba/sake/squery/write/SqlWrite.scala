@@ -9,11 +9,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.OffsetDateTime
+import scala.deriving.*
+import scala.quoted.*
 
 trait SqlWrite[T]:
   def write(ps: jsql.PreparedStatement, idx: Int, valueOpt: Option[T]): Unit
 
-object SqlWrite:
+object SqlWrite {
 
   def apply[T](using sqlWrite: SqlWrite[T]): SqlWrite[T] = sqlWrite
 
@@ -134,3 +136,56 @@ object SqlWrite:
     ): Unit =
       sw.write(ps, idx, value.flatten)
   }
+
+  /* macro derived instances */
+  inline def derived[T]: SqlWrite[T] = ${ derivedMacro[T] }
+
+  private def derivedMacro[T: Type](using Quotes): Expr[SqlWrite[T]] = {
+    import quotes.reflect.*
+
+    val mirror: Expr[Mirror.Of[T]] = Expr.summon[Mirror.Of[T]].getOrElse {
+      report.errorAndAbort(
+        s"Cannot derive SqlWrite[${Type.show[T]}] automatically because ${Type.show[T]} is not a singleton enum"
+      )
+    }
+
+    mirror match
+      case '{ $m: Mirror.ProductOf[T] } =>
+        report.errorAndAbort("Product types are not supported")
+
+      case '{
+            type label <: Tuple;
+            $m: Mirror.SumOf[T] { type MirroredElemLabels = `label` }
+          } =>
+        val labels = Expr(Type.valueOfTuple[label].map(_.toList.map(_.toString)).getOrElse(List.empty))
+
+        val isSingleCasesEnum = isSingletonCasesEnum[T]
+        if !isSingleCasesEnum then
+          report.errorAndAbort(
+            s"Cannot derive SqlWrite[${Type.show[T]}] automatically because ${Type.show[T]} is not a singleton-cases enum"
+          )
+
+        val companion = TypeRepr.of[T].typeSymbol.companionModule.termRef
+        val valueOfSelect = Select.unique(Ident(companion), "valueOf").symbol
+
+        '{
+          new SqlWrite[T] {
+            def write(ps: jsql.PreparedStatement, idx: Int, valueOpt: Option[T]): Unit =
+              valueOpt match
+                case Some(value) =>
+                  val index = $m.ordinal(value)
+                  val label = $labels(index)
+                  ps.setObject(idx, label, jsql.Types.OTHER)
+                case None => ps.setNull(idx, jsql.Types.OTHER)
+          }
+        }
+
+      case hmm => report.errorAndAbort("Sum types are not supported")
+  }
+
+  private def isSingletonCasesEnum[T: Type](using Quotes): Boolean =
+    import quotes.reflect.*
+    val ts = TypeRepr.of[T].typeSymbol
+    ts.flags.is(Flags.Enum) && ts.companionClass.methodMember("values").nonEmpty
+
+}

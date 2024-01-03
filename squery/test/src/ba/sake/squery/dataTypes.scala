@@ -23,5 +23,9 @@ case class Datatypes(
     boolean: Option[Boolean],
     string: Option[String],
     uuid: Option[UUID],
-    tstz: Option[Instant]
+    tstz: Option[Instant],
+    clr: Option[Color]
 ) derives SqlReadRow
+
+enum Color derives SqlRead, SqlWrite:
+  case red, green, blue

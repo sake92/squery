@@ -1,34 +1,19 @@
-package ba.sake.squery.read
+package ba.sake.squery
+package read
 
 import java.{sql => jsql}
 import java.time.*
 import java.util.UUID
+import scala.deriving.*
+import scala.quoted.*
 
 // reads a value from a column
 trait SqlRead[T]:
   def readByName(jRes: jsql.ResultSet, colName: String): Option[T]
   def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[T]
 
-object SqlRead:
+object SqlRead {
   def apply[T](using sqlRead: SqlRead[T]): SqlRead[T] = sqlRead
-
-  // TODO derived for simple enums
-  /*
-
-import java.sql.ResultSet
-import ba.sake.squery.read.SqlRead
-import ba.sake.sharaf.petclinic.common.PetType
-
-given SqlRead[PetType] = new {
-  private val stringRead = SqlRead[String]
-
-  override def readByName(jRes: ResultSet, colName: String): Option[PetType] =
-    stringRead.readByName(jRes, colName).map(PetType.valueOf)
-
-  override def readByIdx(jRes: ResultSet, colIdx: Int): Option[PetType] =
-    stringRead.readByIdx(jRes, colIdx).map(PetType.valueOf)
-}
-   */
 
   given SqlRead[String] = new {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[String] =
@@ -79,7 +64,6 @@ given SqlRead[PetType] = new {
 
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[OffsetDateTime] =
       Option(jRes.getObject(colIdx, classOf[OffsetDateTime]))
-
   }
 
   given SqlRead[LocalDate] = new {
@@ -104,7 +88,6 @@ given SqlRead[PetType] = new {
 
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[UUID] =
       Option(jRes.getObject(colIdx, classOf[UUID]))
-
   }
 
   // this "cannot fail"
@@ -114,5 +97,79 @@ given SqlRead[PetType] = new {
 
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Option[T]] =
       Some(sr.readByIdx(jRes, colIdx))
-
   }
+
+  /* macro derived instances */
+  inline def derived[T]: SqlRead[T] = ${ derivedMacro[T] }
+
+  private def derivedMacro[T: Type](using Quotes): Expr[SqlRead[T]] = {
+    import quotes.reflect.*
+
+    val mirror: Expr[Mirror.Of[T]] = Expr.summon[Mirror.Of[T]].getOrElse {
+      report.errorAndAbort(
+        s"Cannot derive SqlRead[${Type.show[T]}] automatically because ${Type.show[T]} is not a singleton enum"
+      )
+    }
+
+    mirror match
+      case '{ $m: Mirror.ProductOf[T] } =>
+        report.errorAndAbort("Product types are not supported")
+
+      case '{
+            type label <: Tuple;
+            $m: Mirror.SumOf[T] { type MirroredElemLabels = `label` }
+          } =>
+        val labels = Expr(Type.valueOfTuple[label].map(_.toList.map(_.toString)).getOrElse(List.empty))
+
+        val isSingleCasesEnum = isSingletonCasesEnum[T]
+        if !isSingleCasesEnum then
+          report.errorAndAbort(
+            s"Cannot derive SqlRead[${Type.show[T]}] automatically because ${Type.show[T]} is not a singleton-cases enum"
+          )
+
+        val companion = TypeRepr.of[T].typeSymbol.companionModule.termRef
+        val valueOfSelect = Select.unique(Ident(companion), "valueOf").symbol
+
+        '{
+          new SqlRead[T] {
+            override def readByName(jRes: jsql.ResultSet, colName: String): Option[T] =
+              SqlRead[String].readByName(jRes, colName).map { enumString =>
+                try {
+                  ${
+                    val bla = '{ enumString }
+                    Block(Nil, Apply(Select(Ident(companion), valueOfSelect), List(bla.asTerm))).asExprOf[T]
+                  }
+                } catch {
+                  case e: IllegalArgumentException =>
+                    throw SqueryException(
+                      s"Enum value not found: '${enumString}'. Possible values: ${$labels.map(l => s"'$l'").mkString(", ")}"
+                    )
+                }
+              }
+
+            override def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[T] =
+              SqlRead[String].readByIdx(jRes, colIdx).map { enumString =>
+                try {
+                  ${
+                    val bla = '{ enumString }
+                    Block(Nil, Apply(Select(Ident(companion), valueOfSelect), List(bla.asTerm))).asExprOf[T]
+                  }
+                } catch {
+                  case e: IllegalArgumentException =>
+                    throw SqueryException(
+                      s"Enum value not found: '${enumString}'. Possible values: ${$labels.map(l => s"'$l'").mkString(", ")}"
+                    )
+                }
+              }
+          }
+        }
+
+      case hmm => report.errorAndAbort("Sum types are not supported")
+  }
+
+  private def isSingletonCasesEnum[T: Type](using Quotes): Boolean =
+    import quotes.reflect.*
+    val ts = TypeRepr.of[T].typeSymbol
+    ts.flags.is(Flags.Enum) && ts.companionClass.methodMember("values").nonEmpty
+
+}
