@@ -15,6 +15,8 @@ val SqlReadRow = ba.sake.squery.read.SqlReadRow
 type SqlWrite[T] = ba.sake.squery.write.SqlWrite[T]
 val SqlWrite = ba.sake.squery.write.SqlWrite
 
+type DbAction[T] = SqueryConnection ?=> T
+
 // ext methods coz overloadinggggggggg
 extension (query: Query) {
 

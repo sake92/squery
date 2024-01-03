@@ -278,6 +278,8 @@ class PostgresSuite extends munit.FunSuite {
     }
   }
 
+  // TODO transactions
+
   test("Log warnings") {
     val ctx = initDb()
     ctx.run {

@@ -25,7 +25,6 @@ class SquerySuite extends munit.FunSuite {
   }
 
   test("Query in query") {
-
     val likeArg = "%Bob%"
     val queryWhere = sql"WHERE name ILIKE ${likeArg}"
 
@@ -37,6 +36,10 @@ class SquerySuite extends munit.FunSuite {
       """SELECT id FROM customers WHERE name ILIKE ? LIMIT ?"""
     )
     assertEquals(q.arguments, Seq(SqlArgument(likeArg), SqlArgument(limitArg)))
+  }
+
+  test("DbAction") {
+    val a1: DbAction[Int] = sql"""SELECT id FROM customers""".readValue[Int]()
   }
 
 }
