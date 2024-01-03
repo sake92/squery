@@ -270,7 +270,9 @@ class PostgresSuite extends munit.FunSuite {
       val dt2 = Datatypes(None, None, None, None, None, None, None, None)
 
       val values = Seq(dt1, dt2)
-        .map(dt => sql"(${dt.int}, ${dt.long}, ${dt.double}, ${dt.boolean}, ${dt.string}, ${dt.uuid}, ${dt.tstz}, ${dt.clr})")
+        .map(dt =>
+          sql"(${dt.int}, ${dt.long}, ${dt.double}, ${dt.boolean}, ${dt.string}, ${dt.uuid}, ${dt.tstz}, ${dt.clr})"
+        )
         .intersperse(sql",")
         .reduce(_ ++ _)
       sql"""
@@ -289,7 +291,38 @@ class PostgresSuite extends munit.FunSuite {
     }
   }
 
-  // TODO transactions
+  test("Transaction") {
+    val ctx = initDb()
+    // create table normally
+    ctx.run {
+      sql"""
+        CREATE TABLE test_transactions(
+          name VARCHAR,
+          UNIQUE(name)
+        )
+      """.update()
+    }
+    // all succeeds,
+    // or nothing succeeds!
+    intercept[Exception] {
+      ctx.runTransaction() {
+        sql"""
+        INSERT INTO test_transactions(name)
+        VALUES ('abc')
+      """.insert()
+        // fail coz unique name
+        sql"""
+        INSERT INTO test_transactions(name)
+        VALUES ('abc')
+      """.insert()
+      }
+    }
+    // check there is NO ENTRIES, coz transaction failed
+    ctx.run {
+      val values = sql"SELECT name FROM test_transactions".readValues[String]()
+      assertEquals(values, Seq.empty)
+    }
+  }
 
   test("Log warnings") {
     val ctx = initDb()

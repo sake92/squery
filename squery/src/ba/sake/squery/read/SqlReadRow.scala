@@ -74,7 +74,7 @@ object SqlReadRow:
           Some(p.fromTuple(tuple.asInstanceOf[p.MirroredElemTypes]))
       }
 
-  // TODO a bit nicer recursive get-all-stuff
+  // a bit nicer recursive get-all-stuff maybe?
   // https://github.com/lampepfl/dotty/blob/3.2.2/tests/pos-special/fatal-warnings/not-looping-implicit.scala#L12
 
   private inline def getReads[T <: Tuple]: Tuple =

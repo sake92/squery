@@ -46,7 +46,7 @@ object GettingStarted extends TutorialPage {
 
       or if you want to run them transactionally:
       ```scala
-      ctx.runTransaction {
+      ctx.runTransaction() {
         // queries go here!
       }
       ```

@@ -5,16 +5,19 @@ import scala.util.Using
 
 class SqueryContext(ds: DataSource) {
 
-  def run[A](fn: SqueryConnection ?=> A): A =
+  def run[A](dbAction: DbAction[A]): A =
     Using.resource(ds.getConnection()) { conn =>
       conn.setAutoCommit(true)
-      fn(using SqueryConnection(conn))
+      dbAction(using SqueryConnection(conn))
     }
 
-  def runTransaction[A](fn: SqueryConnection ?=> A): A =
+  def runTransaction[A](level: TransactionIsolation = TransactionIsolation.ReadCommited)(
+      dbAction: DbAction[A]
+  ): A =
     Using.resource(ds.getConnection()) { conn =>
       conn.setAutoCommit(false)
-      val res = fn(using SqueryConnection(conn))
+      conn.setTransactionIsolation(level.jdbcLevel)
+      val res = dbAction(using SqueryConnection(conn))
       conn.commit()
       res
     }
