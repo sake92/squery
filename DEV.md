@@ -29,6 +29,6 @@ git push  --atomic origin main $VERSION
 
 # TODOs
 
-- add scastie example with H2 :oooo
+- privatize stuff
 - test more databases
 - sql parser reorders OFFSET LIMIT ???

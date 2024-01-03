@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.Logger
 
 import ba.sake.squery.write.SqlArgument
 
-class Query(
+case class Query(
     private[squery] val sqlString: String,
     private[squery] val arguments: Seq[SqlArgument[?]]
 ) {

@@ -3,6 +3,8 @@ package ba.sake.squery
 import ba.sake.squery.write.SqlArgument
 import scala.collection.mutable.ListBuffer
 
+// TODO interpolate Seq[SqlArgument] ?
+
 // arg can be a simple value
 // or another query
 type SqlInterpolatorArg = SqlArgument[?] | Query

@@ -1,7 +1,7 @@
 package ba.sake.squery
 package utils
 
-class UtilsSuite extends munit.FunSuite {
+class SeqUtilsSuite extends munit.FunSuite {
 
   val customer1 = Customer(1, "1_customer", None)
   val customer2 = Customer(2, "2_customer", Some("str2"))

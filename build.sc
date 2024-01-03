@@ -10,7 +10,8 @@ object squery extends CommonScalaModule with SqueryPublishModule {
 
   def ivyDeps = Agg(
     ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
-    ivy"com.github.jsqlparser:jsqlparser:4.7"
+    ivy"com.github.jsqlparser:jsqlparser:4.7",
+    ivy"org.scala-lang.modules::scala-collection-contrib:0.3.0"
   )
 
   object test extends ScalaTests with TestModule.Munit {
