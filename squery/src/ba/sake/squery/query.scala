@@ -68,7 +68,7 @@ object Query {
     val stmt = CCJSqlParserUtil.parse(query)
     stmt match
       case selectStmt: Select =>
-        selectStmt.getSelectBody().accept(new SqueryAddAliasesVisitor())
+        selectStmt.getSelectBody().accept(SqueryAddAliasesVisitor())
         selectStmt.getSelectBody().toString()
       case updateStmt: Update =>
         if updateStmt.getWhere() == null then

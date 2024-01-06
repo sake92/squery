@@ -57,7 +57,7 @@ private class SqueryAddAliasesVisitor extends SelectVisitor, SelectItemVisitor {
       val alias = s""" "$selectExpressionItem" """.trim
       if usedAliases.contains(alias) then throw SqueryException(s"Alias '$alias' is already used in this query.")
       usedAliases += alias
-      selectExpressionItem.setAlias(new Alias(alias))
+      selectExpressionItem.setAlias(Alias(alias))
 
   override def visit(withItem: WithItem): Unit = {}
 

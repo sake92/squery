@@ -15,42 +15,42 @@ trait SqlRead[T]:
 object SqlRead {
   def apply[T](using sqlRead: SqlRead[T]): SqlRead[T] = sqlRead
 
-  given SqlRead[String] = new {
+  given SqlRead[String] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[String] =
       Option(jRes.getString(colName))
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[String] =
       Option(jRes.getString(colIdx))
   }
 
-  given SqlRead[Boolean] = new {
+  given SqlRead[Boolean] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Boolean] =
       Option(jRes.getBoolean(colName)).filterNot(_ => jRes.wasNull())
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Boolean] =
       Option(jRes.getBoolean(colIdx)).filterNot(_ => jRes.wasNull())
   }
 
-  given SqlRead[Int] = new {
+  given SqlRead[Int] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Int] =
       Option(jRes.getInt(colName)).filterNot(_ => jRes.wasNull())
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Int] =
       Option(jRes.getInt(colIdx)).filterNot(_ => jRes.wasNull())
   }
 
-  given SqlRead[Long] = new {
+  given SqlRead[Long] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Long] =
       Option(jRes.getLong(colName)).filterNot(_ => jRes.wasNull())
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Long] =
       Option(jRes.getLong(colIdx)).filterNot(_ => jRes.wasNull())
   }
 
-  given SqlRead[Double] = new {
+  given SqlRead[Double] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Double] =
       Option(jRes.getDouble(colName)).filterNot(_ => jRes.wasNull())
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Double] =
       Option(jRes.getDouble(colIdx)).filterNot(_ => jRes.wasNull())
   }
 
-  given SqlRead[Instant] = new {
+  given SqlRead[Instant] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Instant] =
       Option(jRes.getTimestamp(colName)).map(_.toInstant)
 
@@ -58,7 +58,7 @@ object SqlRead {
       Option(jRes.getTimestamp(colIdx)).map(_.toInstant)
   }
 
-  given SqlRead[OffsetDateTime] = new {
+  given SqlRead[OffsetDateTime] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[OffsetDateTime] =
       Option(jRes.getObject(colName, classOf[OffsetDateTime]))
 
@@ -66,7 +66,7 @@ object SqlRead {
       Option(jRes.getObject(colIdx, classOf[OffsetDateTime]))
   }
 
-  given SqlRead[LocalDate] = new {
+  given SqlRead[LocalDate] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[LocalDate] =
       Option(jRes.getDate(colName)).map(_.toLocalDate())
 
@@ -74,7 +74,7 @@ object SqlRead {
       Option(jRes.getDate(colIdx)).map(_.toLocalDate())
   }
 
-  given SqlRead[LocalDateTime] = new {
+  given SqlRead[LocalDateTime] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[LocalDateTime] =
       Option(jRes.getTimestamp(colName)).map(_.toLocalDateTime())
 
@@ -82,7 +82,7 @@ object SqlRead {
       Option(jRes.getTimestamp(colIdx)).map(_.toLocalDateTime())
   }
 
-  given SqlRead[UUID] = new {
+  given SqlRead[UUID] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[UUID] =
       Option(jRes.getObject(colName, classOf[UUID]))
 
@@ -91,7 +91,7 @@ object SqlRead {
   }
 
   // this "cannot fail"
-  given [T](using sr: SqlRead[T]): SqlRead[Option[T]] = new {
+  given [T](using sr: SqlRead[T]): SqlRead[Option[T]] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Option[T]] =
       Some(sr.readByName(jRes, colName))
 

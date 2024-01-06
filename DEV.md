@@ -29,6 +29,8 @@ git push  --atomic origin main $VERSION
 
 # TODOs
 
+- update scastie!
+- more tutorials
 - privatize stuff
 - test more databases
 - sql parser reorders OFFSET LIMIT ???

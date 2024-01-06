@@ -16,10 +16,10 @@ case class Phone(id: Int, number: String) derives SqlReadRow
 // joined row
 case class CustomerWithPhone(c: Customer, p: Phone) derives SqlReadRow
 
-val ds = new org.h2.jdbcx.JdbcDataSource()
+val ds = JdbcDataSource()
 ds.setURL("jdbc:h2:mem:")
 
-val ctx = new SqueryContext(ds)
+val ctx = SqueryContext(ds)
 
 ctx.run {
   val res: Seq[CustomerWithPhone] = sql"""

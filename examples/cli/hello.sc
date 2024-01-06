@@ -4,8 +4,9 @@
 //> using dep "com.lihaoyi::pprint:0.8.1"
 
 import ba.sake.squery.*
+import org.h2.jdbcx.JdbcDataSource
 
-val ds = new org.h2.jdbcx.JdbcDataSource()
+val ds = JdbcDataSource()
 ds.setURL("jdbc:h2:mem:")
 
 val ctx = SqueryContext(ds)

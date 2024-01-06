@@ -26,7 +26,7 @@ object GettingStarted extends TutorialPage {
       ds.setUsername(..)
       ds.setPassword(..)
 
-      val ctx = new SqueryContext(ds)
+      val ctx = SqueryContext(ds)
       ```
       """.md
     )

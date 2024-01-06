@@ -15,7 +15,7 @@ object SqlReadRow:
   def apply[T](using sqlReadRow: SqlReadRow[T]): SqlReadRow[T] = sqlReadRow
 
   // cannot fail, it will *at least* give you a None
-  given [T](using srr: SqlReadRow[T]): SqlReadRow[Option[T]] = new {
+  given [T](using srr: SqlReadRow[T]): SqlReadRow[Option[T]] with {
     def readRow(jRes: ResultSet, prefix: Option[String]): Option[Option[T]] =
       Some(srr.readRow(jRes, prefix))
   }

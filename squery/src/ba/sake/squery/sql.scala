@@ -12,10 +12,11 @@ type SqlInterpolatorArg = SqlArgument[?] | Query
   */
 extension (sc: StringContext) {
 
+  // TODO implement as a macro, so we get a statically known string literal... !?? ZOMG :OO
   def sql(args: SqlInterpolatorArg*): Query =
     val stringPartsIter = sc.parts.iterator
     val argsIter = args.iterator
-    var sb = new StringBuilder(stringPartsIter.next())
+    var sb = StringBuilder(stringPartsIter.next())
     val allArgs = ListBuffer.empty[SqlArgument[?]]
 
     while stringPartsIter.hasNext do {

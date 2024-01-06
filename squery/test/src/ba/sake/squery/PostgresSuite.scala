@@ -28,7 +28,7 @@ class PostgresSuite extends munit.FunSuite {
     def apply() = ctx
 
     override def beforeAll(): Unit = {
-      container = new PostgreSQLContainer("postgres:9.6.12")
+      container = PostgreSQLContainer("postgres:9.6.12")
       container.start()
 
       val ds = com.zaxxer.hikari.HikariDataSource()
@@ -36,7 +36,7 @@ class PostgresSuite extends munit.FunSuite {
       ds.setUsername(container.getUsername())
       ds.setPassword(container.getPassword())
 
-      ctx = new SqueryContext(ds)
+      ctx = SqueryContext(ds)
 
       ctx.run {
         sql"""

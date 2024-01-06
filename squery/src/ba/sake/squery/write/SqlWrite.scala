@@ -19,7 +19,7 @@ object SqlWrite {
 
   def apply[T](using sqlWrite: SqlWrite[T]): SqlWrite[T] = sqlWrite
 
-  given SqlWrite[String] = new {
+  given SqlWrite[String] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
@@ -29,7 +29,7 @@ object SqlWrite {
       case None        => ps.setString(idx, null)
   }
 
-  given SqlWrite[Boolean] = new {
+  given SqlWrite[Boolean] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
@@ -39,7 +39,7 @@ object SqlWrite {
       case None        => ps.setNull(idx, jsql.Types.BOOLEAN)
   }
 
-  given SqlWrite[Int] = new {
+  given SqlWrite[Int] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
@@ -49,7 +49,7 @@ object SqlWrite {
       case None        => ps.setNull(idx, jsql.Types.INTEGER)
   }
 
-  given SqlWrite[Long] = new {
+  given SqlWrite[Long] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
@@ -59,7 +59,7 @@ object SqlWrite {
       case None        => ps.setNull(idx, jsql.Types.BIGINT)
   }
 
-  given SqlWrite[Double] = new {
+  given SqlWrite[Double] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
@@ -69,7 +69,7 @@ object SqlWrite {
       case None        => ps.setNull(idx, jsql.Types.DOUBLE)
   }
 
-  given SqlWrite[Instant] = new {
+  given SqlWrite[Instant] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
@@ -79,7 +79,7 @@ object SqlWrite {
       case None        => ps.setNull(idx, jsql.Types.TIMESTAMP_WITH_TIMEZONE)
   }
 
-  given SqlWrite[OffsetDateTime] = new {
+  given SqlWrite[OffsetDateTime] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
@@ -89,7 +89,7 @@ object SqlWrite {
       case None        => ps.setNull(idx, jsql.Types.TIMESTAMP_WITH_TIMEZONE)
   }
 
-  given SqlWrite[LocalDate] = new {
+  given SqlWrite[LocalDate] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
@@ -99,7 +99,7 @@ object SqlWrite {
       case None        => ps.setNull(idx, jsql.Types.DATE)
   }
 
-  given SqlWrite[LocalDateTime] = new {
+  given SqlWrite[LocalDateTime] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
@@ -118,7 +118,7 @@ object SqlWrite {
       case None => ps.setNull(idx, jsql.Types.TIMESTAMP)
   }
 
-  given SqlWrite[UUID] = new {
+  given SqlWrite[UUID] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
@@ -128,7 +128,7 @@ object SqlWrite {
       case None        => ps.setNull(idx, jsql.Types.OTHER)
   }
 
-  given [T](using sw: SqlWrite[T]): SqlWrite[Option[T]] = new {
+  given [T](using sw: SqlWrite[T]): SqlWrite[Option[T]] with {
     def write(
         ps: jsql.PreparedStatement,
         idx: Int,
