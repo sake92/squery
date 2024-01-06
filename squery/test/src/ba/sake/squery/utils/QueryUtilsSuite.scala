@@ -12,8 +12,8 @@ class QueryUtilsSuite extends munit.FunSuite {
       sql"q1"
     )
     assertEquals(
-      Seq(Option(sql"q1"), Option(sql"q2"), Option(sql"q3")).concatenate(sql"AND", sql"true"),
-      sql"q1 AND q2 AND q3"
+      Seq(Option(sql"q1"), None, Option(sql"q2")).concatenate(sql"AND", sql"true"),
+      sql"q1 AND q2"
     )
   }
 }

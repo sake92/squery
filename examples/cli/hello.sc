@@ -1,5 +1,5 @@
 //> using scala "3.3.1"
-//> using dep "ba.sake::squery:0.0.14"
+//> using dep "ba.sake::squery:0.0.19"
 //> using dep "com.h2database:h2:2.1.214"
 //> using dep "com.lihaoyi::pprint:0.8.1"
 
@@ -8,7 +8,7 @@ import ba.sake.squery.*
 val ds = new org.h2.jdbcx.JdbcDataSource()
 ds.setURL("jdbc:h2:mem:")
 
-val ctx = new SqueryContext(ds)
+val ctx = SqueryContext(ds)
 
 ctx.run {
 
@@ -29,7 +29,7 @@ ctx.run {
     )
   """.update()
 
-  // id is just a dummy value here becazse it is autointcremented..
+  // id is just a dummy value here because it is autointcremented..
   val c1 = Customer(1, "my_customer")
   val c2 = Customer(1, "other_customer")
 
@@ -77,7 +77,7 @@ ctx.run {
   ///////////////////
   // dynamic
   ///////////////////
-  val dynQuery = sql"SELECT id, name FROM customers" ++ sortBy(SortCustomersField.name)
+  val dynQuery = sql"SELECT id, name FROM customers ${sortBy(SortCustomersField.name)}"
   pprint.pprintln(
     dynQuery.readRows[Customer]()
   )

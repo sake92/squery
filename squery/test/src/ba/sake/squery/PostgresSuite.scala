@@ -305,7 +305,7 @@ class PostgresSuite extends munit.FunSuite {
     // all succeeds,
     // or nothing succeeds!
     intercept[Exception] {
-      ctx.runTransaction() {
+      ctx.runTransaction {
         sql"""
         INSERT INTO test_transactions(name)
         VALUES ('abc')
@@ -315,6 +315,19 @@ class PostgresSuite extends munit.FunSuite {
         INSERT INTO test_transactions(name)
         VALUES ('abc')
       """.insert()
+      }
+    }
+    intercept[Exception] {
+      ctx.runTransactionWithIsolation(TransactionIsolation.Serializable) {
+        sql"""
+          INSERT INTO test_transactions(name)
+          VALUES ('abc')
+        """.insert()
+        // fail coz unique name
+        sql"""
+          INSERT INTO test_transactions(name)
+          VALUES ('abc')
+        """.insert()
       }
     }
     // check there is NO ENTRIES, coz transaction failed
