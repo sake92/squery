@@ -2,20 +2,17 @@ package ba.sake.squery
 
 import java.{sql => jsql}
 import scala.util.Using
-
 import net.sf.jsqlparser.parser.CCJSqlParserUtil
 import net.sf.jsqlparser.statement.select.Select
 import net.sf.jsqlparser.statement.update.Update
 import net.sf.jsqlparser.statement.delete.Delete
 import net.sf.jsqlparser.JSQLParserException
-
 import com.typesafe.scalalogging.Logger
-
-import ba.sake.squery.write.SqlArgument
+import ba.sake.squery.DynamicArg
 
 case class Query(
     private[squery] val sqlString: String,
-    private[squery] val arguments: Seq[SqlArgument[?]]
+    private[squery] val arguments: Seq[DynamicArg[?]]
 ) {
 
   private val logger = Logger(getClass.getName)

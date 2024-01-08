@@ -5,7 +5,6 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.collection.decorators._
 import org.testcontainers.containers.PostgreSQLContainer
-import ba.sake.squery.write.SqlArgument
 
 class PostgresSuite extends munit.FunSuite {
 
