@@ -35,7 +35,7 @@ ds.setJdbcUrl(..)
 ds.setUsername(..)
 ds.setPassword(..)
 
-val ctx = new SqueryContext(ds)
+val ctx = SqueryContext(ds)
 </code></pre>
 </div></section><section id="running-queries"><h2>Running queries</h2><div><p>Now we can run queries inside the context:</p>
 <pre><code class="language-scala">ctx.run {
