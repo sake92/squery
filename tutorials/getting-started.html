@@ -36,10 +36,11 @@
 You will probably want to use a connection pool for performance (like HikariCP).</p>
 <pre><code class="language-scala">import ba.sake.squery.{*, given}
 // import one of these if needed:
-// import ba.sake.squery.postgres.*
-// import ba.sake.squery.mysql.*
-// import ba.sake.squery.mariadb.*
-// import ba.sake.squery.oracle.*
+// import ba.sake.squery.postgres.given
+// import ba.sake.squery.mysql.given
+// import ba.sake.squery.mariadb.given
+// import ba.sake.squery.oracle.given
+// import ba.sake.squery.h2.given
 
 val ds = com.zaxxer.hikari.HikariDataSource()
 ds.setJdbcUrl(..)
