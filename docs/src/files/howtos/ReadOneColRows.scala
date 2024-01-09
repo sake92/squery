@@ -26,10 +26,10 @@ object ReadOneColRows extends HowToPage {
 
       ---
 
-      There are also variations that return a single result, depending if you want an `Option[T]` or `T` (throws if no row returned):
+      There are also variations that return a single result, depending if you want an `Option[T]` or `T`:
       ```scala
-      sql"SELECT ...".readValueOpt[T]() : Option[T]
-      sql"SELECT ...".readValue[T]() : T
+      sql"SELECT ...".readValueOpt[T]() : Option[T] // first result, if present
+      sql"SELECT ...".readValue[T]() : T            // first result, or exception
       ```
       """.md
     )

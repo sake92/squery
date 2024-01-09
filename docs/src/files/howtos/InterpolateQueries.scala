@@ -21,7 +21,7 @@ object InterpolateQueries extends HowToPage {
       SELECT customer_id, name
       FROM customers
       $${whereQuery}
-    ${Consts.tq}.insert()
+    ${Consts.tq}.readRow[Customer]()
     ```
     """.md
   )

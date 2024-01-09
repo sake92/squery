@@ -18,9 +18,11 @@ trait HowToPage extends DocPage {
     InsertRetGenKeys,
     InsertRetValues,
     Update,
+    InterpolateLiteralStrings,
     InterpolateValues,
     InterpolateQueries,
-    DynamicQueries
+    DynamicQueries,
+    Transactions,
   )
 
   override def pageCategory = Some("How-Tos")

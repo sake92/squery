@@ -306,14 +306,14 @@ class PostgresSuite extends munit.FunSuite {
     intercept[Exception] {
       ctx.runTransaction {
         sql"""
-        INSERT INTO test_transactions(name)
-        VALUES ('abc')
-      """.insert()
+          INSERT INTO test_transactions(name)
+          VALUES ('abc')
+        """.insert()
         // fail coz unique name
         sql"""
-        INSERT INTO test_transactions(name)
-        VALUES ('abc')
-      """.insert()
+          INSERT INTO test_transactions(name)
+          VALUES ('abc')
+        """.insert()
       }
     }
     intercept[Exception] {

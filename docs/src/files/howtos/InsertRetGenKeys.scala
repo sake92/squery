@@ -26,8 +26,8 @@ object InsertRetGenKeys extends HowToPage {
 
       There are also variations that return a single result, depending if you want an `Option[T]` or `T` (throws if no row returned):
       ```scala
-      sql"SELECT ...".insertReturningGenKey[T]() : Option[T]
-      sql"SELECT ...".insertReturningGenKey[T]() : T
+      sql"SELECT ...".insertReturningGenKeyOpt[T]() : Option[T] // first result, if present
+      sql"SELECT ...".insertReturningGenKey[T]() : T            // first result, or exception
       ```
 
       """.md

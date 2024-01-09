@@ -32,10 +32,10 @@ object ReadMultiColRows extends HowToPage {
 
       ---
 
-      There are also variations that return a single result, depending if you want an `Option[T]` or `T` (throws if no row returned):
+      There are also variations that return a single result, depending if you want an `Option[T]` or `T`:
       ```scala
-      sql"SELECT ...".readRowOpt[T]() : Option[T]
-      sql"SELECT ...".readRow[T]() : T
+      sql"SELECT ...".readRowOpt[T]() : Option[T] // first result, if present
+      sql"SELECT ...".readRow[T]() : T            // first result, or exception
       ```
 
       """.md

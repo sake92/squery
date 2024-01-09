@@ -23,6 +23,13 @@ object InterpolateValues extends HowToPage {
       VALUES($$customerId, $$phoneNumber)
     ${Consts.tq}.insert()
     ```
+
+    The final query that gets executed will look like this:
+      ```sql
+      INSERT INTO phones(customer_id, number)
+      VALUES(?, ?)
+      ```
+      so it is injection-safe.
     """.md
   )
 }
