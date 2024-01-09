@@ -24,9 +24,9 @@ object squery extends CommonScalaModule with SqueryPublishModule {
       ivy"org.testcontainers:mysql:1.19.3",
       ivy"mysql:mysql-connector-java:8.0.33",
       ivy"org.testcontainers:mariadb:1.19.3",
-      ivy"org.mariadb.jdbc:mariadb-java-client:3.3.2"
-
-
+      ivy"org.mariadb.jdbc:mariadb-java-client:3.3.2",
+      ivy"org.testcontainers:oracle-free:1.19.3",
+      ivy"com.oracle.database.jdbc:ojdbc8:23.3.0.23.09"
     )
   }
 }

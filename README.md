@@ -4,8 +4,15 @@ Simple SQL queries in Scala 3.
 
 No DSLs, no fuss, just plain SQL.
 
-Scastie example https://scastie.scala-lang.org/93LkJTTVRVad2jNv1KE4HA
+Supports *any* JDBC driver.  
+Additional support for Postgres, MySql, MariaDb, Oracle.
 
+
+---
+Scastie example: https://scastie.scala-lang.org/93LkJTTVRVad2jNv1KE4HA
+
+
+---
 Hello world:
 ```scala
 

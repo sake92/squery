@@ -20,6 +20,11 @@ object GettingStarted extends TutorialPage {
 
       ```scala
       import ba.sake.squery.*
+      // import one of these if needed:
+      // import ba.sake.squery.postgres.*
+      // import ba.sake.squery.mysql.*
+      // import ba.sake.squery.mariadb.*
+      // import ba.sake.squery.oracle.*
       
       val ds = com.zaxxer.hikari.HikariDataSource()
       ds.setJdbcUrl(..)

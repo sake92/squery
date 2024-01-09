@@ -73,7 +73,7 @@ class PostgresSuite extends munit.FunSuite {
           CREATE TABLE phones(
             id SERIAL PRIMARY KEY,
             customer_id INTEGER REFERENCES customers(id),
-            number VARCHAR
+            numbr VARCHAR
           )
         """.update()
 
@@ -101,9 +101,9 @@ class PostgresSuite extends munit.FunSuite {
         customer2 = customer2.copy(id = customerIds(1))
 
         val phoneIds = sql"""
-          INSERT INTO phones(customer_id, number) VALUES
-            (${customer1.id}, ${phone1.number}),
-            (${customer1.id}, ${phone2.number})
+          INSERT INTO phones(customer_id, numbr) VALUES
+            (${customer1.id}, ${phone1.numbr}),
+            (${customer1.id}, ${phone2.numbr})
         """.insertReturningGenKeys[Int]()
         phone1 = phone1.copy(id = phoneIds(0))
         phone2 = phone2.copy(id = phoneIds(1))
@@ -141,13 +141,10 @@ class PostgresSuite extends munit.FunSuite {
       )
 
       assertEquals(
-        sql"SELECT number FROM phones WHERE customer_id = ${customer1.id}"
+        sql"SELECT numbr FROM phones WHERE customer_id = ${customer1.id}"
           .readValues[String](),
-        phones.map(_.number)
+        phones.map(_.numbr)
       )
-
-      val q1 = sql""
-      val q2 = sql" ${q1} "
     }
   }
 
@@ -158,7 +155,7 @@ class PostgresSuite extends munit.FunSuite {
       assertEquals(
         sql"""
           SELECT c.id, c.name, c.street,
-            p.id, p.number
+            p.id, p.numbr
           FROM customers c
           JOIN phones p ON p.customer_id = c.id
           WHERE c.id = ${customer1.id}
@@ -173,7 +170,7 @@ class PostgresSuite extends munit.FunSuite {
       assertEquals(
         sql"""
           SELECT c.id, c.name, c.street,
-            p.id, p.number
+            p.id, p.numbr
           FROM customers c
           LEFT JOIN phones p ON p.customer_id = c.id
         """.readRows[CustomerWithPhoneOpt](),

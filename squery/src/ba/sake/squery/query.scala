@@ -25,21 +25,23 @@ case class Query(
 
   private[squery] def newPreparedStatement(
       c: jsql.Connection,
-      retGenKeys: Boolean = false
+      retGenKeys: Boolean = false,
+      colNames: Seq[String] = Seq.empty
   ): jsql.PreparedStatement = {
     val enrichedQueryString = Query.enrichSqlQuery(sqlString)
     // TODO reorder enriched issue..
     // println("enriched: " + enrichedQueryString)
     logger.debug(s"Executing statement: $enrichedQueryString")
     val stat =
-      c.prepareStatement(
-        enrichedQueryString,
-        if retGenKeys then jsql.Statement.RETURN_GENERATED_KEYS
-        else jsql.Statement.NO_GENERATED_KEYS
-      )
+      if retGenKeys then
+        if colNames.isEmpty then c.prepareStatement(enrichedQueryString, jsql.Statement.RETURN_GENERATED_KEYS)
+        else c.prepareStatement(enrichedQueryString, colNames.toArray)
+      else c.prepareStatement(enrichedQueryString)
+
     arguments.zipWithIndex.foreach { (arg, i) =>
       arg.sqlWrite.write(stat, i + 1, Option(arg.value))
     }
+
     // print warnings if any
     var warning = stat.getWarnings()
     while (warning != null) {
