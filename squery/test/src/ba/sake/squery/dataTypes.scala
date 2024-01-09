@@ -3,6 +3,7 @@ package ba.sake.squery
 import java.util.UUID
 import java.time.Instant
 
+// TODO remove street !?
 case class Customer(id: Int, name: String, street: Option[String]) derives SqlReadRow:
   def insertTuple = sql"(${name}, ${street})"
 

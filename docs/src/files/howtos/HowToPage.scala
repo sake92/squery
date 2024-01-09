@@ -3,8 +3,6 @@ package files.howtos
 import utils.*
 import Bundle.*
 
-// TODO how to map flat result to List[stuff] groupByOrdered :)
-
 trait HowToPage extends DocPage {
 
   override def categoryPosts = List(

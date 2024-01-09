@@ -52,6 +52,10 @@ class SeqUtilsSuite extends munit.FunSuite {
 
   test("groupByOrderedOpt") {
     val groupedByCustomer = rowsLeftJoin.groupByOrderedOpt(_.c, _.a)
+
+    val dtos = groupedByCustomer.map { case (c, addresses) =>
+      CustomerDTO(c.id, c.name, addresses.map(_.name.get))
+    }.toSeq
     assertEquals(
       groupedByCustomer,
       Map(
@@ -62,5 +66,7 @@ class SeqUtilsSuite extends munit.FunSuite {
       )
     )
   }
+
+  case class CustomerDTO(id: Int, name: String, addresses: Seq[String])
 
 }

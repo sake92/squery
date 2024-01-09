@@ -15,32 +15,43 @@ object MapToObject extends HowToPage {
     "How To Map Flat Rows To Objects",
     frag(
       s"""
-      You can do arbitrary SQL commands here.  
-      The most common one is `UPDATE`-ing some rows:
+      Suppose you have these data `class`-es:
       ```scala
-      // returns number of affected rows
-      def updateCustomers: Int = ctx.run {
-        sql${Consts.tq}
-          UPDATE customers
-          SET name = 'whatever'
-          WHERE name LIKE 'xyz_%'
-        ${Consts.tq}.update()
-      }
+      // table rows:
+      case class Customer(id: Int, name: String) derives SqlReadRow
+      case class Address(id: Int, name: String) derives SqlReadRow
+
+      // left join result:
+      case class CustomerWithAddressOpt(c: Customer, a: Option[Address]) derives SqlReadRow
       ```
+
+      Now, when you do a `SELECT` you'll get a `Seq[CustomerWithPhoneOpt]`, a "flat" result, named tuple.  
+      But, on your REST API you'd like to return a structured object:
+      ```scala
+      case class CustomerDTO(id: Int, name: String, addresses: Seq[String])
+      ```
+
+      Squery has utilities for exactly that.  
+      Let's see how `groupByOrderedOpt` works:
+      ```scala
+      import ba.sake.squery.utils.*
+
+      val groupedByCustomer: Map[Customer, Seq[Address]] = rowsLeftJoin.groupByOrderedOpt(_.c, _.a)
+      val dtos = groupedByCustomer.map { case (c, addresses) =>
+        CustomerDTO(c.id, c.name, addresses.map(_.name))
+      }.toSeq
+      ```
+      We can see that it returns a `Map[Customer, Seq[Address]]`, just as we wanted.  
+      Then we just map over it and populate the DTO object, can't be simpler!
 
       ---
 
-      But of course you can do other commands as well:
-      ```scala
-      def createTable: Unit = ctx.run {
-        sql${Consts.tq}
-          CREATE TABLE customers(
-            id SERIAL PRIMARY KEY,
-            name VARCHAR
-          )
-        ${Consts.tq}.update()
-      }
-      ```
+      This does a few thing for us:
+      - keeps the list of results *ordered*, so you don't have to sort it twice (once in DB, and again in memory)
+      - extracts the value that we need from the raw row result
+      - handles the `None` case
+      - handles the starting, empty Seq of results case
+
 
       """.md
     )
