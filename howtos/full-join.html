@@ -51,7 +51,7 @@ The final query is a composition of <code>Customer</code> and <code>Phone</code>
 <p>You could have additional columns like a <code>COUNT</code>/<code>SUM</code> or whatever you need in <code>CustomerWithPhone</code> query result.</p>
 <hr />
 <p>Full example:</p>
-<pre><code class="language-scala">import ba.sake.squery.*
+<pre><code class="language-scala">import ba.sake.squery.{*, given}
 
 case class Customer(id: Int, name: String) derives SqlReadRow
 case class Phone(id: Int, number: String) derives SqlReadRow
