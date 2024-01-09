@@ -20,7 +20,7 @@ object ReadMultiColRows extends HowToPage {
       A natural fit for that are `case class`es.  
       We need to add a `derives SqlReadRow`, and then we can use it:
       ```scala
-      import ba.sake.squery.*
+      import ba.sake.squery.{*, given}
 
       case class Customer(id: Int, name: String) derives SqlReadRow
 

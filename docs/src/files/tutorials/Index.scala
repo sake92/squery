@@ -55,7 +55,7 @@ object Index extends TutorialPage {
       Section(
         "Scastie",
         s"""
-        You can also use this [Scastie example](https://scastie.scala-lang.org/93LkJTTVRVad2jNv1KE4HA) to try ${Consts.ProjectName} online.
+        You can also use this [Scastie example](${Consts.ScastieExampleUrl}) to try ${Consts.ProjectName} online.
         """.md
       ),
       Section(

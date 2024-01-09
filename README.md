@@ -9,7 +9,7 @@ Additional support for Postgres, MySql, MariaDb, Oracle.
 
 
 ---
-Scastie example: https://scastie.scala-lang.org/93LkJTTVRVad2jNv1KE4HA
+Scastie example: https://scastie.scala-lang.org/JArud6GGSLOmYyxCNsNdNw
 
 
 ---

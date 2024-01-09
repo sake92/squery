@@ -19,7 +19,7 @@ object GettingStarted extends TutorialPage {
       You will probably want to use a connection pool for performance (like HikariCP).
 
       ```scala
-      import ba.sake.squery.*
+      import ba.sake.squery.{*, given}
       // import one of these if needed:
       // import ba.sake.squery.postgres.*
       // import ba.sake.squery.mysql.*

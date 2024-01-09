@@ -44,7 +44,7 @@ object FullJoin extends HowToPage {
 
       Full example:
       ```scala
-      import ba.sake.squery.*
+      import ba.sake.squery.{*, given}
 
       case class Customer(id: Int, name: String) derives SqlReadRow
       case class Phone(id: Int, number: String) derives SqlReadRow

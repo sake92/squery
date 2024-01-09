@@ -1,9 +1,9 @@
 //> using scala "3.3.1"
-//> using dep "ba.sake::squery:0.0.19"
+//> using dep "ba.sake::squery:0.1.0"
 //> using dep "com.h2database:h2:2.1.214"
 //> using dep "com.lihaoyi::pprint:0.8.1"
 
-import ba.sake.squery.*
+import ba.sake.squery.{*, given}
 import org.h2.jdbcx.JdbcDataSource
 
 val ds = JdbcDataSource()

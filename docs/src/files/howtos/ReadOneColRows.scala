@@ -17,7 +17,7 @@ object ReadOneColRows extends HowToPage {
       s"""
       We use the `readValues[T]()` to read single-column results:
       ```scala
-      import ba.sake.squery.*
+      import ba.sake.squery.{*, given}
       
       def customersIds: List[Int] = ctx.run {
         sql"SELECT id FROM customers".readValues[Int]()

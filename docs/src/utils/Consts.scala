@@ -13,4 +13,6 @@ object Consts:
   val GhUrl = s"https://github.com/${GhHandle}/${GhProjectName}"
   val GhSourcesUrl = s"${GhUrl}/tree/main"
 
+  val ScastieExampleUrl = "https://scastie.scala-lang.org/JArud6GGSLOmYyxCNsNdNw"
+
   val tq = """""""""
