@@ -18,9 +18,15 @@ object squery extends CommonScalaModule with SqueryPublishModule {
       ivy"ch.qos.logback:logback-classic:1.4.6",
       ivy"org.scalameta::munit:1.0.0-M7",
       ivy"com.zaxxer:HikariCP:4.0.3",
-      ivy"org.postgresql:postgresql:42.5.4",
       ivy"org.testcontainers:testcontainers:1.17.6",
-      ivy"org.testcontainers:postgresql:1.17.6"
+      ivy"org.testcontainers:postgresql:1.17.6",
+      ivy"org.postgresql:postgresql:42.5.4",
+      ivy"org.testcontainers:mysql:1.19.3",
+      ivy"mysql:mysql-connector-java:8.0.33",
+      ivy"org.testcontainers:mariadb:1.19.3",
+      ivy"org.mariadb.jdbc:mariadb-java-client:3.3.2"
+
+
     )
   }
 }

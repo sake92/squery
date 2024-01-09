@@ -16,16 +16,4 @@ case class CustomerWithPhoneOpt(c: Customer, p: Option[Phone]) derives SqlReadRo
 case class Address(id: Int, name: Option[String]) derives SqlReadRow
 case class CustomerWithAddressOpt(c: Customer, a: Option[Address]) derives SqlReadRow
 
-case class Datatypes(
-    int: Option[Int],
-    long: Option[Long],
-    double: Option[Double],
-    boolean: Option[Boolean],
-    string: Option[String],
-    uuid: Option[UUID],
-    tstz: Option[Instant],
-    clr: Option[Color]
-) derives SqlReadRow
 
-enum Color derives SqlRead, SqlWrite:
-  case red, green, blue

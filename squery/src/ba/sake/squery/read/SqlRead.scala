@@ -82,14 +82,6 @@ object SqlRead {
       Option(jRes.getTimestamp(colIdx)).map(_.toLocalDateTime())
   }
 
-  given SqlRead[UUID] with {
-    def readByName(jRes: jsql.ResultSet, colName: String): Option[UUID] =
-      Option(jRes.getObject(colName, classOf[UUID]))
-
-    def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[UUID] =
-      Option(jRes.getObject(colIdx, classOf[UUID]))
-  }
-
   // this "cannot fail"
   given [T](using sr: SqlRead[T]): SqlRead[Option[T]] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Option[T]] =

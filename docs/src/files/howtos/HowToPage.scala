@@ -22,7 +22,7 @@ trait HowToPage extends DocPage {
     InterpolateValues,
     InterpolateQueries,
     DynamicQueries,
-    Transactions,
+    Transactions
   )
 
   override def pageCategory = Some("How-Tos")

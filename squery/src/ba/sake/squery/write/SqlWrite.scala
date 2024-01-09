@@ -118,16 +118,6 @@ object SqlWrite {
       case None => ps.setNull(idx, jsql.Types.TIMESTAMP)
   }
 
-  given SqlWrite[UUID] with {
-    def write(
-        ps: jsql.PreparedStatement,
-        idx: Int,
-        valueOpt: Option[UUID]
-    ): Unit = valueOpt match
-      case Some(value) => ps.setObject(idx, value)
-      case None        => ps.setNull(idx, jsql.Types.OTHER)
-  }
-
   given [T](using sw: SqlWrite[T]): SqlWrite[Option[T]] with {
     def write(
         ps: jsql.PreparedStatement,
@@ -175,8 +165,8 @@ object SqlWrite {
                 case Some(value) =>
                   val index = $m.ordinal(value)
                   val label = $labels(index)
-                  ps.setObject(idx, label, jsql.Types.OTHER)
-                case None => ps.setNull(idx, jsql.Types.OTHER)
+                  ps.setString(idx, label)
+                case None => ps.setString(idx, null)
           }
         }
 

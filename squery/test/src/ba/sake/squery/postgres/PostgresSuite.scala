@@ -1,10 +1,30 @@
 package ba.sake.squery
+package postgres
 
 import java.util.UUID
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.collection.decorators._
 import org.testcontainers.containers.PostgreSQLContainer
+
+// UUID, enum.. Postgres specific
+case class Datatypes(
+    d_int: Option[Int],
+    d_long: Option[Long],
+    d_double: Option[Double],
+    d_boolean: Option[Boolean],
+    d_string: Option[String],
+    d_uuid: Option[UUID],
+    d_tstz: Option[Instant],
+    d_clr: Option[Color]
+) derives SqlReadRow:
+  def insertTuple = sql"(${d_int}, ${d_long}, ${d_double}, ${d_boolean}, ${d_string}, ${d_uuid}, ${d_tstz}, ${d_clr})"
+
+object Datatypes:
+  inline val * = "d_int, d_long, d_double, d_boolean, d_string, d_uuid, d_tstz, d_clr"
+
+enum Color derives SqlRead, SqlWrite:
+  case red, green, blue
 
 class PostgresSuite extends munit.FunSuite {
 
@@ -28,6 +48,9 @@ class PostgresSuite extends munit.FunSuite {
 
     override def beforeAll(): Unit = {
       container = PostgreSQLContainer("postgres:9.6.12")
+      // let PG to figure out that a setString is actually an enum
+      // https://stackoverflow.com/a/43125099/4496364
+      container.withUrlParam("stringtype", "unspecified") // TODO document
       container.start()
 
       val ds = com.zaxxer.hikari.HikariDataSource()
@@ -246,14 +269,14 @@ class PostgresSuite extends munit.FunSuite {
       // postgres has MICROseconds precision
       sql"""
         CREATE TABLE datatypes(
-          int INTEGER,
-          long BIGINT,
-          double DOUBLE PRECISION,
-          boolean BOOLEAN,
-          string VARCHAR(255),
-          uuid UUID,
-          tstz TIMESTAMPTZ,
-          clr color
+          d_int INTEGER,
+          d_long BIGINT,
+          d_double DOUBLE PRECISION,
+          d_boolean BOOLEAN,
+          d_string VARCHAR(255),
+          d_uuid UUID,
+          d_tstz TIMESTAMPTZ,
+          d_clr color
         )
       """.update()
       val dt1 = Datatypes(
@@ -269,18 +292,16 @@ class PostgresSuite extends munit.FunSuite {
       val dt2 = Datatypes(None, None, None, None, None, None, None, None)
 
       val values = Seq(dt1, dt2)
-        .map(dt =>
-          sql"(${dt.int}, ${dt.long}, ${dt.double}, ${dt.boolean}, ${dt.string}, ${dt.uuid}, ${dt.tstz}, ${dt.clr})"
-        )
+        .map(_.insertTuple)
         .intersperse(sql",")
         .reduce(_ ++ _)
       sql"""
-        INSERT INTO datatypes(int, long, double, boolean, string, uuid, tstz, clr)
+        INSERT INTO datatypes(${Datatypes.*})
         VALUES ${values}
       """.insert()
 
       val storedRows = sql"""
-        SELECT int, long, double, boolean, string, uuid, tstz, clr
+        SELECT ${Datatypes.*}
         FROM datatypes
       """.readRows[Datatypes]()
       assertEquals(
@@ -340,6 +361,8 @@ class PostgresSuite extends munit.FunSuite {
     val ctx = initDb()
     ctx.run {
       // custom squery warnings
+      // no WHERE clause
+      // TODO how to test these..?
       sql"UPDATE customers SET name='bla'".update()
 
       intercept[Exception] {
