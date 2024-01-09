@@ -29,8 +29,6 @@ case class Query(
       colNames: Seq[String] = Seq.empty
   ): jsql.PreparedStatement = {
     val enrichedQueryString = Query.enrichSqlQuery(sqlString)
-    // TODO reorder enriched issue..
-    // println("enriched: " + enrichedQueryString)
     logger.debug(s"Executing statement: $enrichedQueryString")
     val stat =
       if retGenKeys then

@@ -359,15 +359,14 @@ class PostgresSuite extends munit.FunSuite {
     ctx.run {
       // custom squery warnings
       // no WHERE clause
-      // TODO how to test these..?
+      // TODO how to test logging statements ??
       sql"UPDATE customers SET name='bla'".update()
 
       intercept[Exception] {
         sql"DELETE FROM customers".update()
       }
 
-      // JDBC warning
-      // TODO not triggering...
+      // TODO not triggering JDBC warning...
       sql"""
         CREATE OR REPLACE FUNCTION test_fun_warn() RETURNS integer AS $$$$
         BEGIN

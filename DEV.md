@@ -13,7 +13,7 @@
 ./mill examples.runMain bla
 
 # for local dev/test
-./mill  squery.publishM2Local
+./mill  squery.publishLocal
 
 git diff
 git commit -am "msg"
@@ -36,3 +36,5 @@ git push  --atomic origin main $VERSION
 - neo4j
 - cassandra
 - sql parser reorders OFFSET LIMIT ???
+- generate (id, name) + corresponding insert (?, ?)
+    depending on autoincrement/serial stuff

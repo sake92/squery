@@ -6,10 +6,6 @@ import scala.collection.mutable.ListBuffer
 import ba.sake.squery.write.*
 import ba.sake.squery.Query
 
-// TODO make derived SqlArgument[CaseClass]
-// and insert (?, ?) automatically ??
-// or autogenerate it with scalafix, easier
-
 case class LiteralString(value: String)
 
 case class DynamicArg[T](value: T)(using val sqlWrite: SqlWrite[T])

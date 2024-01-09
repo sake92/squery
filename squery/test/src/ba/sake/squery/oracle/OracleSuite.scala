@@ -240,21 +240,6 @@ class OracleSuite extends munit.FunSuite {
     }
   }
 
-  // TODO seems like this only works with PL/SQL ...
-  /*
-  test("INSERT returning columns") {
-    val ctx = initDb()
-    ctx.run {
-      val customer = sql"""
-        INSERT INTO customers(name)
-        VALUES ('bla')
-        RETURNING id, name, street
-        INTO id, name, street
-      """.insertReturningRow[Customer]()
-      assertEquals(customer.name, "bla")
-    }
-  }
-   */
   test("UPDATE should return number of affected rows") {
     val ctx = initDb()
     ctx.run {
