@@ -29,8 +29,10 @@ git push  --atomic origin main $VERSION
 
 # TODOs
 
+- matrix of supported features (or require an implicit.. e.g. Supports[ReturningGeneratedColumns])
 - update scastie!
-- more tutorials
+- write tutorials
 - privatize stuff
-- test more databases
+- neo4j
+- cassandra
 - sql parser reorders OFFSET LIMIT ???

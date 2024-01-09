@@ -4,7 +4,6 @@ import utils.*
 import Bundle.*
 
 // TODO how to map flat result to List[stuff] groupByOrdered :)
-// TODO transactions
 
 trait HowToPage extends DocPage {
 
@@ -22,7 +21,8 @@ trait HowToPage extends DocPage {
     InterpolateValues,
     InterpolateQueries,
     DynamicQueries,
-    Transactions
+    Transactions,
+    MapToObject
   )
 
   override def pageCategory = Some("How-Tos")
