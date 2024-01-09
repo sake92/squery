@@ -3,10 +3,16 @@
       display: none;
     }
 
+    .affix {
+      width: 100%;
+    }
+
     @media (min-width: 991px) {
       .affix {
-          position: fixed;
-          width: 10%;
+        position: fixed;
+        width: 15%;
+        height: 80vh;
+        overflow: auto;
       }
 
       nav#tocScrollspy {
@@ -26,7 +32,7 @@
           padding-left: 3em;
           font-size: .8em;
       }
-    </style></head><body><div class="hidden-print"><nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top"><div class="container-fluid"><a class="navbar-brand" href="../index.html"><span><img src="../images/favicon.ico" alt="logo" width="32" height="32" /></span> Squery</a><button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#main-navbar"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="main-navbar"><ul class="navbar-nav"></ul><ul class="navbar-nav ms-auto"><li class="nav-item"><a href="../tutorials/index.html" class="nav-link">Tutorials</a></li><li class="nav-item"><a href="index.html" class="active nav-link">How-Tos</a></li><li class="nav-item"><a href="../reference/index.html" class="nav-link">Reference</a></li><li class="nav-item"><a href="../philosophy/index.html" class="nav-link">Philosophy</a></li></ul></div></div></nav></div><div class="container-fluid"><div class="row"><div class="col-md-3 d-flex justify-content-end hidden-print"><nav class="affix"><ul class="nav nav-pills flex-column"><li><a href="index.html" class="nav-link ">How-Tos</a></li><li><a href="read-one-col-rows.html" class="nav-link ">Read One-Column Values</a></li><li><a href="read-multi-col-rows.html" class="nav-link ">Read Multi-Column Values</a></li><li><a href="full-join.html" class="nav-link ">Full Join</a></li><li><a href="outer-join.html" class="nav-link ">Outer Join</a></li><li><a href="insert.html" class="nav-link ">Insert</a></li><li><a href="insert-ret-gen-keys.html" class="nav-link ">Insert returning generated keys</a></li><li><a href="insert-ret-values.html" class="nav-link active">Insert returning inserted values</a></li><li><a href="update.html" class="nav-link ">Update</a></li><li><a href="interpolate-values.html" class="nav-link ">Interpolate values</a></li><li><a href="interpolate-queries.html" class="nav-link ">Interpolate Queries</a></li><li><a href="dynamic-queries.html" class="nav-link ">Dynamic Queries</a></li></ul></nav></div><div data-bs-spy="scroll" data-bs-target="#tocScrollspy" class="col-md-6"><div class="hidden-print"></div><div><section id="how-to-insert-returning-inserted-values"><h2>How To Insert returning inserted values?</h2><p>This method inserts the rows and returns columns you want from the inserted rows.<br />
+    </style></head><body><div class="hidden-print"><nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top"><div class="container-fluid"><a class="navbar-brand" href="../index.html"><span><img src="../images/favicon.ico" alt="logo" width="32" height="32" /></span> Squery</a><button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#main-navbar"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="main-navbar"><ul class="navbar-nav"></ul><ul class="navbar-nav ms-auto"><li class="nav-item"><a href="../tutorials/index.html" class="nav-link">Tutorials</a></li><li class="nav-item"><a href="index.html" class="active nav-link">How-Tos</a></li><li class="nav-item"><a href="../reference/index.html" class="nav-link">Reference</a></li><li class="nav-item"><a href="../philosophy/index.html" class="nav-link">Philosophy</a></li></ul></div></div></nav></div><div class="container-fluid"><div class="row"><div class="col-md-3 d-flex justify-content-end hidden-print"><nav class="affix"><ul class="nav nav-pills flex-column"><li><a href="index.html" class="nav-link ">How-Tos</a></li><li><a href="read-one-col-rows.html" class="nav-link ">Read One-Column Values</a></li><li><a href="read-multi-col-rows.html" class="nav-link ">Read Multi-Column Values</a></li><li><a href="full-join.html" class="nav-link ">Full Join</a></li><li><a href="outer-join.html" class="nav-link ">Outer Join</a></li><li><a href="insert.html" class="nav-link ">Insert</a></li><li><a href="insert-ret-gen-keys.html" class="nav-link ">Insert returning generated keys</a></li><li><a href="insert-ret-values.html" class="nav-link active">Insert returning inserted values</a></li><li><a href="update.html" class="nav-link ">Update</a></li><li><a href="interpolate-literal-strings.html" class="nav-link ">Interpolate literal strings</a></li><li><a href="interpolate-values.html" class="nav-link ">Interpolate values</a></li><li><a href="interpolate-queries.html" class="nav-link ">Interpolate Queries</a></li><li><a href="dynamic-queries.html" class="nav-link ">Dynamic Queries</a></li><li><a href="transactions.html" class="nav-link ">Transactions</a></li></ul></nav></div><div data-bs-spy="scroll" data-bs-target="#tocScrollspy" class="col-md-6"><div class="hidden-print"></div><div><section id="how-to-insert-returning-inserted-values"><h2>How To Insert returning inserted values?</h2><p>This method inserts the rows and returns columns you want from the inserted rows.<br />
 This is <strong>not supported by all databases</strong>, unfortunately.</p>
 <pre><code class="language-scala">def insertCustomers: List[Customer] = ctx.run {
   sql&quot;&quot;&quot;
