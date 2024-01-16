@@ -55,7 +55,7 @@ val ctx = SqueryContext(ds)
 }
 </code></pre>
 <p>or if you want to run them transactionally:</p>
-<pre><code class="language-scala">ctx.runTransaction() {
+<pre><code class="language-scala">ctx.runTransaction {
   // queries go here!
 }
 </code></pre>
