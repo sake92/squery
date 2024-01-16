@@ -38,10 +38,10 @@ type SqlInterpolatorArgOrQuery = LiteralString | DynamicArg[?] | Query
   */
 extension (sc: StringContext) {
 
-  inline def sql(args: SqlInterpolatorArgOrQuery*): Query =
+  def sql(args: SqlInterpolatorArgOrQuery*): Query =
     val stringPartsIter = sc.parts.iterator
     val argsIter = args.iterator
-    var sb = StringBuilder(stringPartsIter.next())
+    val sb = StringBuilder(stringPartsIter.next())
     val allArgs = ListBuffer.empty[DynamicArg[?]]
 
     while stringPartsIter.hasNext do {
