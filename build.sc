@@ -7,6 +7,8 @@ import io.kipp.mill.ci.release.CiReleaseModule
 import ba.sake.millhepek.MillHepekModule
 
 object squery extends CommonScalaModule with SqueryPublishModule {
+  def artifactName = "squery"
+
   def ivyDeps = Agg(
     ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
     ivy"com.github.jsqlparser:jsqlparser:4.7",
@@ -32,6 +34,17 @@ object squery extends CommonScalaModule with SqueryPublishModule {
   }
 }
 
+object generator extends CommonScalaModule with SqueryPublishModule {
+  def artifactName = "squery-generator"
+  def moduleDeps = Seq(squery)
+  def ivyDeps = Agg(
+    ivy"org.apache.commons:commons-text:1.12.0",
+    ivy"com.lihaoyi::pprint:0.9.0",
+    ivy"com.zaxxer:HikariCP:4.0.3",
+    ivy"org.postgresql:postgresql:42.5.4"
+  )
+}
+
 object docs extends CommonScalaModule with MillHepekModule {
   def ivyDeps = Agg(
     ivy"ba.sake::hepek:0.24.1"
@@ -43,7 +56,7 @@ trait CommonScalaModule extends ScalaModule with ScalafmtModule {
 }
 
 trait SqueryPublishModule extends CiReleaseModule {
-  def artifactName = "squery"
+
   def pomSettings = PomSettings(
     organization = "ba.sake",
     url = "https://github.com/sake92/squery",

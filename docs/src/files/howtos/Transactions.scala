@@ -18,14 +18,14 @@ object Transactions extends HowToPage {
       We use the `runTransaction` to run queries inside of a transaction:
       ```scala
       ctx.runTransaction {
-        sql"
+        sql${Consts.tq}
           INSERT INTO customers(name)
           VALUES (1, 'abc')
-        ".insert()
-        sql"
+        ${Consts.tq}.insert()
+        sql${Consts.tq}
           INSERT INTO customers(name)
           VALUES (1, 'def')
-        ".insert()
+        ${Consts.tq}.insert()
       }
       ```
       If one of the queries fails, the transaction will be rolled back, nothing will happen.

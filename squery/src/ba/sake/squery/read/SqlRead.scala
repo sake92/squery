@@ -29,6 +29,14 @@ object SqlRead {
       Option(jRes.getBoolean(colIdx)).filterNot(_ => jRes.wasNull())
   }
 
+  given SqlRead[Short] with {
+    def readByName(jRes: jsql.ResultSet, colName: String): Option[Short] =
+      Option(jRes.getShort(colName)).filterNot(_ => jRes.wasNull())
+    def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Short] =
+      Option(jRes.getShort(colIdx)).filterNot(_ => jRes.wasNull())
+  }
+
+
   given SqlRead[Int] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Int] =
       Option(jRes.getInt(colName)).filterNot(_ => jRes.wasNull())
@@ -80,6 +88,14 @@ object SqlRead {
 
     def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[LocalDateTime] =
       Option(jRes.getTimestamp(colIdx)).map(_.toLocalDateTime())
+  }
+
+  given SqlRead[Array[Byte]] with {
+    def readByName(jRes: jsql.ResultSet, colName: String): Option[Array[Byte]] =
+      Option(jRes.getBytes(colName))
+
+    def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Array[Byte]] =
+      Option(jRes.getBytes(colIdx))
   }
 
   // this "cannot fail"
