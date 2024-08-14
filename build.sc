@@ -17,8 +17,8 @@ object squery extends CommonScalaModule with SqueryPublishModule {
 
   object test extends ScalaTests with TestModule.Munit {
     def ivyDeps = Agg(
+      ivy"org.scalameta::munit:1.0.0",
       ivy"ch.qos.logback:logback-classic:1.4.6",
-      ivy"org.scalameta::munit:1.0.0-M7",
       ivy"com.zaxxer:HikariCP:4.0.3",
       ivy"com.h2database:h2:2.1.214",
       ivy"org.testcontainers:testcontainers:1.17.6",
@@ -36,13 +36,25 @@ object squery extends CommonScalaModule with SqueryPublishModule {
 
 object generator extends CommonScalaModule with SqueryPublishModule {
   def artifactName = "squery-generator"
+
   def moduleDeps = Seq(squery)
+
   def ivyDeps = Agg(
-    ivy"org.apache.commons:commons-text:1.12.0",
-    ivy"com.lihaoyi::pprint:0.9.0",
-    ivy"com.zaxxer:HikariCP:4.0.3",
-    ivy"org.postgresql:postgresql:42.5.4"
+    ivy"ch.qos.logback:logback-classic:1.4.6",
+    ivy"com.lihaoyi::os-lib:0.10.3",
+    ivy"org.apache.commons:commons-text:1.12.0"
   )
+
+  object test extends ScalaTests with TestModule.Munit {
+
+    def ivyDeps = Agg(
+      ivy"org.scalameta::munit:1.0.0",
+      ivy"com.zaxxer:HikariCP:4.0.3",
+      ivy"org.postgresql:postgresql:42.5.4",
+      ivy"org.testcontainers:testcontainers:1.17.6",
+      ivy"org.testcontainers:postgresql:1.17.6"
+    )
+  }
 }
 
 object docs extends CommonScalaModule with MillHepekModule {

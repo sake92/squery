@@ -12,12 +12,10 @@ given SqlRead[UUID] with {
     Option(jRes.getObject(colIdx, classOf[UUID]))
 }
 
-/*
 given [T: SqlRead]: SqlRead[Array[T]] with {
   def readByName(jRes: jsql.ResultSet, colName: String): Option[Array[T]] =
-    Option(jRes.getArray(colName)).map(_.asInstanceOf[Array[T]])
+    Option(jRes.getArray(colName)).map(_.getArray().asInstanceOf[Array[T]])
 
   def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Array[T]] =
-    Option(jRes.getArray(colIdx)).map(_.asInstanceOf[Array[T]])
+    Option(jRes.getArray(colIdx)).map(_.getArray().asInstanceOf[Array[T]])
 }
- */

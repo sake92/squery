@@ -151,6 +151,7 @@ class DbMetadataExtractor(ds: DataSource) {
       case "numeric"                     => ColumnType.Predefined("Double")
       case "text"                        => ColumnType.Predefined("String")
       case "character"                   => ColumnType.Predefined("String")
+      case "character varying"           => ColumnType.Predefined("String")
       case "tsvector"                    => ColumnType.Predefined("String")
       case "date"                        => ColumnType.Predefined("LocalDate")
       case "timestamp without time zone" => ColumnType.Predefined("LocalDateTime")
