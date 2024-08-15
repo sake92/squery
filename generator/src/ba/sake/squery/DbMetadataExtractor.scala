@@ -1,9 +1,9 @@
 package ba.sake.squery.generator
 
-import java.sql.{Array => _, *}
+import java.sql.{Array => _, _}
 import javax.sql.DataSource
-import scala.util.*
-import scala.util.chaining.*
+import scala.util._
+import scala.util.chaining._
 import scala.collection.mutable.ArrayBuffer
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.CaseUtils
@@ -63,7 +63,7 @@ class DbMetadataExtractor(ds: DataSource) {
 
     val res = ArrayBuffer.empty[ColumnDef]
     Using.resource(databaseMetaData.getColumns(null, schemaName, tableName, null)) { resultSet =>
-      while resultSet.next() do {
+      while (resultSet.next()) {
         val columnName = resultSet.getString("COLUMN_NAME")
         val typeName = resultSet.getString("TYPE_NAME")
         val jdbcType = resultSet.getInt("DATA_TYPE") // java.sql.Types
@@ -99,7 +99,7 @@ class DbMetadataExtractor(ds: DataSource) {
     Using.resource(connection.createStatement()) { stmt =>
       Using.resource(stmt.executeQuery(query)) { rs =>
         val buff = ArrayBuffer.empty[((String, String), ColumnType)]
-        while rs.next() do {
+        while (rs.next()) {
           val tableName = rs.getString("table_name")
           val columnName = rs.getString("column_name")
           val displayTypeOriginal = rs.getString("display_type_original")
@@ -119,14 +119,11 @@ class DbMetadataExtractor(ds: DataSource) {
       displayTypeResolved: String,
       arrayDim: Int
   ): ColumnType = {
-    if arrayDim > 0 then {
+    if (arrayDim > 0) {
       val arrayScalarType = displayTypeOriginal.takeWhile(_ != '[')
       resolveScalarType(arrayScalarType)
         .map { scalarType =>
-          val scalarTypeName = scalarType match
-            case ColumnType.Predefined(name)     => name
-            case ColumnType.Enumeration(name, _) => name
-            case ColumnType.Unknown(_)           => "<UNKNOWN>"
+          val scalarTypeName = scalarType.name
           val arrayType = ("Array[" * arrayDim) + scalarTypeName + ("]" * arrayDim)
           // TODO array of enums/domain types?
           ColumnType.Predefined(arrayType)
@@ -156,8 +153,9 @@ class DbMetadataExtractor(ds: DataSource) {
       case "date"                        => ColumnType.Predefined("LocalDate")
       case "timestamp without time zone" => ColumnType.Predefined("LocalDateTime")
       case "timestamp with time zone"    => ColumnType.Predefined("Instant")
+      case "uuid"                        => ColumnType.Predefined("UUID")
       case "bytea"                       => ColumnType.Predefined("Array[Byte]")
-      case other                         => throw RuntimeException(s"Unknown scalar type ${other}")
+      case other                         => throw new RuntimeException(s"Unknown scalar type ${other}")
     }
   }
 
@@ -165,10 +163,10 @@ class DbMetadataExtractor(ds: DataSource) {
     Using(connection.createStatement()) { stmt =>
       val resultSet = stmt.executeQuery(s"select unnest(enum_range(null, null::${typeName}))")
       val enumValues = ArrayBuffer.empty[String]
-      while resultSet.next() do {
+      while (resultSet.next()) {
         enumValues += resultSet.getString(1)
       }
-      if enumValues.isEmpty then throw RuntimeException(s"Enum '${typeName}' has no values and cannot be generated.")
+      if (enumValues.isEmpty) throw new RuntimeException(s"Enum '${typeName}' has no values and cannot be generated.")
       else ColumnType.Enumeration(typeName, enumValues.toSeq)
     }
 
@@ -177,15 +175,18 @@ class DbMetadataExtractor(ds: DataSource) {
     val metadata = resultSet.getMetaData()
     val totalCols = metadata.getColumnCount()
     var columnNames = Seq.empty[String]
-    for i <- 1 to totalCols do columnNames = columnNames.appended(metadata.getColumnName(i))
+    for (i <- 1 to totalCols) {
+      columnNames = columnNames.appended(metadata.getColumnName(i))
+    }
 
-    while (resultSet.next()) do
+    while (resultSet.next()) {
       println("+" * 30)
-      for i <- 1 to totalCols do
+      for (i <- 1 to totalCols) {
         val value = resultSet.getString(i)
         print(s"${columnNames(i - 1)} = ${value}; ")
+      }
       println()
-    end while
+    }
   }
 }
 
@@ -210,7 +211,9 @@ case class ColumnDef(
     defaultValue: Option[String]
 )
 
-enum ColumnType:
-  case Predefined(name: String)
-  case Enumeration(name: String, values: Seq[String])
-  case Unknown(originalName: String)
+sealed abstract class ColumnType
+object ColumnType {
+  case class Predefined(name: String) extends ColumnType
+  case class Enumeration(name: String, values: Seq[String]) extends ColumnType
+  case class Unknown(originalName: String) extends ColumnType
+}

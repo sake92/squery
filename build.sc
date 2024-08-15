@@ -1,12 +1,31 @@
 import $ivy.`io.chris-kipp::mill-ci-release::0.1.9`
+import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.7.1`
 import $ivy.`ba.sake::mill-hepek::0.0.2`
 
-import mill._, mill.scalalib._, publish._, scalafmt._
+import mill._, mill.scalalib._
+import mill.scalalib.scalafmt._
+import mill.scalalib.publish._
+import mill.scalalib.api.ZincWorkerUtil.scalaNativeBinaryVersion
+import de.tobiasroeser.mill.integrationtest._
 
 import io.kipp.mill.ci.release.CiReleaseModule
 import ba.sake.millhepek.MillHepekModule
 
-object squery extends CommonScalaModule with SqueryPublishModule {
+val scala213 = "2.13.14"
+
+object squery extends CommonScalaModule with CiReleaseModule {
+
+  def pomSettings = PomSettings(
+    organization = "ba.sake",
+    url = "https://github.com/sake92/squery",
+    licenses = Seq(License.Common.Apache2),
+    versionControl = VersionControl.github("sake92", "squery"),
+    description = "Squery SQL library",
+    developers = Seq(
+      Developer("sake92", "Sakib Hadžiavdić", "https://sake.ba")
+    )
+  )
+
   def artifactName = "squery"
 
   def ivyDeps = Agg(
@@ -34,19 +53,30 @@ object squery extends CommonScalaModule with SqueryPublishModule {
   }
 }
 
-object generator extends CommonScalaModule with SqueryPublishModule {
+object generator extends ScalaModule with CiReleaseModule {
   def artifactName = "squery-generator"
 
-  def moduleDeps = Seq(squery)
+  override def scalaVersion = scala213
+
+  def pomSettings = PomSettings(
+    organization = "ba.sake",
+    url = "https://github.com/sake92/squery",
+    licenses = Seq(License.Common.Apache2),
+    versionControl = VersionControl.github("sake92", "squery"),
+    description = "Squery Generator library",
+    developers = Seq(
+      Developer("sake92", "Sakib Hadžiavdić", "https://sake.ba")
+    )
+  )
 
   def ivyDeps = Agg(
+    ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
     ivy"ch.qos.logback:logback-classic:1.4.6",
     ivy"com.lihaoyi::os-lib:0.10.3",
     ivy"org.apache.commons:commons-text:1.12.0"
   )
 
   object test extends ScalaTests with TestModule.Munit {
-
     def ivyDeps = Agg(
       ivy"org.scalameta::munit:1.0.0",
       ivy"com.zaxxer:HikariCP:4.0.3",
@@ -57,6 +87,61 @@ object generator extends CommonScalaModule with SqueryPublishModule {
   }
 }
 
+/* MILL PLUGIN */
+val millVersion = "0.11.11"
+
+object `mill-plugin` extends ScalaModule with CiReleaseModule with ScalafmtModule {
+
+  def millBinaryVersion(millVersion: String) =
+    scalaNativeBinaryVersion(millVersion)
+
+  override def scalaVersion = scala213
+
+  override def artifactName =
+    s"mill-squery-generator_mill${millBinaryVersion(millVersion)}"
+
+  override def pomSettings = PomSettings(
+    description = "Mill plugin for generating squery source code",
+    organization = "ba.sake",
+    url = "https://github.com/sake92/squery",
+    licenses = Seq(License.`Apache-2.0`),
+    versionControl = VersionControl.github(owner = "sake92", repo = "squery"),
+    developers = Seq(Developer("sake92", "Sakib Hadziavdic", "https://github.com/sake92"))
+  )
+
+  override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
+    ivy"com.lihaoyi::mill-scalalib:${millVersion}"
+  )
+
+  def moduleDeps = Seq(generator)
+
+  def ivyDeps = Agg(
+    ivy"org.postgresql:postgresql:42.6.0"
+  )
+
+  override def scalacOptions = Seq("-Ywarn-unused", "-deprecation")
+
+}
+
+object `mill-plugin-itest` extends MillIntegrationTestModule {
+
+  override def millTestVersion = millVersion
+
+  override def pluginsUnderTest = Seq(`mill-plugin`)
+
+  def testBase = millSourcePath / "src"
+
+  override def testInvocations: T[Seq[(PathRef, Seq[TestInvocation.Targets])]] =
+    T {
+      Seq(
+        PathRef(testBase / "simple") -> Seq(
+          TestInvocation.Targets(Seq("verify"), noServer = true)
+        )
+      )
+    }
+}
+
+/* DOCS */
 object docs extends CommonScalaModule with MillHepekModule {
   def ivyDeps = Agg(
     ivy"ba.sake::hepek:0.24.1"
@@ -65,18 +150,4 @@ object docs extends CommonScalaModule with MillHepekModule {
 
 trait CommonScalaModule extends ScalaModule with ScalafmtModule {
   def scalaVersion = "3.4.0"
-}
-
-trait SqueryPublishModule extends CiReleaseModule {
-
-  def pomSettings = PomSettings(
-    organization = "ba.sake",
-    url = "https://github.com/sake92/squery",
-    licenses = Seq(License.Common.Apache2),
-    versionControl = VersionControl.github("sake92", "squery"),
-    description = "Squery SQL library",
-    developers = Seq(
-      Developer("sake92", "Sakib Hadžiavdić", "https://sake.ba")
-    )
-  )
 }
