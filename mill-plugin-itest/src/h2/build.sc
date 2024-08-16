@@ -16,7 +16,7 @@ object root extends ScalaModule with SqueryGeneratorModule with FlywayModule {
   def ivyDeps = Agg(
     ivy"com.zaxxer:HikariCP:4.0.3",
     ivy"com.h2database:h2:2.3.232",
-    ivy"ba.sake::squery:0.3.0-10-e7e6a2-SNAPSHOT" // TODO remove after https://github.com/lefou/mill-integrationtest/issues/198
+    ivy"ba.sake::squery:0.3.0-14-8c8556-SNAPSHOT" // TODO remove after https://github.com/lefou/mill-integrationtest/issues/198
   )
 
   // TODO remove after https://github.com/lefou/mill-integrationtest/issues/198
