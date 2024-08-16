@@ -22,19 +22,16 @@ object DbDefExtractor {
 
 abstract class DbDefExtractor(ds: DataSource) {
 
-  def extract(schemaNames: Seq[String]): DbDef = Using.resource(ds.getConnection()) { connection =>
+  def extract(): DbDef = Using.resource(ds.getConnection()) { connection =>
     val databaseMetaData = connection.getMetaData()
     val dbName = databaseMetaData.getDatabaseProductName().toLowerCase
-    val existingSchemaNames = Using.resource(databaseMetaData.getSchemas()) { rs =>
+    val schemaNames = Using.resource(databaseMetaData.getSchemas()) { rs =>
       val buff = ArrayBuffer.empty[String]
       while (rs.next()) {
         buff += rs.getString("TABLE_SCHEM")
       }
       buff.toSeq
     }
-    val missingSchemaNames = schemaNames.toSet.diff(existingSchemaNames.toSet)
-    if (missingSchemaNames.nonEmpty)
-      throw new RuntimeException(s"Schemas do not exist in database: ${missingSchemaNames.mkString(", ")}")
     val schemaDefs = schemaNames.map { schemaName =>
       val tables = extractTables(connection, schemaName, databaseMetaData)
       SchemaDef(name = schemaName, tables = tables)
