@@ -39,6 +39,26 @@ object SqlWrite {
       case None        => ps.setNull(idx, jsql.Types.BOOLEAN)
   }
 
+  given SqlWrite[Byte] with {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[Byte]
+    ): Unit = valueOpt match
+      case Some(value) => ps.setByte(idx, value)
+      case None        => ps.setNull(idx, jsql.Types.TINYINT)
+  }
+
+  given SqlWrite[Short] with {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[Short]
+    ): Unit = valueOpt match
+      case Some(value) => ps.setShort(idx, value)
+      case None        => ps.setNull(idx, jsql.Types.SMALLINT)
+  }
+
   given SqlWrite[Int] with {
     def write(
         ps: jsql.PreparedStatement,
@@ -116,6 +136,16 @@ object SqlWrite {
           )
         )
       case None => ps.setNull(idx, jsql.Types.TIMESTAMP)
+  }
+
+  given SqlWrite[Array[Byte]] with {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[Array[Byte]]
+    ): Unit = valueOpt match
+      case Some(value) => ps.setBytes(idx, value)
+      case None        => ps.setNull(idx, jsql.Types.BINARY)
   }
 
   given [T](using sw: SqlWrite[T]): SqlWrite[Option[T]] with {

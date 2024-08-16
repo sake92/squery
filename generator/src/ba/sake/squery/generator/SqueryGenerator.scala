@@ -113,20 +113,34 @@ class SqueryGenerator(config: SqueryGeneratorConfig = SqueryGeneratorConfig.Defa
         s"""prefix + ${columnDef.metadata.name.safeIdentifier}"""
       }
       val caseClassName = transformName(tableDef.name, config.typeNameMapper) + config.rowTypeSuffix
+      val (pkValue, pkTypeDef) = // TODO handle empty
+        if (tableDef.pkColumns.length == 1) {
+          val pkCol = tableDef.pkColumns.head
+          (s"${pkCol.metadata.name}", s"type PK = ${pkCol.scalaType.name}")
+        } else {
+          val (pkColExprs, pkColDefs) = tableDef.pkColumns.map { pkCol =>
+            (pkCol.metadata.name, s"${pkCol.metadata.name}: ${pkCol.scalaType.name}")
+          }.unzip
+          (s"${caseClassName}.PK(${pkColExprs.mkString(", ")})", s"case class PK(${pkColDefs.mkString(", ")})")
+        }
       val contents =
         s"""|case class ${caseClassName}(
             |${columnDefsScala.mkString(",\n")}
-            |) derives SqlReadRow
+            |) derives SqlReadRow {
+            |  def pk: ${caseClassName}.PK = ${pkValue}
+            |}
             |
             |object ${caseClassName} {
-            |${columnNamesScala.mkString("\n")}
-            |
             |  inline val TableName = "${tableDef.schema}.${tableDef.name}"
+            |
+            |${columnNamesScala.mkString("\n")}
             |
             |  inline val * = prefixed("")
             |
             |  transparent inline def prefixed(inline prefix: String) =
             |    ${prefixedColumnNamesScala.mkString(""" + ", " + """)}
+            |
+            |  ${pkTypeDef}
             |}
             |""".stripMargin
       GeneratedFile(s"${caseClassName}.scala", contents)
@@ -135,9 +149,27 @@ class SqueryGenerator(config: SqueryGeneratorConfig = SqueryGeneratorConfig.Defa
     val daoFiles = schemaDef.tables.map { tableDef =>
       val caseClassName = transformName(tableDef.name, config.typeNameMapper) + config.rowTypeSuffix
       val daoClassName = transformName(tableDef.name, config.typeNameMapper) + "CrudDao"
+      val findByIdWhereExpr = if (tableDef.pkColumns.isEmpty) {
+        // TODO throw or skip when no pks
+        ???
+      } else if (tableDef.pkColumns.length == 1) {
+        s"${tableDef.pkColumns.head.metadata.name} = $${id}"
+      } else
+        tableDef.pkColumns
+          .map { pkCol =>
+            s"${pkCol.metadata.name} = $${id.${pkCol.metadata.name}}"
+          }
+          .mkString(" AND ")
       val contents =
         s"""|trait ${daoClassName} {
-            |  def countAll(): DbAction[Int] = sql"SELECT COUNT(*) FROM $${${caseClassName}.TableName}".readValue()
+            |  def countAll(): DbAction[Int] =
+            |    sql"SELECT COUNT(*) FROM $${${caseClassName}.TableName}".readValue()
+            |
+            |  def findAll(): DbAction[Seq[${caseClassName}]] =
+            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName}".readRows()
+            |
+            |  def findById(id: ${caseClassName}.PK): DbAction[${caseClassName}] =
+            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName} WHERE ${findByIdWhereExpr}".readRow()
             |}
             |
             |object ${daoClassName} extends ${daoClassName} {
@@ -214,6 +246,7 @@ object NameMapper {
   case object CamelCase extends NameMapper
 }
 
+// TODO camelCase identifiers??
 case class SqueryGeneratorConfig(
     typeNameMapper: NameMapper,
     rowTypeSuffix: String

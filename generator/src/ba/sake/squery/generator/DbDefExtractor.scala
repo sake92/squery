@@ -22,16 +22,19 @@ object DbDefExtractor {
 
 abstract class DbDefExtractor(ds: DataSource) {
 
-  def extract(): DbDef = Using.resource(ds.getConnection()) { connection =>
+  def extract(schemaNames: Seq[String]): DbDef = Using.resource(ds.getConnection()) { connection =>
     val databaseMetaData = connection.getMetaData()
     val dbName = databaseMetaData.getDatabaseProductName().toLowerCase
-    val schemaNames = Using.resource(databaseMetaData.getSchemas()) { rs =>
+    val existingSchemaNames = Using.resource(databaseMetaData.getSchemas()) { rs =>
       val buff = ArrayBuffer.empty[String]
       while (rs.next()) {
         buff += rs.getString("TABLE_SCHEM")
       }
       buff.toSeq
     }
+    val missingSchemaNames = schemaNames.toSet.diff(existingSchemaNames.toSet)
+    if (missingSchemaNames.nonEmpty)
+      throw new RuntimeException(s"Schemas do not exist in database: ${missingSchemaNames.mkString(", ")}")
     val schemaDefs = schemaNames.map { schemaName =>
       val tables = extractTables(connection, schemaName, databaseMetaData)
       SchemaDef(name = schemaName, tables = tables)
@@ -68,14 +71,14 @@ abstract class DbDefExtractor(ds: DataSource) {
         val tableName = tablesRS.getString("TABLE_NAME")
         val tableColumnDefs = allColumnDefs.filter(_.metadata.table == tableName)
         val pkColumns = Using.resource(databaseMetaData.getPrimaryKeys(null, schemaName, tableName)) { pksRS =>
-          val tableDefsRes = ArrayBuffer.empty[ColumnDef]
+          val pkColumnRes = ArrayBuffer.empty[ColumnDef]
           while (pksRS.next()) {
             val pkColName = pksRS.getString("COLUMN_NAME")
-            tableDefsRes += tableColumnDefs
+            pkColumnRes += tableColumnDefs
               .find(_.metadata.name == pkColName)
               .getOrElse(throw new RuntimeException(s"PK column not found: ${pkColName}"))
           }
-          tableDefsRes.toSeq
+          pkColumnRes.toSeq
         }
         tableDefsRes += TableDef(schemaName, tableName, tableColumnDefs, pkColumns)
       }
@@ -150,11 +153,13 @@ case class ColumnDef(
     scalaType: ColumnType
 )
 
-sealed abstract class ColumnType
+sealed abstract class ColumnType {
+  def name: String
+}
 object ColumnType {
   case class Predefined(name: String) extends ColumnType
   case class Enumeration(name: String, values: Seq[String]) extends ColumnType
-  case class Unknown(originalName: String) extends ColumnType
+  case class Unknown(name: String) extends ColumnType
 }
 
 // raw db data

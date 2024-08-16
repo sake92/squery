@@ -55,7 +55,7 @@ trait SqueryGeneratorModule extends JavaModule {
       } else throw new RuntimeException(s"Unsupported database ${jdbcUrl}")
 
     val extractor = DbDefExtractor(dataSource)
-    val dbDef = extractor.extract()
+    val dbDef = extractor.extract(squerySchemas().map(_._1))
     val generator = new SqueryGenerator()
     generator.generateFiles(
       dbDef,
