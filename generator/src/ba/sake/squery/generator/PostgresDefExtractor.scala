@@ -9,77 +9,14 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.CaseUtils
 
 // https://stackoverflow.com/a/16624964/4496364
-class DbMetadataExtractor(ds: DataSource) {
-
-  def extract(): DbMetadata = Using.resource(ds.getConnection()) { connection =>
-
-    val databaseMetaData = connection.getMetaData()
-    val dbName = databaseMetaData.getDatabaseProductName().toLowerCase
-
-    val schemaNames = Using.resource(databaseMetaData.getSchemas()) { rs =>
-      val buff = ArrayBuffer.empty[String]
-      while (rs.next()) {
-        buff += rs.getString("TABLE_SCHEM")
-      }
-      buff.toSeq
-    }
-    val schemas = schemaNames.map { schemaName =>
-      val tables = extractTables(connection, schemaName, databaseMetaData)
-      SchemaDef(name = schemaName, tables = tables)
-    }
-    DbMetadata(
-      name = dbName,
-      schemas = schemas
-    )
-  }
-
-  private def extractTables(
-      connection: Connection,
-      schemaName: String,
-      databaseMetaData: DatabaseMetaData
-  ): Seq[TableDef] = {
-    var readTablesCount = 0
-    val columnsMetadata = getColumnsMetadata(connection, schemaName)
-    Using.resource(databaseMetaData.getTables(null, schemaName, null, Array("TABLE"))) { resultSet =>
-      val res = ArrayBuffer.empty[TableDef]
-      while (resultSet.next()) {
-        val schema = resultSet.getString("TABLE_SCHEM")
-        val tableName = resultSet.getString("TABLE_NAME")
-        val columnDefs = generateColumnDefs(databaseMetaData, columnsMetadata, schema, tableName)
-        res += TableDef(schema, tableName, columnDefs)
-        readTablesCount += 1
-      }
-      res.toSeq
-    }
-  }
-
-// TODO getPrimaryKeys
-  private def generateColumnDefs(
-      databaseMetaData: DatabaseMetaData,
-      columnsMetadata: Map[(String, String), ColumnType],
-      schemaName: String,
-      tableName: String
-  ): Seq[ColumnDef] = {
-
-    val res = ArrayBuffer.empty[ColumnDef]
-    Using.resource(databaseMetaData.getColumns(null, schemaName, tableName, null)) { resultSet =>
-      while (resultSet.next()) {
-        val columnName = resultSet.getString("COLUMN_NAME")
-        val typeName = resultSet.getString("TYPE_NAME")
-        val jdbcType = resultSet.getInt("DATA_TYPE") // java.sql.Types
-        val isNullable = resultSet.getString("IS_NULLABLE") == "YES"
-        val isAutoInc = resultSet.getString("IS_AUTOINCREMENT") == "YES"
-        val isGenerated = resultSet.getString("IS_GENERATEDCOLUMN") == "YES"
-        val defaultValue = Option(resultSet.getString("COLUMN_DEF"))
-        val resolvedType = columnsMetadata((tableName, columnName))
-        res += ColumnDef(columnName, resolvedType, isNullable, isAutoInc, isGenerated, defaultValue)
-      }
-    }
-    res.toSeq
-  }
+class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
 
   // (table, column) -> ColumnType
-  private def getColumnsMetadata(connection: Connection, schemaName: String): Map[(String, String), ColumnType] = {
+  override protected def getColumnTypes(
+      connection: Connection,
+      schemaName: String,
+      columnsMetadatas: Seq[ColumnMetadata]
+  ): Map[(String, String), ColumnType] = {
     val query = s"""
       SELECT  ns.nspname AS schema_name,
               tbl.relname AS table_name,
@@ -159,7 +96,7 @@ class DbMetadataExtractor(ds: DataSource) {
     }
   }
 
-  def resolveEnumType(connection: Connection, typeName: String): Try[ColumnType.Enumeration] =
+  private def resolveEnumType(connection: Connection, typeName: String): Try[ColumnType.Enumeration] =
     Using(connection.createStatement()) { stmt =>
       val resultSet = stmt.executeQuery(s"select unnest(enum_range(null, null::${typeName}))")
       val enumValues = ArrayBuffer.empty[String]
@@ -170,50 +107,4 @@ class DbMetadataExtractor(ds: DataSource) {
       else ColumnType.Enumeration(typeName, enumValues.toSeq)
     }
 
-  // test utils
-  private def printAll(resultSet: ResultSet) = {
-    val metadata = resultSet.getMetaData()
-    val totalCols = metadata.getColumnCount()
-    var columnNames = Seq.empty[String]
-    for (i <- 1 to totalCols) {
-      columnNames = columnNames.appended(metadata.getColumnName(i))
-    }
-
-    while (resultSet.next()) {
-      println("+" * 30)
-      for (i <- 1 to totalCols) {
-        val value = resultSet.getString(i)
-        print(s"${columnNames(i - 1)} = ${value}; ")
-      }
-      println()
-    }
-  }
-}
-
-case class DbMetadata(
-    name: String,
-    schemas: Seq[SchemaDef]
-)
-
-case class SchemaDef(
-    name: String,
-    tables: Seq[TableDef]
-)
-
-case class TableDef(schema: String, name: String, columnDefs: Seq[ColumnDef])
-
-case class ColumnDef(
-    name: String,
-    scalaType: ColumnType, // scala type
-    isNullable: Boolean,
-    isAutoInc: Boolean,
-    isGenerated: Boolean,
-    defaultValue: Option[String]
-)
-
-sealed abstract class ColumnType
-object ColumnType {
-  case class Predefined(name: String) extends ColumnType
-  case class Enumeration(name: String, values: Seq[String]) extends ColumnType
-  case class Unknown(originalName: String) extends ColumnType
 }

@@ -3,40 +3,62 @@ package ba.sake.squery.generator.mill
 import mill._
 import mill.scalalib._
 import _root_.ba.sake.squery.generator._
-import org.postgresql.ds.PGSimpleDataSource
 
 trait SqueryGeneratorModule extends JavaModule {
 
-  def squeryServer: T[String] = T("localhost")
-  def squeryPort: T[Int]
-
+  def squeryJdbcUrl: T[String]
   def squeryUsername: T[String]
   def squeryPassword: T[String]
 
-  def squeryDatabase: T[String]
-
-  /** List of (schema, basePackage)
-    */
+  /** List of (schema, basePackage) */
   def squerySchemas: T[Seq[(String, String)]]
 
   def squeryTargetDir: T[os.Path] = T(millSourcePath / "src")
 
   def squeryGenerate(): Command[Unit] = T.command {
-    println("Started generating Squery sources...")
+    println("Starting to generate Squery sources...")
 
-    // TODO parametrize db type
-    val ds = new PGSimpleDataSource()
-    ds.setUser(squeryUsername())
-    ds.setPassword(squeryPassword())
-    ds.setDatabaseName(squeryDatabase())
-    ds.setServerNames(Array(squeryServer()))
-    ds.setPortNumbers(Array(squeryPort()))
+    val jdbcUrl = squeryJdbcUrl()
+    val username = squeryUsername()
+    val password = squeryPassword()
+    val dataSource: javax.sql.DataSource =
+      if (jdbcUrl.startsWith("jdbc:h2:")) {
+        val ds = new org.h2.jdbcx.JdbcDataSource()
+        ds.setURL(jdbcUrl)
+        ds.setUser(username)
+        ds.setPassword(password)
+        ds
+      } else if (jdbcUrl.startsWith("jdbc:postgresql:")) {
+        val ds = new org.postgresql.ds.PGSimpleDataSource()
+        ds.setURL(jdbcUrl)
+        ds.setUser(username)
+        ds.setPassword(password)
+        ds
+      } else if (jdbcUrl.startsWith("jdbc:mysql:")) {
+        val ds = new com.mysql.cj.jdbc.MysqlDataSource()
+        ds.setURL(jdbcUrl)
+        ds.setUser(username)
+        ds.setPassword(password)
+        ds
+      } else if (jdbcUrl.startsWith("jdbc:mariadb:")) {
+        val ds = new org.mariadb.jdbc.MariaDbDataSource()
+        ds.setUrl(jdbcUrl)
+        ds.setUser(username)
+        ds.setPassword(password)
+        ds
+      } else if (jdbcUrl.startsWith("jdbc:oracle:")) {
+        val ds = new oracle.jdbc.pool.OracleDataSource()
+        ds.setURL(jdbcUrl)
+        ds.setUser(username)
+        ds.setPassword(password)
+        ds
+      } else throw new RuntimeException(s"Unsupported database ${jdbcUrl}")
 
-    val extractor = new DbMetadataExtractor(ds)
-    val dbMeta = extractor.extract()
+    val extractor = DbDefExtractor(dataSource)
+    val dbDef = extractor.extract()
     val generator = new SqueryGenerator()
     generator.generateFiles(
-      dbMeta,
+      dbDef,
       squerySchemas().map { case (schemaName, basePackage) =>
         SchemaConfig(
           name = schemaName,
@@ -46,7 +68,7 @@ trait SqueryGeneratorModule extends JavaModule {
       }
     )
 
-    println("Finished generating Squery sources...")
+    println("Finished generating Squery sources")
   }
 
 }

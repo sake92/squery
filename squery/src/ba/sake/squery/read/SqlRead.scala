@@ -29,6 +29,14 @@ object SqlRead {
       Option(jRes.getBoolean(colIdx)).filterNot(_ => jRes.wasNull())
   }
 
+  given SqlRead[Byte] with {
+    def readByName(jRes: jsql.ResultSet, colName: String): Option[Byte] =
+      Option(jRes.getByte(colName))
+
+    def readByIdx(jRes: jsql.ResultSet, colIdx: Int): Option[Byte] =
+      Option(jRes.getByte(colIdx))
+  }
+
   given SqlRead[Short] with {
     def readByName(jRes: jsql.ResultSet, colName: String): Option[Short] =
       Option(jRes.getShort(colName)).filterNot(_ => jRes.wasNull())

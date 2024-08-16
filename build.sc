@@ -75,16 +75,6 @@ object generator extends ScalaModule with CiReleaseModule {
     ivy"com.lihaoyi::os-lib:0.10.3",
     ivy"org.apache.commons:commons-text:1.12.0"
   )
-
-  object test extends ScalaTests with TestModule.Munit {
-    def ivyDeps = Agg(
-      ivy"org.scalameta::munit:1.0.0",
-      ivy"com.zaxxer:HikariCP:4.0.3",
-      ivy"org.postgresql:postgresql:42.5.4",
-      ivy"org.testcontainers:testcontainers:1.17.6",
-      ivy"org.testcontainers:postgresql:1.17.6"
-    )
-  }
 }
 
 /* MILL PLUGIN */
@@ -116,7 +106,11 @@ object `mill-plugin` extends ScalaModule with CiReleaseModule with ScalafmtModul
   def moduleDeps = Seq(generator)
 
   def ivyDeps = Agg(
-    ivy"org.postgresql:postgresql:42.6.0"
+    ivy"com.h2database:h2:2.3.232",
+    ivy"org.postgresql:postgresql:42.6.0",
+    ivy"mysql:mysql-connector-java:8.0.33",
+    ivy"org.mariadb.jdbc:mariadb-java-client:3.3.2",
+    ivy"com.oracle.database.jdbc:ojdbc8:23.3.0.23.09"
   )
 
   override def scalacOptions = Seq("-Ywarn-unused", "-deprecation")
@@ -134,7 +128,7 @@ object `mill-plugin-itest` extends MillIntegrationTestModule {
   override def testInvocations: T[Seq[(PathRef, Seq[TestInvocation.Targets])]] =
     T {
       Seq(
-        PathRef(testBase / "simple") -> Seq(
+        PathRef(testBase / "h2") -> Seq(
           TestInvocation.Targets(Seq("verify"), noServer = true)
         )
       )

@@ -23,6 +23,7 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ matrix.java }}
       - run: ./mill __.test
+      #TODO - run: ./mill mill-plugin-itest
   
   publish:
     needs: test
