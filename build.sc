@@ -56,7 +56,7 @@ object squery extends CommonScalaModule with CiReleaseModule {
 object generator extends ScalaModule with CiReleaseModule {
   def artifactName = "squery-generator"
 
-  override def scalaVersion = scala213
+  def scalaVersion = scala213
 
   def pomSettings = PomSettings(
     organization = "ba.sake",
@@ -85,12 +85,12 @@ object `mill-plugin` extends ScalaModule with CiReleaseModule with ScalafmtModul
   def millBinaryVersion(millVersion: String) =
     scalaNativeBinaryVersion(millVersion)
 
-  override def scalaVersion = scala213
+  def scalaVersion = scala213
 
-  override def artifactName =
+  def artifactName =
     s"mill-squery-generator_mill${millBinaryVersion(millVersion)}"
 
-  override def pomSettings = PomSettings(
+  def pomSettings = PomSettings(
     description = "Mill plugin for generating squery source code",
     organization = "ba.sake",
     url = "https://github.com/sake92/squery",
@@ -99,7 +99,7 @@ object `mill-plugin` extends ScalaModule with CiReleaseModule with ScalafmtModul
     developers = Seq(Developer("sake92", "Sakib Hadziavdic", "https://github.com/sake92"))
   )
 
-  override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
+  def compileIvyDeps = super.compileIvyDeps() ++ Agg(
     ivy"com.lihaoyi::mill-scalalib:${millVersion}"
   )
 
@@ -113,19 +113,21 @@ object `mill-plugin` extends ScalaModule with CiReleaseModule with ScalafmtModul
     ivy"com.oracle.database.jdbc:ojdbc8:23.3.0.23.09"
   )
 
-  override def scalacOptions = Seq("-Ywarn-unused", "-deprecation")
+  def scalacOptions = Seq("-Ywarn-unused", "-deprecation")
 
 }
 
 object `mill-plugin-itest` extends MillIntegrationTestModule {
 
-  override def millTestVersion = millVersion
+  def millTestVersion = millVersion
 
-  override def pluginsUnderTest = Seq(`mill-plugin`)
+  def pluginsUnderTest = Seq(`mill-plugin`)
+
+  def temporaryIvyModules = Seq(squery)
 
   def testBase = millSourcePath / "src"
 
-  override def testInvocations: T[Seq[(PathRef, Seq[TestInvocation.Targets])]] =
+  def testInvocations: T[Seq[(PathRef, Seq[TestInvocation.Targets])]] =
     T {
       Seq(
         PathRef(testBase / "h2") -> Seq(
