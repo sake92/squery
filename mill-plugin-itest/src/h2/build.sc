@@ -16,8 +16,17 @@ object root extends ScalaModule with SqueryGeneratorModule with FlywayModule {
   def ivyDeps = Agg(
     ivy"com.zaxxer:HikariCP:4.0.3",
     ivy"com.h2database:h2:2.3.232",
-    ivy"ba.sake::squery:0.3.0-8-a20b4a-DIRTY8921b651-SNAPSHOT"
+    ivy"ba.sake::squery:0.3.0-10-e7e6a2-SNAPSHOT" // TODO remove after https://github.com/lefou/mill-integrationtest/issues/198
   )
+
+  // TODO remove after https://github.com/lefou/mill-integrationtest/issues/198
+  def repositoriesTask = T.task {
+    super
+      .repositoriesTask()
+      .appended(
+        coursier.maven.MavenRepository("https://oss.sonatype.org/content/repositories/snapshots")
+      )
+  }
 
   def flywayDriverDeps = Agg(ivy"com.h2database:h2:2.3.232")
   def flywayUrl = "jdbc:h2:./h2_pagila"
