@@ -143,7 +143,9 @@ case class SchemaDef(
     tables: Seq[TableDef]
 )
 
-case class TableDef(schema: String, name: String, columnDefs: Seq[ColumnDef], pkColumns: Seq[ColumnDef])
+case class TableDef(schema: String, name: String, columnDefs: Seq[ColumnDef], pkColumns: Seq[ColumnDef]) {
+  def nonPkColDefs: Seq[ColumnDef] = columnDefs.filterNot(pkColumns.contains)
+}
 
 case class ColumnDef(
     metadata: ColumnMetadata,

@@ -164,18 +164,34 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
     val daoFiles = schemaDef.tables.map { tableDef =>
       val caseClassName = transformName(tableDef.name, config.typeNameMapper) + config.rowTypeSuffix
       val daoClassName = transformName(tableDef.name, config.typeNameMapper) + "CrudDao"
-      val findByIdWhereExpr = if (tableDef.pkColumns.isEmpty) {
+
+      def byIdWhereExpr(prefix: String, singlePrefix: Boolean = false) = if (tableDef.pkColumns.isEmpty) {
         // TODO skip when no pks
         ???
       } else if (tableDef.pkColumns.length == 1) {
-        s"${tableDef.pkColumns.head.metadata.name} = $${id}"
+        val pkCol = tableDef.pkColumns.head
+        if (singlePrefix) s"${pkCol.metadata.name} = $${${prefix}.${pkCol.metadata.name}}"
+        else s"${pkCol.metadata.name} = $${id}"
       } else
         tableDef.pkColumns
           .map { pkCol =>
-            s"${pkCol.metadata.name} = $${id.${pkCol.metadata.name}}"
+            s"${pkCol.metadata.name} = $${${prefix}.${pkCol.metadata.name.safeIdentifier}}"
           }
           .mkString(" AND ")
-      // TODO create, update, delete
+
+      val insertExpr = tableDef.columnDefs
+        .map { colDef =>
+          s"$${row.${colDef.metadata.name.safeIdentifier}}"
+        }
+        .mkString(", ")
+
+      val updateExpr = tableDef.nonPkColDefs
+        .map { colDef =>
+          s"        ${colDef.metadata.name} = $${row.${colDef.metadata.name.safeIdentifier}}"
+        }
+        .mkString(",\n")
+
+      // TODO create, update
       val contents =
         s"""|trait ${daoClassName} {
             |  def countAll(): DbAction[Int] =
@@ -185,7 +201,29 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
             |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName}".readRows()
             |
             |  def findById(id: ${caseClassName}.PK): DbAction[${caseClassName}] =
-            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName} WHERE ${findByIdWhereExpr}".readRow()
+            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName} WHERE ${byIdWhereExpr(
+             "id"
+           )}".readRow()
+            |  def findByIdOpt(id: ${caseClassName}.PK): DbAction[Option[${caseClassName}]] =
+            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName} WHERE ${byIdWhereExpr(
+             "id"
+           )}".readRowOpt()
+            |  
+            |  def insert(row: ${caseClassName}): DbAction[Unit] =
+            |    sql""\"INSERT INTO $${${caseClassName}.TableName} VALUES (
+            |      ${insertExpr}
+            |    )""\".insert()
+            |
+            |  def updateById(row: ${caseClassName}): DbAction[Unit] =
+            |    sql""\"
+            |      UPDATE $${${caseClassName}.TableName}
+            |      SET 
+            |${updateExpr}
+            |      WHERE ${byIdWhereExpr("row", singlePrefix = true)}
+            |    ""\".update()
+            |
+            |  def deleteById(id: ${caseClassName}.PK): DbAction[Unit] =
+            |    sql"DELETE FROM $${${caseClassName}.TableName} WHERE ${byIdWhereExpr("id")}".update()
             |}
             |
             |object ${daoClassName} extends ${daoClassName} {
