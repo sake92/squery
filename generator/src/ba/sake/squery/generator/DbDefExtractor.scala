@@ -36,8 +36,10 @@ abstract class DbDefExtractor(ds: DataSource) {
       val tables = extractTables(connection, schemaName, databaseMetaData)
       SchemaDef(name = schemaName, tables = tables)
     }
+    val dbType = DbType.fromDatabaseProductName(dbName)
     DbDef(
       name = dbName,
+      tpe = dbType,
       schemas = schemaDefs
     )
   }
@@ -135,6 +137,7 @@ abstract class DbDefExtractor(ds: DataSource) {
 
 case class DbDef(
     name: String,
+    tpe: DbType,
     schemas: Seq[SchemaDef]
 )
 
