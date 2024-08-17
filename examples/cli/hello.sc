@@ -1,7 +1,7 @@
 //> using scala "3.3.1"
-//> using dep "ba.sake::squery:0.2.0"
+//> using dep "ba.sake::squery:0.4.0"
 //> using dep "com.h2database:h2:2.1.214"
-//> using dep "com.lihaoyi::pprint:0.8.1"
+//> using dep "com.lihaoyi::pprint:0.9.0"
 
 import ba.sake.squery.{*, given}
 import org.h2.jdbcx.JdbcDataSource
