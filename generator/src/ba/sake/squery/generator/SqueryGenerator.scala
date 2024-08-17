@@ -165,65 +165,97 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       val caseClassName = transformName(tableDef.name, config.typeNameMapper) + config.rowTypeSuffix
       val daoClassName = transformName(tableDef.name, config.typeNameMapper) + "CrudDao"
 
-      def byIdWhereExpr(prefix: String, singlePrefix: Boolean = false) = if (tableDef.pkColumns.isEmpty) {
-        // TODO skip when no pks
-        ???
-      } else if (tableDef.pkColumns.length == 1) {
-        val pkCol = tableDef.pkColumns.head
-        if (singlePrefix) s"${pkCol.metadata.name} = $${${prefix}.${pkCol.metadata.name}}"
-        else s"${pkCol.metadata.name} = $${id}"
-      } else
+      def byIdWhereExpr(prefix: String) = if (tableDef.hasCompositePk) {
         tableDef.pkColumns
           .map { pkCol =>
             s"${pkCol.metadata.name} = $${${prefix}.${pkCol.metadata.name.safeIdentifier}}"
           }
           .mkString(" AND ")
+      } else {
+        val pkCol = tableDef.pkColumns.head
+        if (prefix == "row") s"${pkCol.metadata.name} = $${row.${pkCol.metadata.name.safeIdentifier}}"
+        else s"${pkCol.metadata.name} = $${id}"
+      }
 
-      val insertExpr = tableDef.columnDefs
-        .map { colDef =>
-          s"$${row.${colDef.metadata.name.safeIdentifier}}"
-        }
-        .mkString(", ")
 
-      val updateExpr = tableDef.nonPkColDefs
-        .map { colDef =>
-          s"        ${colDef.metadata.name} = $${row.${colDef.metadata.name.safeIdentifier}}"
-        }
-        .mkString(",\n")
-
-      // TODO create, update
-      val contents =
-        s"""|trait ${daoClassName} {
-            |  def countAll(): DbAction[Int] =
+      def genCountAllQuery: String =
+        s"""|  def countAll(): DbAction[Int] =
             |    sql"SELECT COUNT(*) FROM $${${caseClassName}.TableName}".readValue()
-            |
-            |  def findAll(): DbAction[Seq[${caseClassName}]] =
+            |""".stripMargin
+      def genFindAllQuery: String =
+        s"""|  def findAll(): DbAction[Seq[${caseClassName}]] =
             |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName}".readRows()
-            |
-            |  def findById(id: ${caseClassName}.PK): DbAction[${caseClassName}] =
-            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName} WHERE ${byIdWhereExpr(
-             "id"
-           )}".readRow()
-            |  def findByIdOpt(id: ${caseClassName}.PK): DbAction[Option[${caseClassName}]] =
-            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName} WHERE ${byIdWhereExpr(
-             "id"
-           )}".readRowOpt()
-            |  
-            |  def insert(row: ${caseClassName}): DbAction[Unit] =
+            |""".stripMargin
+
+      def genFindById: Option[String] = Option.when(tableDef.hasPk) {
+        val whereExpr = byIdWhereExpr("id")
+        s"""|  def findById(id: ${caseClassName}.PK): DbAction[${caseClassName}] =
+            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName} WHERE ${whereExpr}".readRow()
+            |""".stripMargin
+      }
+      def genFindByIdOpt: Option[String] = Option.when(tableDef.hasPk) {
+        val whereExpr = byIdWhereExpr("id")
+        s"""|  def findByIdOpt(id: ${caseClassName}.PK): DbAction[Option[${caseClassName}]] =
+            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName} WHERE ${whereExpr}".readRowOpt()
+            |""".stripMargin
+      }
+      def genInsert: String = {
+        val insertExpr = tableDef.columnDefs
+          .map { colDef =>
+            s"$${row.${colDef.metadata.name.safeIdentifier}}"
+          }
+          .mkString(", ")
+        val whereExpr = byIdWhereExpr("id")
+        s"""|  def insert(row: ${caseClassName}): DbAction[Unit] =
             |    sql""\"INSERT INTO $${${caseClassName}.TableName} VALUES (
             |      ${insertExpr}
             |    )""\".insert()
-            |
-            |  def updateById(row: ${caseClassName}): DbAction[Unit] =
+            |""".stripMargin
+      }
+      def genUpdateById: Option[String] = Option.when(tableDef.hasPk) {
+        val updateExpr = tableDef.nonPkColDefs
+          .map { colDef =>
+            s"        ${colDef.metadata.name} = $${row.${colDef.metadata.name.safeIdentifier}}"
+          }
+          .mkString(",\n")
+        val whereExpr = byIdWhereExpr("row")
+        s"""|  def updateById(row: ${caseClassName}): DbAction[Unit] =
             |    sql""\"
             |      UPDATE $${${caseClassName}.TableName}
             |      SET 
             |${updateExpr}
-            |      WHERE ${byIdWhereExpr("row", singlePrefix = true)}
+            |      WHERE ${whereExpr}
             |    ""\".update()
+            |""".stripMargin
+      }
+      def genDeleteById: Option[String] = Option.when(tableDef.hasPk) {
+        val whereExpr = byIdWhereExpr("id")
+        s"""|  def deleteById(id: ${caseClassName}.PK): DbAction[Unit] =
+            |    sql"DELETE FROM $${${caseClassName}.TableName} WHERE ${whereExpr}".update()
+            |""".stripMargin
+      }
+
+      // must have a PK to work
+      val optionalSelectQueries = Seq(
+        genFindById,
+        genFindByIdOpt
+      ).flatten.mkString("\n\n")
+      val optionalUpdateQueries = Seq(
+        genUpdateById,
+        genDeleteById
+      ).flatten.mkString("\n\n")
+
+      val contents =
+        s"""|trait ${daoClassName} {
+            |${genCountAllQuery}
+
+            |${genFindAllQuery}
             |
-            |  def deleteById(id: ${caseClassName}.PK): DbAction[Unit] =
-            |    sql"DELETE FROM $${${caseClassName}.TableName} WHERE ${byIdWhereExpr("id")}".update()
+            |${optionalSelectQueries}
+            |
+            |${genInsert}
+            |
+            |${optionalUpdateQueries}
             |}
             |
             |object ${daoClassName} extends ${daoClassName} {

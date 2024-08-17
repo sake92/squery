@@ -14,8 +14,8 @@ object DbDefExtractor {
       val databaseMetaData = connection.getMetaData()
       val dbName = databaseMetaData.getDatabaseProductName().toLowerCase
       dbName match {
-        case "postgres" => new PostgresDefExtractor(ds)
-        case _          => new JdbcDefExtractor(ds)
+        case "postgresql" => new PostgresDefExtractor(ds)
+        case _            => new JdbcDefExtractor(ds)
       }
     }
 }
@@ -144,6 +144,8 @@ case class SchemaDef(
 )
 
 case class TableDef(schema: String, name: String, columnDefs: Seq[ColumnDef], pkColumns: Seq[ColumnDef]) {
+  def hasPk: Boolean = pkColumns.nonEmpty
+  def hasCompositePk: Boolean = pkColumns.length > 1
   def nonPkColDefs: Seq[ColumnDef] = columnDefs.filterNot(pkColumns.contains)
 }
 
