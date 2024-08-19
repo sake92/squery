@@ -2,6 +2,7 @@ import $ivy.`org.scalameta::munit:0.7.29`
 import $ivy.`com.lihaoyi::mill-contrib-flyway:`
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
 import $file.plugins
+import $file.versions
 
 import mill._, scalalib._
 import de.tobiasroeser.mill.vcs.version.VcsVersion
@@ -16,17 +17,8 @@ object root extends ScalaModule with SqueryGeneratorModule with FlywayModule {
   def ivyDeps = Agg(
     ivy"com.zaxxer:HikariCP:4.0.3",
     ivy"com.h2database:h2:2.3.232",
-    ivy"ba.sake::squery:0.3.0-14-8c8556-SNAPSHOT" // TODO remove after https://github.com/lefou/mill-integrationtest/issues/198
+    ivy"ba.sake::squery:${versions.Versions.squery}"
   )
-
-  // TODO remove after https://github.com/lefou/mill-integrationtest/issues/198
-  def repositoriesTask = T.task {
-    super
-      .repositoriesTask()
-      .appended(
-        coursier.maven.MavenRepository("https://oss.sonatype.org/content/repositories/snapshots")
-      )
-  }
 
   def flywayDriverDeps = Agg(ivy"com.h2database:h2:2.3.232")
   def flywayUrl = "jdbc:h2:./h2_pagila"

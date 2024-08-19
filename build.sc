@@ -135,6 +135,16 @@ object `mill-plugin-itest` extends MillIntegrationTestModule {
         )
       )
     }
+
+  override def perTestResources = T.sources {
+    os.write(
+      T.dest / "versions.sc",
+      s"""object Versions {
+        val squery = "${squery.publishVersion()}"
+      }"""
+    )
+    Seq(PathRef(T.dest))
+  }
 }
 
 /* DOCS */
