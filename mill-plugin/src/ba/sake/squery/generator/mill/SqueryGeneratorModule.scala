@@ -2,9 +2,16 @@ package ba.sake.squery.generator.mill
 
 import mill._
 import mill.scalalib._
+import upickle.default.{ReadWriter, macroRW}
 import _root_.ba.sake.squery.generator._
 
 trait SqueryGeneratorModule extends JavaModule {
+
+  implicit val NoopRW: ReadWriter[NameMapper.Noop.type] = macroRW
+  implicit val CamelCaseRW: ReadWriter[NameMapper.CamelCase.type] = macroRW
+  implicit val NameMapperRW: ReadWriter[NameMapper] = macroRW
+
+  implicit val SqueryGeneratorConfigRW: ReadWriter[SqueryGeneratorConfig] = macroRW
 
   def squeryJdbcUrl: T[String]
   def squeryUsername: T[String]
@@ -14,6 +21,8 @@ trait SqueryGeneratorModule extends JavaModule {
   def squerySchemas: T[Seq[(String, String)]]
 
   def squeryTargetDir: T[os.Path] = T(millSourcePath / "src")
+
+  def squeryGeneratorConfig: T[SqueryGeneratorConfig] = T(SqueryGeneratorConfig.Default)
 
   def squeryGenerate(): Command[Unit] = T.command {
     println("Starting to generate Squery sources...")
@@ -54,7 +63,7 @@ trait SqueryGeneratorModule extends JavaModule {
         ds
       } else throw new RuntimeException(s"Unsupported database ${jdbcUrl}")
 
-    val generator = new SqueryGenerator(dataSource)
+    val generator = new SqueryGenerator(dataSource, squeryGeneratorConfig())
     generator.generateFiles(
       squerySchemas().map { case (schemaName, basePackage) =>
         SchemaConfig(

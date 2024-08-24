@@ -105,9 +105,9 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
     }
     val enumFiles = enumDefs.map { enumDef =>
       val enumCaseDefs = enumDef.values.map { enumDefCaseValue =>
-        s"    case ${enumDefCaseValue.safeIdentifier}"
+        s"    case ${enumDefCaseValue.safeName}"
       }
-      val enumName = transformName(enumDef.name, config.typeNameMapper)
+      val enumName = enumDef.safeTypeName
       val contents =
         s"""|enum ${enumName} derives SqlRead, SqlWrite:
             |${enumCaseDefs.mkString("\n")}
@@ -117,25 +117,25 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
 
     val tableFiles = schemaDef.tables.map { tableDef =>
       val columnDefsScala = tableDef.columnDefs.map { columnDef =>
-        val safeTypeName = getSafeTypeName(columnDef.scalaType, config.typeNameMapper)
+        val safeTypeName = columnDef.scalaType.safeTypeName
         val tpe = if (columnDef.metadata.isNullable) s"Option[${safeTypeName}]" else safeTypeName
-        s"    ${columnDef.metadata.name.safeIdentifier}: ${tpe}"
+        s"    ${columnDef.metadata.name.safeName}: ${tpe}"
       }
       val columnValNamesScala = tableDef.columnDefs.map { columnDef =>
-        s"""  inline val ${columnDef.metadata.name.safeIdentifier} = "${columnDef.metadata.name}""""
+        s"""  inline val ${columnDef.metadata.name.safeColNameIdentifier} = "${columnDef.metadata.name}""""
       }
-      val columnNamesScala = tableDef.columnDefs.map(_.metadata.name.safeIdentifier)
+      val columnNamesScala = tableDef.columnDefs.map(_.metadata.name.safeColNameIdentifier)
       val withPrefixColumnNamesScala = columnNamesScala.map { columnName =>
         s"""prefix + "." + ${columnName}"""
       }
-      val caseClassName = transformName(tableDef.name, config.typeNameMapper) + config.rowTypeSuffix
+      val caseClassName = tableDef.name.safeTypeName + config.rowTypeSuffix
       val (pkValue, pkTypeDef) = // TODO handle empty
         if (tableDef.pkColumns.length == 1) {
           val pkCol = tableDef.pkColumns.head
-          (s"${pkCol.metadata.name}", s"type PK = ${pkCol.scalaType.name}")
+          (s"${pkCol.metadata.name.safeName}", s"type PK = ${pkCol.scalaType.safeTypeName}")
         } else {
           val (pkColExprs, pkColDefs) = tableDef.pkColumns.map { pkCol =>
-            (pkCol.metadata.name, s"${pkCol.metadata.name}: ${pkCol.scalaType.name}")
+            (pkCol.metadata.name.safeName, s"${pkCol.metadata.name.safeName}: ${pkCol.scalaType.safeTypeName}")
           }.unzip
           (s"${caseClassName}.PK(${pkColExprs.mkString(", ")})", s"case class PK(${pkColDefs.mkString(", ")})")
         }
@@ -164,18 +164,18 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
     }
 
     val daoFiles = schemaDef.tables.map { tableDef =>
-      val caseClassName = transformName(tableDef.name, config.typeNameMapper) + config.rowTypeSuffix
-      val daoClassName = transformName(tableDef.name, config.typeNameMapper) + "CrudDao"
+      val caseClassName = tableDef.name.safeTypeName + config.rowTypeSuffix
+      val daoClassName = tableDef.name.safeTypeName + "CrudDao"
 
       def byIdWhereExpr(prefix: String) = if (tableDef.hasCompositePk) {
         tableDef.pkColumns
           .map { pkCol =>
-            s"${pkCol.metadata.name} = $${${prefix}.${pkCol.metadata.name.safeIdentifier}}"
+            s"${pkCol.metadata.name} = $${${prefix}.${pkCol.metadata.name.safeName}}"
           }
           .mkString(" AND ")
       } else {
         val pkCol = tableDef.pkColumns.head
-        if (prefix == "row") s"${pkCol.metadata.name} = $${row.${pkCol.metadata.name.safeIdentifier}}"
+        if (prefix == "row") s"${pkCol.metadata.name} = $${row.${pkCol.metadata.name.safeName}}"
         else s"${pkCol.metadata.name} = $${id}"
       }
 
@@ -203,12 +203,9 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       def genInsert: String = {
         // TODO if cols are autoinc
         // https://www.jooq.org/doc/latest/manual/sql-building/sql-statements/insert-statement/insert-returning/
-        val colsListExpr = tableDef.columnDefs
-          .map(_.metadata.name)
-          .mkString(", ")
         val insertExpr = tableDef.columnDefs
           .map { colDef =>
-            s"$${row.${colDef.metadata.name.safeIdentifier}}"
+            s"$${row.${colDef.metadata.name.safeName}}"
           }
           .mkString(", ")
         val whereExpr = byIdWhereExpr("id")
@@ -231,7 +228,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       def genUpdateById: Option[String] = Option.when(tableDef.hasPk) {
         val updateExpr = tableDef.nonPkColDefs
           .map { colDef =>
-            s"        ${colDef.metadata.name} = $${row.${colDef.metadata.name.safeIdentifier}}"
+            s"        ${colDef.metadata.name} = $${row.${colDef.metadata.name.safeName}}"
           }
           .mkString(",\n")
         val whereExpr = byIdWhereExpr("row")
@@ -274,9 +271,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
             |${optionalUpdateQueries}
             |}
             |
-            |object ${daoClassName} extends ${daoClassName} {
-            |
-            |}
+            |object ${daoClassName} extends ${daoClassName}
             |""".stripMargin
       GeneratedFile(s"${daoClassName}.scala", contents)
     }
@@ -293,23 +288,29 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
     (imports, enumFiles ++ tableFiles, daoFiles)
   }
 
-  private def transformName(str: String, nameMapper: NameMapper): String =
+  private def transformName(str: String, nameMapper: NameMapper, capitalizeFirstLetter: Boolean): String =
     nameMapper match {
       case NameMapper.Noop      => str
-      case NameMapper.CamelCase => CaseUtils.toCamelCase(str, true, '_')
+      case NameMapper.CamelCase => CaseUtils.toCamelCase(str, capitalizeFirstLetter, '_')
     }
 
-  private def getSafeTypeName(tpe: ColumnType, nameMapper: NameMapper): String = tpe match {
-    case ColumnType.Predefined(name)              => name
-    case ColumnType.Enumeration(enumName, values) => transformName(enumName, nameMapper).safeIdentifier
-    case ColumnType.Unknown(originalName)         => s"<UNKNOWN> // ${originalName}"
+  implicit class ColumnTypeOps(tpe: ColumnType) {
+    def safeTypeName: String = tpe match {
+      case ColumnType.Predefined(name)         => name
+      case ColumnType.Enumeration(enumName, _) => enumName.safeTypeName
+      case ColumnType.Unknown(originalName)    => s"<UNKNOWN> // ${originalName}"
+    }
   }
 
   implicit class StrOps(str: String) {
-    def safeIdentifier: String =
+    def safeName: String =
       if (SqueryGenerator.ReservedScalaKeywords(str) || str.contains("-"))
         s"`${str}`"
       else str
+    def safeTypeName: String =
+      transformName(str, config.typeNameMapper, capitalizeFirstLetter = true).safeName
+    def safeColNameIdentifier: String =
+      transformName(str, config.colNameIdentifierMapper, capitalizeFirstLetter = false).safeName
   }
 
 }
@@ -349,7 +350,11 @@ case class SqueryGeneratorConfig(
 
 object SqueryGeneratorConfig {
   val Default: SqueryGeneratorConfig =
-    SqueryGeneratorConfig(colNameIdentifierMapper = NameMapper.CamelCase,typeNameMapper = NameMapper.CamelCase, rowTypeSuffix = "Row")
+    SqueryGeneratorConfig(
+      colNameIdentifierMapper = NameMapper.CamelCase,
+      typeNameMapper = NameMapper.CamelCase,
+      rowTypeSuffix = "Row"
+    )
 }
 
 case class GeneratedFile(
