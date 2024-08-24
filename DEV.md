@@ -19,7 +19,7 @@ git diff
 git commit -am "msg"
 
 
-$VERSION="0.5.1"
+$VERSION="0.5.2"
 git commit --allow-empty -am "Release $VERSION"
 git tag -a $VERSION -m "Release $VERSION"
 git push  --atomic origin main $VERSION
