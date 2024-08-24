@@ -34,6 +34,8 @@ object squery extends CommonScalaModule with CiReleaseModule {
     ivy"org.scala-lang.modules::scala-collection-contrib:0.3.0"
   )
 
+  def scalacOptions = Seq("-Ywarn-unused", "-deprecation", "-feature")
+
   object test extends ScalaTests with TestModule.Munit {
     def ivyDeps = Agg(
       ivy"org.scalameta::munit:1.0.0",

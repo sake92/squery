@@ -21,7 +21,7 @@ case class Datatypes(
   def insertTuple = sql"(${d_int}, ${d_long}, ${d_double}, ${d_boolean}, ${d_string}, ${d_uuid}, ${d_tstz}, ${d_clr})"
 
 object Datatypes:
-  inline val * = "d_int, d_long, d_double, d_boolean, d_string, d_uuid, d_tstz, d_clr"
+  inline val allCols = "d_int, d_long, d_double, d_boolean, d_string, d_uuid, d_tstz, d_clr"
 
 enum Color derives SqlRead, SqlWrite:
   case red, green, blue
@@ -274,12 +274,12 @@ class MySqlSuite extends munit.FunSuite {
         .intersperse(sql",")
         .reduce(_ ++ _)
       sql"""
-        INSERT INTO datatypes(${Datatypes.*})
+        INSERT INTO datatypes(${Datatypes.allCols})
         VALUES ${values}
       """.insert()
 
       val storedRows = sql"""
-        SELECT ${Datatypes.*}
+        SELECT ${Datatypes.allCols}
         FROM datatypes
       """.readRows[Datatypes]()
       assertEquals(

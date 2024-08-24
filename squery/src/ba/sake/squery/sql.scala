@@ -1,5 +1,6 @@
 package ba.sake.squery
 
+import scala.language.implicitConversions
 import scala.compiletime.*
 import scala.compiletime.ops.any.*
 import scala.collection.mutable.ListBuffer
@@ -27,8 +28,8 @@ given sqlWrite2DynamicArg[T: SqlWrite]: Conversion[T, DynamicArg[T]] with
 
 /*
 arg can be:
-- a literal string https://scala-slick.org/doc/3.2.0/sql.html#splicing-literal-values
-- a simple value
+- a literal-type string like in https://scala-slick.org/doc/3.2.0/sql.html#splicing-literal-values
+- a simple value (dynamic ? argument)
 - or another query
  */
 type SqlInterpolatorArgOrQuery = LiteralString | DynamicArg[?] | Query

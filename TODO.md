@@ -1,4 +1,14 @@
 
+- allow unambiguous colprefix.col1,
+    handy when joining with other table, but returning only it
+
+- camelcase setting inline vals in generator
+
+- parametrize mill plugin
+
+- find/update/delete where DAO functions
+
+- override types
 
 
 

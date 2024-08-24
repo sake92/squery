@@ -121,11 +121,12 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         val tpe = if (columnDef.metadata.isNullable) s"Option[${safeTypeName}]" else safeTypeName
         s"    ${columnDef.metadata.name.safeIdentifier}: ${tpe}"
       }
-      val columnNamesScala = tableDef.columnDefs.map { columnDef =>
-        s"""  inline val ${columnDef.metadata.name.safeIdentifier} = "${columnDef.metadata.name.safeIdentifier}""""
+      val columnValNamesScala = tableDef.columnDefs.map { columnDef =>
+        s"""  inline val ${columnDef.metadata.name.safeIdentifier} = "${columnDef.metadata.name}""""
       }
-      val prefixedColumnNamesScala = tableDef.columnDefs.map { columnDef =>
-        s"""prefix + ${columnDef.metadata.name.safeIdentifier}"""
+      val columnNamesScala = tableDef.columnDefs.map(_.metadata.name.safeIdentifier)
+      val withPrefixColumnNamesScala = columnNamesScala.map { columnName =>
+        s"""prefix + "." + ${columnName}"""
       }
       val caseClassName = transformName(tableDef.name, config.typeNameMapper) + config.rowTypeSuffix
       val (pkValue, pkTypeDef) = // TODO handle empty
@@ -146,14 +147,15 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
             |}
             |
             |object ${caseClassName} {
-            |  inline val TableName = "${tableDef.schema}.${tableDef.name}"
+            |  inline val tableName = "${tableDef.schema}.${tableDef.name}"
             |
-            |${columnNamesScala.mkString("\n")}
+            |${columnValNamesScala.mkString("\n")}
             |
-            |  inline val * = prefixed("")
+            |  inline val allCols =
+            |    ${columnNamesScala.mkString(""" + ", " + """)}
             |
-            |  transparent inline def prefixed(inline prefix: String) =
-            |    ${prefixedColumnNamesScala.mkString(""" + ", " + """)}
+            |  transparent inline def allColsWithPrefix(inline prefix: String) =
+            |    ${withPrefixColumnNamesScala.mkString(""" + ", " + """)}
             |
             |  ${pkTypeDef}
             |}
@@ -179,23 +181,23 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
 
       def genCountAllQuery: String =
         s"""|  def countAll(): DbAction[Int] =
-            |    sql"SELECT COUNT(*) FROM $${${caseClassName}.TableName}".readValue()
+            |    sql"SELECT COUNT(*) FROM $${${caseClassName}.tableName}".readValue()
             |""".stripMargin
       def genFindAllQuery: String =
         s"""|  def findAll(): DbAction[Seq[${caseClassName}]] =
-            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName}".readRows()
+            |    sql"SELECT $${${caseClassName}.allCols} FROM $${${caseClassName}.tableName}".readRows()
             |""".stripMargin
 
       def genFindById: Option[String] = Option.when(tableDef.hasPk) {
         val whereExpr = byIdWhereExpr("id")
         s"""|  def findById(id: ${caseClassName}.PK): DbAction[${caseClassName}] =
-            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName} WHERE ${whereExpr}".readRow()
+            |    sql"SELECT $${${caseClassName}.allCols} FROM $${${caseClassName}.tableName} WHERE ${whereExpr}".readRow()
             |""".stripMargin
       }
       def genFindByIdOpt: Option[String] = Option.when(tableDef.hasPk) {
         val whereExpr = byIdWhereExpr("id")
         s"""|  def findByIdOpt(id: ${caseClassName}.PK): DbAction[Option[${caseClassName}]] =
-            |    sql"SELECT $${${caseClassName}.*} FROM $${${caseClassName}.TableName} WHERE ${whereExpr}".readRowOpt()
+            |    sql"SELECT $${${caseClassName}.allCols} FROM $${${caseClassName}.tableName} WHERE ${whereExpr}".readRowOpt()
             |""".stripMargin
       }
       def genInsert: String = {
@@ -213,15 +215,15 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         if (dbType.supportsReturning)
           s"""|  def insert(row: ${caseClassName}): DbAction[${caseClassName}] =
               |    sql""\"
-              |      INSERT INTO $${${caseClassName}.TableName}($${${caseClassName}.*})
+              |      INSERT INTO $${${caseClassName}.tableName}($${${caseClassName}.allCols})
               |      VALUES (${insertExpr})
-              |      RETURNING $${${caseClassName}.*}
+              |      RETURNING $${${caseClassName}.allCols}
               |    ""\".insertReturningRow()
               |""".stripMargin
         else
           s"""|  def insert(row: ${caseClassName}): DbAction[Unit] =
               |    sql""\"
-              |      INSERT INTO $${${caseClassName}.TableName}($${${caseClassName}.*})
+              |      INSERT INTO $${${caseClassName}.tableName}($${${caseClassName}.allCols})
               |      VALUES(${insertExpr})
               |    ""\".insert()
               |""".stripMargin
@@ -235,7 +237,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         val whereExpr = byIdWhereExpr("row")
         s"""|  def updateById(row: ${caseClassName}): DbAction[Unit] =
             |    sql""\"
-            |      UPDATE $${${caseClassName}.TableName}
+            |      UPDATE $${${caseClassName}.tableName}
             |      SET 
             |${updateExpr}
             |      WHERE ${whereExpr}
@@ -245,7 +247,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       def genDeleteById: Option[String] = Option.when(tableDef.hasPk) {
         val whereExpr = byIdWhereExpr("id")
         s"""|  def deleteById(id: ${caseClassName}.PK): DbAction[Unit] =
-            |    sql"DELETE FROM $${${caseClassName}.TableName} WHERE ${whereExpr}".update()
+            |    sql"DELETE FROM $${${caseClassName}.tableName} WHERE ${whereExpr}".update()
             |""".stripMargin
       }
 
@@ -338,15 +340,16 @@ object NameMapper {
   case object CamelCase extends NameMapper
 }
 
-// TODO camelCase identifiers??
+// case-class-row column name mapping is forbidden!
 case class SqueryGeneratorConfig(
+    colNameIdentifierMapper: NameMapper,
     typeNameMapper: NameMapper,
     rowTypeSuffix: String
 )
 
 object SqueryGeneratorConfig {
   val Default: SqueryGeneratorConfig =
-    SqueryGeneratorConfig(typeNameMapper = NameMapper.CamelCase, rowTypeSuffix = "Row")
+    SqueryGeneratorConfig(colNameIdentifierMapper = NameMapper.CamelCase,typeNameMapper = NameMapper.CamelCase, rowTypeSuffix = "Row")
 }
 
 case class GeneratedFile(
