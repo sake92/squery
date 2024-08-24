@@ -125,17 +125,8 @@ object SqlWrite {
         idx: Int,
         valueOpt: Option[LocalDateTime]
     ): Unit = valueOpt match
-      case Some(value) =>
-        ps.setDate(
-          idx,
-          java.sql.Date(
-            value
-              .atZone(ZoneId.systemDefault())
-              .toInstant()
-              .toEpochMilli()
-          )
-        )
-      case None => ps.setNull(idx, jsql.Types.TIMESTAMP)
+      case Some(value) => ps.setObject(idx, value)
+      case None        => ps.setNull(idx, jsql.Types.TIMESTAMP)
   }
 
   given SqlWrite[Array[Byte]] with {

@@ -1,5 +1,6 @@
-import ba.sake.squery.{*, given}
-import public.daos.*
+package public
+
+import ba.sake.squery.SqueryContext
 
 object Globals {
   private val ds = new com.zaxxer.hikari.HikariDataSource()

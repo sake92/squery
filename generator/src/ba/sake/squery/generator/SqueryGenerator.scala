@@ -179,15 +179,31 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         else s"${pkCol.metadata.name} = $${id}"
       }
 
-      def genCountAllQuery: String =
+      def genCountAll: String =
         s"""|  def countAll(): DbAction[Int] =
             |    sql"SELECT COUNT(*) FROM $${${caseClassName}.tableName}".readValue()
             |""".stripMargin
-      def genFindAllQuery: String =
+      def genCountWhere: String =
+        s"""|  def countWhere(whereQuery: Query): DbAction[Int] =
+            |    sql"SELECT COUNT(*) FROM $${${caseClassName}.tableName} WHERE $${whereQuery}".readValue()
+            |""".stripMargin
+      
+      def genFindAll: String =
         s"""|  def findAll(): DbAction[Seq[${caseClassName}]] =
             |    sql"SELECT $${${caseClassName}.allCols} FROM $${${caseClassName}.tableName}".readRows()
             |""".stripMargin
-
+      def genFindWhere: String =
+        s"""|  def findWhere(whereQuery: Query): DbAction[${caseClassName}] =
+            |    sql"SELECT $${${caseClassName}.allCols} FROM $${${caseClassName}.tableName} WHERE $${whereQuery}".readRow()
+            |""".stripMargin
+      def genFindWhereOpt: String =
+        s"""|  def findWhereOpt(whereQuery: Query): DbAction[Option[${caseClassName}]] =
+            |    sql"SELECT $${${caseClassName}.allCols} FROM $${${caseClassName}.tableName} WHERE $${whereQuery}".readRowOpt()
+            |""".stripMargin
+      def genFindAllWhere: String =
+        s"""|  def findAllWhere(whereQuery: Query): DbAction[Seq[${caseClassName}]] =
+            |    sql"SELECT $${${caseClassName}.allCols} FROM $${${caseClassName}.tableName} WHERE $${whereQuery}".readRows()
+            |""".stripMargin
       def genFindById: Option[String] = Option.when(tableDef.hasPk) {
         val whereExpr = byIdWhereExpr("id")
         s"""|  def findById(id: ${caseClassName}.PK): DbAction[${caseClassName}] =
@@ -200,6 +216,13 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
             |    sql"SELECT $${${caseClassName}.allCols} FROM $${${caseClassName}.tableName} WHERE ${whereExpr}".readRowOpt()
             |""".stripMargin
       }
+      def genFindByIds: Option[String] = Option.when(tableDef.hasPk && !tableDef.hasCompositePk) {
+        s"""|  def findByIds(ids: Set[${caseClassName}.PK]): DbAction[Seq[${caseClassName}]] =
+            |    val idsExpr = ids.map(id => sql"$${id}").reduce(_ ++ sql"," ++ _)
+            |    sql"SELECT $${${caseClassName}.allCols} FROM $${${caseClassName}.tableName} WHERE ${tableDef.pkColumns.head.metadata.name} IN ($${idsExpr})".readRows()
+            |""".stripMargin
+      }
+
       def genInsert: String = {
         // TODO if cols are autoinc
         // https://www.jooq.org/doc/latest/manual/sql-building/sql-statements/insert-statement/insert-returning/
@@ -218,13 +241,14 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
               |    ""\".insertReturningRow()
               |""".stripMargin
         else
-          s"""|  def insert(row: ${caseClassName}): DbAction[Unit] =
+          s"""|  def insert(row: ${caseClassName}): DbAction[Int] =
               |    sql""\"
               |      INSERT INTO $${${caseClassName}.tableName}($${${caseClassName}.allCols})
               |      VALUES(${insertExpr})
               |    ""\".insert()
               |""".stripMargin
       }
+
       def genUpdateById: Option[String] = Option.when(tableDef.hasPk) {
         val updateExpr = tableDef.nonPkColDefs
           .map { colDef =>
@@ -232,7 +256,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
           }
           .mkString(",\n")
         val whereExpr = byIdWhereExpr("row")
-        s"""|  def updateById(row: ${caseClassName}): DbAction[Unit] =
+        s"""|  def updateById(row: ${caseClassName}): DbAction[Int] =
             |    sql""\"
             |      UPDATE $${${caseClassName}.tableName}
             |      SET 
@@ -241,34 +265,61 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
             |    ""\".update()
             |""".stripMargin
       }
+
+      def genDeleteWhere: String =
+        s"""|  def deleteWhere(whereQuery: Query): DbAction[Int] =
+            |    sql"DELETE FROM $${${caseClassName}.tableName} WHERE $${whereQuery}".update()
+            |""".stripMargin
       def genDeleteById: Option[String] = Option.when(tableDef.hasPk) {
         val whereExpr = byIdWhereExpr("id")
-        s"""|  def deleteById(id: ${caseClassName}.PK): DbAction[Unit] =
+        s"""|  def deleteById(id: ${caseClassName}.PK): DbAction[Int] =
             |    sql"DELETE FROM $${${caseClassName}.tableName} WHERE ${whereExpr}".update()
+            |""".stripMargin
+      }
+      def genDeleteByIds: Option[String] = Option.when(tableDef.hasPk && !tableDef.hasCompositePk) {
+        s"""|  def deleteIds(ids: Set[${caseClassName}.PK]): DbAction[Int] =
+            |    val idsExpr = ids.map(id => sql"$${id}").reduce(_ ++ sql"," ++ _)
+            |    sql"DELETE FROM $${${caseClassName}.tableName} WHERE ${tableDef.pkColumns.head.metadata.name} IN ($${idsExpr})".update()
             |""".stripMargin
       }
 
       // must have a PK to work
       val optionalSelectQueries = Seq(
         genFindById,
-        genFindByIdOpt
+        genFindByIdOpt,
+        genFindByIds
       ).flatten.mkString("\n")
       val optionalUpdateQueries = Seq(
-        genUpdateById,
-        genDeleteById
+        genUpdateById
+      ).flatten.mkString("\n")
+      val optionalDeleteQueries = Seq(
+        genDeleteById,
+        genDeleteByIds
       ).flatten.mkString("\n")
 
       val contents =
         s"""|trait ${daoClassName} {
-            |${genCountAllQuery}
+            |${genCountAll}
             |
-            |${genFindAllQuery}
+            |${genCountWhere}
+            |
+            |${genFindAll}
+            |
+            |${genFindWhere}
+            |
+            |${genFindWhereOpt}
+            |
+            |${genFindAllWhere}
             |
             |${optionalSelectQueries}
             |
             |${genInsert}
             |
             |${optionalUpdateQueries}
+            |
+            |${genDeleteWhere}
+            |
+            |${optionalDeleteQueries}
             |}
             |
             |object ${daoClassName} extends ${daoClassName}
