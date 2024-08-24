@@ -29,9 +29,9 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
               s"""|${Preamble}
                   |${imports}
                   |
-                  |${enumDefsScala.mkString("\n")}
+                  |${enumDefsScala.map(_.content).mkString("\n")}
                   |
-                  |${tableDefsScala.mkString("\n")}
+                  |${tableDefsScala.map(_.content).mkString("\n")}
                   |""".stripMargin
             logger.info(s"Finished generating schema '${schemaName}'")
             res

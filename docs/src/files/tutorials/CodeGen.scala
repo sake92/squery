@@ -30,19 +30,27 @@ object CodeGen extends TutorialPage {
     s"""
       You can use Ammonite to test the generator:
       ```scala
-      import $$ivy.`ba.sake::squery-generator:${Consts.ArtifactVersion}`
+      import $$ivy.`ba.sake:squery-generator_2.13:${Consts.ArtifactVersion}`
+      import $$ivy.`ba.sake:squery::${Consts.ArtifactVersion}`
+      import $$ivy.`org.postgresql:postgresql:42.7.4`
+      import $$ivy.`com.zaxxer:HikariCP:5.1.0`
+      import ba.sake.squery.generator.*
 
-      val dataSource = new org.h2.jdbcx.JdbcDataSource()
-      dataSource.setURL("jdbc:postgresql://localhost:5432/mydb")
-      ds.setUser("username")
-      ds.setPassword("password")
+      val dataSource = com.zaxxer.hikari.HikariDataSource()
+      dataSource.setJdbcUrl("jdbc:postgresql://localhost:5432/mydb")
+      dataSource.setUsername("username")
+      dataSource.setPassword("password")
       
-      val generator = new SqueryGenerator(dataSource)
-      val generatedCode = generator.generateString("myschema")
+      val generator = SqueryGenerator(dataSource)
+      val generatedCode = generator.generateString(Seq("myschema"))
       repl.load(generatedCode)
 
       // now you can use the generated code
-      MyTableCrudDao.findAll()
+      val ctx = SqueryContext(dataSource)
+      ctx.run {
+        MyTableCrudDao.findAll()
+      }
+      
       """.md
   )
 
