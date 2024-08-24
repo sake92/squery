@@ -42,19 +42,27 @@ Postgres, MySQL, MariaDB, Oracle and H2.</p>
 <li>deleteWhere, deleteById, deleteIds</li>
 </ul>
 </section><section id="standalone-generator"><h2>Standalone generator</h2><p>You can use Ammonite to test the generator:</p>
-<pre><code class="language-scala">import $ivy.`ba.sake::squery-generator:0.5.1`
+<pre><code class="language-scala">import $ivy.`ba.sake:squery-generator_2.13:0.5.1`
+import $ivy.`ba.sake:squery::0.5.1`
+import $ivy.`org.postgresql:postgresql:42.7.4`
+import $ivy.`com.zaxxer:HikariCP:5.1.0`
+import ba.sake.squery.generator.*
 
-val dataSource = new org.h2.jdbcx.JdbcDataSource()
-dataSource.setURL(&quot;jdbc:postgresql://localhost:5432/mydb&quot;)
-ds.setUser(&quot;username&quot;)
-ds.setPassword(&quot;password&quot;)
+val dataSource = com.zaxxer.hikari.HikariDataSource()
+dataSource.setJdbcUrl(&quot;jdbc:postgresql://localhost:5432/mydb&quot;)
+dataSource.setUsername(&quot;username&quot;)
+dataSource.setPassword(&quot;password&quot;)
 
-val generator = new SqueryGenerator(dataSource)
-val generatedCode = generator.generateString(&quot;myschema&quot;)
+val generator = SqueryGenerator(dataSource)
+val generatedCode = generator.generateString(Seq(&quot;myschema&quot;))
 repl.load(generatedCode)
 
 // now you can use the generated code
-MyTableCrudDao.findAll()
+val ctx = SqueryContext(dataSource)
+ctx.run {
+  MyTableCrudDao.findAll()
+}
+
 </code></pre>
 </section><section id="mill-plugin"><h2>Mill plugin</h2><p>Squery provides a Mill plugin:</p>
 <pre><code class="language-scala">import $ivy.`ba.sake::mill-squery-generator_mill0.11:0.5.1`
