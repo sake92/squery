@@ -42,7 +42,7 @@ Postgres, MySQL, MariaDB, Oracle and H2.</p>
 <li>deleteWhere, deleteById, deleteIds</li>
 </ul>
 </section><section id="standalone-generator"><h2>Standalone generator</h2><p>You can use Ammonite to test the generator:</p>
-<pre><code class="language-scala">import $ivy.`ba.sake::squery-generator:0.5.0`
+<pre><code class="language-scala">import $ivy.`ba.sake::squery-generator:0.5.1`
 
 val dataSource = new org.h2.jdbcx.JdbcDataSource()
 dataSource.setURL(&quot;jdbc:postgresql://localhost:5432/mydb&quot;)
@@ -57,7 +57,7 @@ repl.load(generatedCode)
 MyTableCrudDao.findAll()
 </code></pre>
 </section><section id="mill-plugin"><h2>Mill plugin</h2><p>Squery provides a Mill plugin:</p>
-<pre><code class="language-scala">import $ivy.`ba.sake::mill-squery-generator_mill0.11:0.5.0`
+<pre><code class="language-scala">import $ivy.`ba.sake::mill-squery-generator_mill0.11:0.5.1`
 import ba.sake.squery.generator._
 import ba.sake.squery.generator.mill.SqueryGeneratorModule
 
