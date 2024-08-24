@@ -33,7 +33,9 @@ object CodeGen extends TutorialPage {
       import $$ivy.`ba.sake::squery-generator:${Consts.ArtifactVersion}`
 
       val dataSource = new org.h2.jdbcx.JdbcDataSource()
-      dataSource.setURL("jdbc:postgres...")
+      dataSource.setURL("jdbc:postgresql://localhost:5432/mydb")
+      ds.setUser("username")
+      ds.setPassword("password")
       
       val generator = new SqueryGenerator(dataSource)
       val generatedCode = generator.generateString("myschema")
