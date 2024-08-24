@@ -7,7 +7,8 @@ trait TutorialPage extends DocPage {
 
   override def categoryPosts = List(
     Index,
-    GettingStarted
+    GettingStarted,
+    CodeGen
   )
 
   override def pageCategory = Some("Tutorials")
