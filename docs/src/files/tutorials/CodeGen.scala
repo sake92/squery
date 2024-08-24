@@ -40,7 +40,7 @@ object CodeGen extends TutorialPage {
       repl.load(generatedCode)
 
       // now you can use the generated code
-      MyTableDao.findAll()
+      MyTableCrudDao.findAll()
       """.md
   )
 
@@ -63,6 +63,12 @@ object CodeGen extends TutorialPage {
       // override to tweak codegen settings
       def squeryGeneratorConfig: T[SqueryGeneratorConfig] = ...
     ```
+
+    Then you can call generator like this:
+    ```scala
+    ./mill root.squeryGenerate
+    ```
+    and it will generate source code inside `com.mypackage.db`, based on `myschema` schema.
     """.md
   )
 
