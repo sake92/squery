@@ -31,7 +31,7 @@ object CodeGen extends TutorialPage {
       You can use Ammonite to test the generator:
       ```scala
       import $$ivy.`ba.sake:squery-generator_2.13:${Consts.ArtifactVersion}`
-      import $$ivy.`ba.sake:squery::${Consts.ArtifactVersion}`
+      import $$ivy.`ba.sake::squery:${Consts.ArtifactVersion}`
       import $$ivy.`org.postgresql:postgresql:42.7.4`
       import $$ivy.`com.zaxxer:HikariCP:5.1.0`
       import ba.sake.squery.generator.*
