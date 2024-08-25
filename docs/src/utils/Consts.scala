@@ -6,7 +6,7 @@ object Consts:
 
   val ArtifactOrg = "ba.sake"
   val ArtifactName = "squery"
-  val ArtifactVersion = "0.5.1"
+  val ArtifactVersion = "0.5.2"
 
   val GhHandle = "sake92"
   val GhProjectName = "squery"
