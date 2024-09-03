@@ -161,7 +161,9 @@ sealed abstract class ColumnType {
   def name: String
 }
 object ColumnType {
-  case class Predefined(name: String) extends ColumnType
+  case class Predefined(tpe: scala.meta.Type) extends ColumnType {
+    override def name: String = tpe.toString()
+  }
   case class Enumeration(name: String, values: Seq[String]) extends ColumnType
   case class Unknown(name: String) extends ColumnType
 }

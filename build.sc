@@ -72,15 +72,15 @@ object generator extends ScalaModule with CiReleaseModule {
   )
 
   def ivyDeps = Agg(
+    ivy"ba.sake::regenesca:0.1.0",
     ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
     ivy"ch.qos.logback:logback-classic:1.4.6",
-    ivy"com.lihaoyi::os-lib:0.10.3",
     ivy"org.apache.commons:commons-text:1.12.0"
   )
 }
 
 /* MILL PLUGIN */
-val millVersion = "0.11.11"
+val millVersion = "0.11.12"
 
 object `mill-plugin` extends ScalaModule with CiReleaseModule with ScalafmtModule {
 

@@ -68,7 +68,7 @@ trait SqueryGeneratorModule extends JavaModule {
       squerySchemas().map { case (schemaName, basePackage) =>
         SchemaConfig(
           name = schemaName,
-          baseFolder = squeryTargetDir(),
+          baseFolder = squeryTargetDir().wrapped,
           basePackage = basePackage
         )
       }

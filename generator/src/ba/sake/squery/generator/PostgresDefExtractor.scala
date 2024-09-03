@@ -5,6 +5,7 @@ import javax.sql.DataSource
 import scala.util._
 import scala.util.chaining._
 import scala.collection.mutable.ArrayBuffer
+import scala.meta._
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.CaseUtils
 
@@ -60,10 +61,15 @@ class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
       val arrayScalarType = displayTypeOriginal.takeWhile(_ != '[')
       resolveScalarType(arrayScalarType)
         .map { scalarType =>
-          val scalarTypeName = scalarType.name
-          val arrayType = ("Array[" * arrayDim) + scalarTypeName + ("]" * arrayDim)
           // TODO array of enums/domain types?
-          ColumnType.Predefined(arrayType)
+          if (arrayDim == 1) {
+            ColumnType.Predefined(t"Array[${scalarType.tpe}]")
+          } else if (arrayDim == 2) {
+            ColumnType.Predefined(t"Array[Array[${scalarType.tpe}]]")
+          } else {
+            throw new RuntimeException(s"Unsupported array dimension: $arrayDim")
+          }
+
         }
         .getOrElse(ColumnType.Unknown(displayTypeOriginal))
     } else
@@ -78,20 +84,20 @@ class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
 
   private def resolveScalarType(tpe: String) = Try {
     tpe match {
-      case "boolean"                     => ColumnType.Predefined("Boolean")
-      case "integer"                     => ColumnType.Predefined("Int")
-      case "smallint"                    => ColumnType.Predefined("Short")
-      case "bigint"                      => ColumnType.Predefined("Long")
-      case "numeric"                     => ColumnType.Predefined("Double")
-      case "text"                        => ColumnType.Predefined("String")
-      case "character"                   => ColumnType.Predefined("String")
-      case "character varying"           => ColumnType.Predefined("String")
-      case "tsvector"                    => ColumnType.Predefined("String")
-      case "date"                        => ColumnType.Predefined("LocalDate")
-      case "timestamp without time zone" => ColumnType.Predefined("LocalDateTime")
-      case "timestamp with time zone"    => ColumnType.Predefined("Instant")
-      case "uuid"                        => ColumnType.Predefined("UUID")
-      case "bytea"                       => ColumnType.Predefined("Array[Byte]")
+      case "boolean"                     => ColumnType.Predefined(t"Boolean")
+      case "integer"                     => ColumnType.Predefined(t"Int")
+      case "smallint"                    => ColumnType.Predefined(t"Short")
+      case "bigint"                      => ColumnType.Predefined(t"Long")
+      case "numeric"                     => ColumnType.Predefined(t"Double")
+      case "text"                        => ColumnType.Predefined(t"String")
+      case "character"                   => ColumnType.Predefined(t"String")
+      case "character varying"           => ColumnType.Predefined(t"String")
+      case "tsvector"                    => ColumnType.Predefined(t"String")
+      case "date"                        => ColumnType.Predefined(t"LocalDate")
+      case "timestamp without time zone" => ColumnType.Predefined(t"LocalDateTime")
+      case "timestamp with time zone"    => ColumnType.Predefined(t"Instant")
+      case "uuid"                        => ColumnType.Predefined(t"UUID")
+      case "bytea"                       => ColumnType.Predefined(t"Array[Byte]")
       case other                         => throw new RuntimeException(s"Unknown scalar type ${other}")
     }
   }

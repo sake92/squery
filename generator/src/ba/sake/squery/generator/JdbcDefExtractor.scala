@@ -5,6 +5,7 @@ import javax.sql.DataSource
 import scala.util._
 import scala.util.chaining._
 import scala.collection.mutable.ArrayBuffer
+import scala.meta._
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.CaseUtils
 
@@ -23,22 +24,22 @@ class JdbcDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
     val databaseMetaData = connection.getMetaData()
     columnsMetadatas.map { cMeta =>
       val tpe = cMeta.jdbcType match {
-        case Types.BIT                     => ColumnType.Predefined("Boolean")
-        case Types.BOOLEAN                 => ColumnType.Predefined("Boolean")
-        case Types.TINYINT                 => ColumnType.Predefined("Byte")
-        case Types.SMALLINT                => ColumnType.Predefined("Short")
-        case Types.INTEGER                 => ColumnType.Predefined("Int")
-        case Types.BIGINT                  => ColumnType.Predefined("Long")
-        case Types.DECIMAL                 => ColumnType.Predefined("Double")
-        case Types.DOUBLE                  => ColumnType.Predefined("Double")
-        case Types.NUMERIC                 => ColumnType.Predefined("Double")
-        case Types.NVARCHAR                => ColumnType.Predefined("String")
-        case Types.VARCHAR                 => ColumnType.Predefined("String")
-        case Types.DATE                    => ColumnType.Predefined("LocalDate")
-        case Types.TIMESTAMP               => ColumnType.Predefined("LocalDateTime")
-        case Types.TIMESTAMP_WITH_TIMEZONE => ColumnType.Predefined("Instant")
-        case Types.VARBINARY               => ColumnType.Predefined("Array[Byte]")
-        case Types.BINARY                  => ColumnType.Predefined("Array[Byte]")
+        case Types.BIT                     => ColumnType.Predefined(t"Boolean")
+        case Types.BOOLEAN                 => ColumnType.Predefined(t"Boolean")
+        case Types.TINYINT                 => ColumnType.Predefined(t"Byte")
+        case Types.SMALLINT                => ColumnType.Predefined(t"Short")
+        case Types.INTEGER                 => ColumnType.Predefined(t"Int")
+        case Types.BIGINT                  => ColumnType.Predefined(t"Long")
+        case Types.DECIMAL                 => ColumnType.Predefined(t"Double")
+        case Types.DOUBLE                  => ColumnType.Predefined(t"Double")
+        case Types.NUMERIC                 => ColumnType.Predefined(t"Double")
+        case Types.NVARCHAR                => ColumnType.Predefined(t"String")
+        case Types.VARCHAR                 => ColumnType.Predefined(t"String")
+        case Types.DATE                    => ColumnType.Predefined(t"LocalDate")
+        case Types.TIMESTAMP               => ColumnType.Predefined(t"LocalDateTime")
+        case Types.TIMESTAMP_WITH_TIMEZONE => ColumnType.Predefined(t"Instant")
+        case Types.VARBINARY               => ColumnType.Predefined(t"Array[Byte]")
+        case Types.BINARY                  => ColumnType.Predefined(t"Array[Byte]")
         case _                             => ColumnType.Unknown(cMeta.jdbcType.toString)
       }
       (cMeta.table, cMeta.name) -> tpe
