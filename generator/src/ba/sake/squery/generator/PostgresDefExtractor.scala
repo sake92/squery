@@ -98,6 +98,8 @@ class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
       case "timestamp with time zone"    => ColumnType.Predefined(t"Instant")
       case "uuid"                        => ColumnType.Predefined(t"UUID")
       case "bytea"                       => ColumnType.Predefined(t"Array[Byte]")
+      case "json"                        => ColumnType.Predefined(t"org.typelevel.jawn.ast.JValue")
+      case "jsonb"                       => ColumnType.Predefined(t"org.typelevel.jawn.ast.JValue")
       case other                         => throw new RuntimeException(s"Unknown scalar type ${other}")
     }
   }

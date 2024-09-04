@@ -35,6 +35,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
             logger.info(s"Started generating schema '${schemaName}'")
             val (modelFiles, daoFiles) =
               generateSchema(schemaDef, dbType = dbDef.tpe, basePackage = "", fileGen = false)
+            // models first because of Ammonite eval order!
             val allFiles = modelFiles ++ daoFiles
             val allSources = generateBaseImports(dbDef.tpe).map(_.syntax) ++ allFiles.map(_.source.syntax)
             logger.info(s"Finished generating schema '${schemaName}'")
@@ -86,7 +87,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       _.columnDefs.map(_.scalaType).collect { case e: ColumnType.Enumeration =>
         e
       }
-    }
+    }.distinctBy(_.name)
     val enumFiles = enumDefs.map { enumDef =>
       val enumCaseDefs = Defn.RepeatedEnumCase(
         List.empty,
@@ -198,18 +199,20 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         """
       }
 
+      // object goes first, coz class references PK type
+      // so that it works in ammonite where definitions are parsed 1 by 1
       val source =
         if (fileGen)
           source"""
           package ${generatePkgSelect(s"${basePackage}.models")}
           ..${generateBaseImports(dbType)}
-          ${caseClassDefn}
           ${objectDefn}
+          ${caseClassDefn}
           """
         else
           source"""
-          ${caseClassDefn}
           ${objectDefn}
+          ${caseClassDefn}
           """
       GeneratedFileSource(Paths.get(s"${caseClassName}.scala"), source)
     }
@@ -515,13 +518,13 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
           source"""
           package ${generatePkgSelect(s"${basePackage}.daos")}
           ..${generateDaoImports(dbType, basePackage)}
-          ${daoClassDefn}
           ${daoObjectDefn}
+          ${daoClassDefn}
           """
         else
           source"""
-          ${daoClassDefn}
           ${daoObjectDefn}
+          ${daoClassDefn}
           """
       GeneratedFileSource(Paths.get(s"${daoClassName}.scala"), source)
     }

@@ -40,8 +40,13 @@ object CodeGen extends TutorialPage {
       import $$ivy.`org.postgresql:postgresql:42.7.4`
       import $$ivy.`com.zaxxer:HikariCP:5.1.0`
       import ba.sake.squery.generator.*
+      import com.zaxxer.hikari.HikariDataSource
 
-      val dataSource = com.zaxxer.hikari.HikariDataSource()
+      // if using Postgres JSONB
+      // import $$ivy.`ba.sake::squery-postgres-jawn:${Consts.ArtifactVersion}`
+      // import ba.sake.squery.postgres.jawn.*
+
+      val dataSource = HikariDataSource()
       dataSource.setJdbcUrl("jdbc:postgresql://localhost:5432/mydb")
       dataSource.setUsername("username")
       dataSource.setPassword("password")
@@ -55,7 +60,6 @@ object CodeGen extends TutorialPage {
       ctx.run {
         MyTableCrudDao.findAll()
       }
-      
       """.md
   )
 
