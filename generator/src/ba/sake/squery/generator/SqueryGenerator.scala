@@ -76,26 +76,28 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
   }
 
   private def generateBaseImports(dbType: DbType) = {
-    val dbSpecificPackageName = Term.Name(dbType.squeryPackage)
-    val dbSpecificPackageTerm = q"ba.sake.squery.${dbSpecificPackageName}"
-    val importeesnel = List(importee"*", importee"given")
-    val importers = List(importer"${dbSpecificPackageTerm}.{..$importeesnel}")
+    val dbSpecificImporter = s"ba.sake.squery.${dbType.squeryPackage}.{*, given}".parse[Importer].get
     List(
       q"import java.time.*",
       q"import java.util.UUID",
       q"import ba.sake.squery.{*, given}",
-      q"import ..${importers}",
+      q"import ..${List(dbSpecificImporter)}",
       q"import ba.sake.squery.read.SqlRead",
       q"import ba.sake.squery.write.SqlWrite"
     )
   }
   private def generateDaoImports(dbType: DbType, basePackage: String) = {
-    val basePackageName = Term.Name(basePackage)
-    val modelsPackageTerm = q"${basePackageName}.models"
-    val importeesnel = List(importee"*")
-    val importers = List(importer"${modelsPackageTerm}.{..$importeesnel}")
-    generateBaseImports(dbType) ++
-      List(q"import ..${importers}")
+    val modelsImporter = s"${basePackage}.models.*".parse[Importer].get
+    val modelsImport = q"import ..${List(modelsImporter)}"
+    generateBaseImports(dbType) ++ List(modelsImport)
+  }
+
+  def generatePkgSelect(pkg: String) = {
+    val packageComponents = pkg.split("\\.").toList
+    val firstSelect = q"${Term.Name(packageComponents(0))}.${Term.Name(packageComponents(1))}"
+    packageComponents.tail.tail.foldLeft(firstSelect) { (a, b) =>
+      q"${a}.${Term.Name(b)}"
+    }
   }
 
   // (models, daos)
@@ -123,7 +125,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       val source =
         if (fileGen)
           source"""
-          package ${Term.Name(basePackage)}.models
+          package ${generatePkgSelect(s"${basePackage}.models")}
           ..${generateBaseImports(dbType)}
           enum ${enumTypeName} derives SqlRead, SqlWrite {
             ${enumCaseDefs}
@@ -224,7 +226,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       val source =
         if (fileGen)
           source"""
-          package ${Term.Name(basePackage)}.models
+          package ${generatePkgSelect(s"${basePackage}.models")}
           ..${generateBaseImports(dbType)}
           ${caseClassDefn}
           ${objectDefn}
@@ -469,7 +471,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       val source =
         if (fileGen)
           source"""
-          package ${Term.Name(basePackage)}.daos
+          package ${generatePkgSelect(s"${basePackage}.daos")}
           ..${generateDaoImports(dbType, basePackage)}
           ${daoClassDefn}
           ${daoObjectDefn}
