@@ -51,8 +51,13 @@ import $ivy.`ba.sake::squery:0.6.0`
 import $ivy.`org.postgresql:postgresql:42.7.4`
 import $ivy.`com.zaxxer:HikariCP:5.1.0`
 import ba.sake.squery.generator.*
+import com.zaxxer.hikari.HikariDataSource
 
-val dataSource = com.zaxxer.hikari.HikariDataSource()
+// if using Postgres JSONB
+// import $ivy.`ba.sake::squery-postgres-jawn:0.6.0`
+// import ba.sake.squery.postgres.jawn.*
+
+val dataSource = HikariDataSource()
 dataSource.setJdbcUrl(&quot;jdbc:postgresql://localhost:5432/mydb&quot;)
 dataSource.setUsername(&quot;username&quot;)
 dataSource.setPassword(&quot;password&quot;)
@@ -66,7 +71,6 @@ val ctx = SqueryContext(dataSource)
 ctx.run {
   MyTableCrudDao.findAll()
 }
-
 </code></pre>
 </section><section id="mill-plugin"><h2>Mill plugin</h2><p>Squery provides a Mill plugin:</p>
 <pre><code class="language-scala">import $ivy.`ba.sake::mill-squery-generator_mill0.11:0.6.0`
