@@ -39,12 +39,12 @@ object squery extends CommonScalaModule with CiReleaseModule {
   object test extends ScalaTests with TestModule.Munit {
     def ivyDeps = Agg(
       ivy"org.scalameta::munit:1.0.0",
-      ivy"ch.qos.logback:logback-classic:1.4.6",
+      ivy"ch.qos.logback:logback-classic:1.5.7",
       ivy"com.zaxxer:HikariCP:4.0.3",
-      ivy"com.h2database:h2:2.1.214",
+      ivy"com.h2database:h2:2.3.232",
       ivy"org.testcontainers:testcontainers:1.17.6",
       ivy"org.testcontainers:postgresql:1.17.6",
-      ivy"org.postgresql:postgresql:42.5.4",
+      ivy"org.postgresql:postgresql:42.7.4",
       ivy"org.testcontainers:mysql:1.19.3",
       ivy"mysql:mysql-connector-java:8.0.33",
       ivy"org.testcontainers:mariadb:1.19.3",
@@ -74,7 +74,7 @@ object generator extends ScalaModule with CiReleaseModule {
   def ivyDeps = Agg(
     ivy"ba.sake::regenesca:0.1.0",
     ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
-    ivy"ch.qos.logback:logback-classic:1.4.6",
+    ivy"ch.qos.logback:logback-classic:1.5.7",
     ivy"org.apache.commons:commons-text:1.12.0"
   )
 }
@@ -109,7 +109,7 @@ object `mill-plugin` extends ScalaModule with CiReleaseModule with ScalafmtModul
 
   def ivyDeps = Agg(
     ivy"com.h2database:h2:2.3.232",
-    ivy"org.postgresql:postgresql:42.6.0",
+    ivy"org.postgresql:postgresql:42.7.4",
     ivy"mysql:mysql-connector-java:8.0.33",
     ivy"org.mariadb.jdbc:mariadb-java-client:3.3.2",
     ivy"com.oracle.database.jdbc:ojdbc8:23.3.0.23.09"
