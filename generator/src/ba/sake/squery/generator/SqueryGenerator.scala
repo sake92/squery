@@ -75,31 +75,6 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
     }
   }
 
-  private def generateBaseImports(dbType: DbType) = {
-    val dbSpecificImporter = s"ba.sake.squery.${dbType.squeryPackage}.{*, given}".parse[Importer].get
-    List(
-      q"import java.time.*",
-      q"import java.util.UUID",
-      q"import ba.sake.squery.{*, given}",
-      q"import ..${List(dbSpecificImporter)}",
-      q"import ba.sake.squery.read.SqlRead",
-      q"import ba.sake.squery.write.SqlWrite"
-    )
-  }
-  private def generateDaoImports(dbType: DbType, basePackage: String) = {
-    val modelsImporter = s"${basePackage}.models.*".parse[Importer].get
-    val modelsImport = q"import ..${List(modelsImporter)}"
-    generateBaseImports(dbType) ++ List(modelsImport)
-  }
-
-  def generatePkgSelect(pkg: String) = {
-    val packageComponents = pkg.split("\\.").toList
-    val firstSelect = q"${Term.Name(packageComponents(0))}.${Term.Name(packageComponents(1))}"
-    packageComponents.tail.tail.foldLeft(firstSelect) { (a, b) =>
-      q"${a}.${Term.Name(b)}"
-    }
-  }
-
   // (models, daos)
   private def generateSchema(
       schemaDef: SchemaDef,
@@ -246,11 +221,9 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
 
       val tableName = s"${tableDef.schema}.${tableDef.name}"
       val tableNameLit = Lit.String(tableName)
-      val tableNameSelect = q"${rowObjectRef}.tableName"
 
       val columnNames = tableDef.columnDefs.map(_.metadata.name)
       val allColsLit = Lit.String(columnNames.mkString(", "))
-      val allColsSelect = q"${rowObjectRef}.allCols"
       val pkTpe = t"PK"
       val pkType = t"${rowObjectRef}.${pkTpe}"
 
@@ -282,41 +255,94 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         }
       }
 
-      val genCountAll =
+      val genCountAll = {
+        val sqlInterpolate = Term.Interpolate(
+          Term.Name("sql"),
+          parts = List(
+            Lit.String(s"SELECT COUNT(*) FROM ${tableName}")
+          ),
+          args = List.empty
+        )
         q"""def countAll(): DbAction[Int] =
-              sql"SELECT COUNT(*) FROM $${${tableNameSelect}}".readValue()
+              ${sqlInterpolate}.readValue()
         """
-      val genCountWhere =
+      }
+      val genCountWhere = {
+        val sqlInterpolate = Term.Interpolate(
+          Term.Name("sql"),
+          parts = List(
+            Lit.String(s"SELECT COUNT(*) FROM ${tableName} WHERE "),
+            Lit.String("")
+          ),
+          args = List(Term.Name("whereQuery"))
+        )
         q"""def countWhere(whereQuery: Query): DbAction[Int] =
-              sql"SELECT COUNT(*) FROM $${${tableNameSelect}} WHERE $${whereQuery}".readValue()
+              ${sqlInterpolate}.readValue()
         """
+      }
 
-      val genFindAll =
+      val genFindAll = {
+        val sqlInterpolate = Term.Interpolate(
+          Term.Name("sql"),
+          parts = List(
+            Lit.String(s"SELECT ${allColsLit.value} FROM ${tableName}")
+          ),
+          args = List.empty
+        )
         q"""def findAll(): DbAction[Seq[${rowClassType}]] =
-              sql"SELECT $${${allColsSelect}} FROM $${${tableNameSelect}}".readRows()
+              ${sqlInterpolate}.readRows()
         """
-      val genFindAllWhere =
+      }
+      val genFindAllWhere = {
+        val sqlInterpolate = Term.Interpolate(
+          Term.Name("sql"),
+          parts = List(
+            Lit.String(s"SELECT ${allColsLit.value} FROM ${tableName} WHERE "),
+            Lit.String("")
+          ),
+          args = List(Term.Name("whereQuery"))
+        )
         q"""def findAllWhere(whereQuery: Query): DbAction[Seq[${rowClassType}]] =
-              sql"SELECT $${${allColsSelect}} FROM $${${tableNameSelect}} WHERE $${whereQuery}".readRows()
+              ${sqlInterpolate}.readRows()
         """
-      val genFindWhere =
+      }
+      val genFindWhere = {
+        val sqlInterpolate = Term.Interpolate(
+          Term.Name("sql"),
+          parts = List(
+            Lit.String(s"SELECT ${allColsLit.value} FROM ${tableName} WHERE "),
+            Lit.String("")
+          ),
+          args = List(Term.Name("whereQuery"))
+        )
         q"""def findWhere(whereQuery: Query): DbAction[${rowClassType}] =
-              sql"SELECT $${${allColsSelect}} FROM $${${tableNameSelect}} WHERE $${whereQuery}".readRow()
+              ${sqlInterpolate}.readRow()
         """
-      val genFindWhereOpt =
+      }
+
+      val genFindWhereOpt = {
+        val sqlInterpolate = Term.Interpolate(
+          Term.Name("sql"),
+          parts = List(
+            Lit.String(s"SELECT ${allColsLit.value} FROM ${tableName} WHERE "),
+            Lit.String("")
+          ),
+          args = List(Term.Name("whereQuery"))
+        )
         q"""def findWhereOpt(whereQuery: Query): DbAction[Option[${rowClassType}]] =
-              sql"SELECT $${${allColsSelect}} FROM $${${tableNameSelect}} WHERE $${whereQuery}".readRowOpt()
+              ${sqlInterpolate}.readRowOpt()
         """
+      }
+
       val genFindById = Option.when(tableDef.hasPk) {
         val (whereLits, whereVars) = byIdWhereExpr("id")
         val sqlInterpolate = Term.Interpolate(
           Term.Name("sql"),
           parts = List(
-            Lit.String("SELECT "),
-            Lit.String(" FROM "),
-            Lit.String(s" WHERE ${whereLits.head.value}") // merge "WHERE" and "id =" into ONE LITERAL!
+            // merge "WHERE" and "id =" into ONE LITERAL!
+            Lit.String(s"SELECT ${allColsLit.value} FROM ${tableName} WHERE ${whereLits.head.value}")
           ) ++ whereLits.tail ++ List(Lit.String("")),
-          args = List(allColsSelect, tableNameSelect) ++ whereVars
+          args = whereVars
         )
         q"""def findById(id: ${pkType}): DbAction[${rowClassType}] =
               ${sqlInterpolate}.readRow()
@@ -327,26 +353,26 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         val sqlInterpolate = Term.Interpolate(
           Term.Name("sql"),
           parts = List(
-            Lit.String("SELECT "),
-            Lit.String(" FROM "),
-            Lit.String(s" WHERE ${whereLits.head.value}") // merge "WHERE" and "id =" into ONE LITERAL!
+            // merge "WHERE" and "id =" into ONE LITERAL!
+            Lit.String(s"SELECT ${allColsLit.value} FROM ${tableName} WHERE ${whereLits.head.value}")
           ) ++ whereLits.tail ++ List(Lit.String("")),
-          args = List(allColsSelect, tableNameSelect) ++ whereVars
+          args = whereVars
         )
         q"""def findByIdOpt(id: ${pkType}): DbAction[Option[${rowClassType}]] =
               ${sqlInterpolate}.readRowOpt()
         """
       }
+
       val genFindByIds = Option.when(tableDef.hasPk && !tableDef.hasCompositePk) {
         val sqlInterpolate = Term.Interpolate(
           Term.Name("sql"),
           parts = List(
-            Lit.String("SELECT "),
-            Lit.String(" FROM "),
-            Lit.String(s" WHERE ${tableDef.pkColumns.head.metadata.name} IN ("),
+            Lit.String(
+              s"SELECT ${allColsLit.value} FROM ${tableName} WHERE ${tableDef.pkColumns.head.metadata.name} IN ("
+            ),
             Lit.String(")")
           ),
-          args = List(allColsSelect, tableNameSelect, Term.Name("idsExpr"))
+          args = List(Term.Name("idsExpr"))
         )
         q"""def findByIds(ids: Set[${pkType}]): DbAction[Seq[${rowClassType}]] = {
               val idsExpr = ids.map(id => sql"$${id}").reduce(_ ++ sql"," ++ _)
@@ -404,41 +430,57 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         }
         val sqlInterpolate = Term.Interpolate(
           Term.Name("sql"),
-          parts = List(Lit.String("UPDATE "), Lit.String(s"\n    SET ${updateLits.head.value}")) ++
+          parts = List(Lit.String(s"UPDATE ${tableName} \nSET ${updateLits.head.value}")) ++
             updateLits.tail ++
             List(Lit.String(s"\n    WHERE ${whereLits.head.value}")) ++
             whereLits.tail ++ List(Lit.String("")),
-          args = List(tableNameSelect) ++ updateVars ++ whereVars
+          args = (updateVars ++ whereVars).toList
         )
         q"""def updateById(row: ${rowClassType}): DbAction[Int] =
               ${sqlInterpolate}.update()
             """
       }
 
-      val genDeleteWhere =
+      val genDeleteWhere = {
+        val sqlInterpolate = Term.Interpolate(
+          Term.Name("sql"),
+          parts = List(
+            Lit.String(s"DELETE FROM ${tableName} WHERE "),
+            Lit.String("")
+          ),
+          args = List(Term.Name("whereQuery"))
+        )
         q"""def deleteWhere(whereQuery: Query): DbAction[Int] =
-              sql"DELETE FROM $${${tableNameSelect}} WHERE $${whereQuery}".update()
+              ${sqlInterpolate}.update()
         """
+      }
+
       val genDeleteById = Option.when(tableDef.hasPk) {
         val (whereLits, whereVars) = byIdWhereExpr("id")
         val sqlInterpolate = Term.Interpolate(
           Term.Name("sql"),
           parts = List(
-            Lit.String("DELETE FROM "),
-            Lit.String(s" WHERE ${whereLits.head.value}") // merge "WHERE" and "id =" into ONE LITERAL!
+            Lit.String(s"DELETE FROM ${tableName} WHERE ${whereLits.head.value}")
           ) ++ whereLits.tail ++ List(Lit.String("")),
-          args = List(tableNameSelect) ++ whereVars
+          args = whereVars
         )
         q"""def deleteById(id: ${pkType}): DbAction[Int] =
               ${sqlInterpolate}.update()
         """
       }
       def genDeleteByIds = Option.when(tableDef.hasPk && !tableDef.hasCompositePk) {
+        val sqlInterpolate = Term.Interpolate(
+          Term.Name("sql"),
+          parts = List(
+            Lit.String(s"DELETE FROM ${tableName} WHERE ${tableDef.pkColumns.head.metadata.name} IN (")
+          ) ++ List(Lit.String(")")),
+          args = List(Term.Name("idsExpr"))
+        )
         val pkColName = Term.Name(tableDef.pkColumns.head.metadata.name.safeColNameIdentifier)
         val pkColRef = q"${rowObjectRef}.${pkColName}"
         q"""def deleteByIds(ids: Set[${pkType}]): DbAction[Int] =
               val idsExpr = ids.map(id => sql"$${id}").reduce(_ ++ sql"," ++ _)
-              deleteWhere(sql"$${${pkColRef}} IN ($${idsExpr})")
+              ${sqlInterpolate}.update()
         """
       }
 
@@ -485,6 +527,31 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
     }
 
     (enumFiles ++ tableFiles, daoFiles)
+  }
+
+  private def generatePkgSelect(pkg: String) = {
+    val packageComponents = pkg.split("\\.").toList
+    val firstSelect = q"${Term.Name(packageComponents(0))}.${Term.Name(packageComponents(1))}"
+    packageComponents.tail.tail.foldLeft(firstSelect) { (a, b) =>
+      q"${a}.${Term.Name(b)}"
+    }
+  }
+
+  private def generateBaseImports(dbType: DbType) = {
+    val dbSpecificImporter = s"ba.sake.squery.${dbType.squeryPackage}.{*, given}".parse[Importer].get
+    List(
+      q"import java.time.*",
+      q"import java.util.UUID",
+      q"import ba.sake.squery.{*, given}",
+      q"import ..${List(dbSpecificImporter)}",
+      q"import ba.sake.squery.read.SqlRead",
+      q"import ba.sake.squery.write.SqlWrite"
+    )
+  }
+  private def generateDaoImports(dbType: DbType, basePackage: String) = {
+    val modelsImporter = s"${basePackage}.models.*".parse[Importer].get
+    val modelsImport = q"import ..${List(modelsImporter)}"
+    generateBaseImports(dbType) ++ List(modelsImport)
   }
 
   private def transformName(str: String, nameMapper: NameMapper, capitalizeFirstLetter: Boolean): String =
