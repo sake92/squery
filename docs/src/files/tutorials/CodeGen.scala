@@ -14,7 +14,7 @@ object CodeGen extends TutorialPage {
   val introSection = Section(
     "Code generator",
     s"""
-      Squery has a standalone code generator that can generate code for various databases:  
+      Squery has a code generator that can generate code for various databases:  
         Postgres, MySQL, MariaDB, Oracle and H2.  
       
       It generates models for table rows and handy DAO code with various utility methods:
@@ -22,6 +22,11 @@ object CodeGen extends TutorialPage {
         - findAll, findWhere, findWhereOpt, findAllWhere, findById, findByIdOpt, findByIds
         - insert, updateById
         - deleteWhere, deleteById, deleteIds
+      
+      Squery codegene is a bit special since it is using [Regenesca library](https://github.com/sake92/regenesca).  
+      When you add a new column for example, it will refactor the `*Row` and `*Dao` code in place!  
+      This means you can add your own methods/vals to the *generated code*, without fear that the codegen will remove it.  
+      Of course, it is best to use `scalafmt` after codegen so that the diff is minimal.
       """.md
   )
 
