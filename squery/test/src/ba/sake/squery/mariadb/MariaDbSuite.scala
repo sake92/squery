@@ -97,9 +97,6 @@ class MariaDbSuite extends munit.FunSuite {
                  (${customer2.name}, ${customer2.street})
         """.insertReturningGenKeys[Int]()
 
-
-        println(customerIds)
-
         customer1 = customer1.copy(id = customerIds(0))
         customer2 = customer2.copy(id = customerIds(1))
 

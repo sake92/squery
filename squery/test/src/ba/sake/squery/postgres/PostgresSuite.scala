@@ -6,6 +6,8 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.collection.decorators._
 import org.testcontainers.containers.PostgreSQLContainer
+import ba.sake.squery.read.{*, given}
+import ba.sake.squery.write.{*, given}
 
 // UUID, enum.. Postgres specific
 case class Datatypes(
@@ -16,12 +18,22 @@ case class Datatypes(
     d_string: Option[String],
     d_uuid: Option[UUID],
     d_tstz: Option[Instant],
-    d_clr: Option[Color]
+    d_clr: Option[Color],
+    d_array_bytes: Option[Vector[Byte]],
+    d_array_int: Option[Vector[Int]],
+    d_array_array_int: Option[Vector[Vector[Int]]],
+    d_array_str: Option[Vector[String]],
+    d_array_array_str: Option[Vector[Vector[String]]]
 ) derives SqlReadRow:
-  def insertTuple = sql"(${d_int}, ${d_long}, ${d_double}, ${d_boolean}, ${d_string}, ${d_uuid}, ${d_tstz}, ${d_clr})"
+
+  def insertTuple =
+    sql"""(${d_int}, ${d_long}, ${d_double}, ${d_boolean}, ${d_string}, ${d_uuid}, ${d_tstz}, ${d_clr},
+      ${d_array_bytes}, ${d_array_int}, ${d_array_array_int}, ${d_array_str}, ${d_array_array_str}
+    )"""
 
 object Datatypes:
-  inline val allCols = "d_int, d_long, d_double, d_boolean, d_string, d_uuid, d_tstz, d_clr"
+  inline val allCols =
+    "d_int, d_long, d_double, d_boolean, d_string, d_uuid, d_tstz, d_clr, d_array_bytes, d_array_int, d_array_array_int, d_array_str, d_array_array_str"
 
 enum Color derives SqlRead, SqlWrite:
   case red, green, blue
@@ -273,7 +285,12 @@ class PostgresSuite extends munit.FunSuite {
           d_string VARCHAR(255),
           d_uuid UUID,
           d_tstz TIMESTAMPTZ,
-          d_clr color
+          d_clr color,
+          d_array_bytes bytea,
+          d_array_int INTEGER[],
+          d_array_array_int INTEGER[][],
+          d_array_str VARCHAR[],
+          d_array_array_str VARCHAR[][]
         )
       """.update()
       val dt1 = Datatypes(
@@ -284,9 +301,14 @@ class PostgresSuite extends munit.FunSuite {
         Some("abc"),
         Some(UUID.randomUUID),
         Some(Instant.now.truncatedTo(ChronoUnit.MICROS)),
-        Some(Color.red)
+        Some(Color.red),
+        Some("array".getBytes("utf8").toVector),
+        Some(Vector(1, 2, 3)),
+        Some(Vector(Vector(1, 1, 1), Vector(2, 2, 2), Vector(3, 3, 3))),
+        Some(Vector("abc")),
+        Some(Vector(Vector("aaa"), Vector("bbb"), Vector("ccc")))
       )
-      val dt2 = Datatypes(None, None, None, None, None, None, None, None)
+      val dt2 = Datatypes(None, None, None, None, None, None, None, None, None, None, None, None, None)
 
       val values = Seq(dt1, dt2)
         .map(_.insertTuple)
@@ -301,10 +323,22 @@ class PostgresSuite extends munit.FunSuite {
         SELECT ${Datatypes.allCols}
         FROM datatypes
       """.readRows[Datatypes]()
-      assertEquals(
-        storedRows,
-        Seq(dt1)
-      )
+      val firstRow = storedRows.head
+
+      assertEquals(firstRow.d_int, dt1.d_int)
+      assertEquals(firstRow.d_long, dt1.d_long)
+      assertEquals(firstRow.d_double, dt1.d_double)
+      assertEquals(firstRow.d_boolean, dt1.d_boolean)
+      assertEquals(firstRow.d_string, dt1.d_string)
+      assertEquals(firstRow.d_uuid, dt1.d_uuid)
+      assertEquals(firstRow.d_tstz, dt1.d_tstz)
+      assertEquals(firstRow.d_clr, dt1.d_clr)
+      assertEquals(firstRow.d_int, dt1.d_int)
+      assertEquals(Some("array"), dt1.d_array_bytes.map(b => new String(b.toArray, "utf8")))
+      assertEquals(firstRow.d_array_int, dt1.d_array_int)
+      assertEquals(firstRow.d_array_array_int, dt1.d_array_array_int)
+      assertEquals(firstRow.d_array_str, dt1.d_array_str)
+      assertEquals(firstRow.d_array_array_str, dt1.d_array_array_str)
     }
   }
 

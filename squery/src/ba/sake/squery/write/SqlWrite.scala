@@ -1,4 +1,5 @@
-package ba.sake.squery.write
+package ba.sake.squery
+package write
 
 import java.{sql => jsql}
 import java.time.Instant
@@ -11,6 +12,8 @@ import java.time.ZoneId
 import java.time.OffsetDateTime
 import scala.deriving.*
 import scala.quoted.*
+import scala.reflect.ClassTag
+import scala.util.NotGiven
 
 trait SqlWrite[T]:
   def write(ps: jsql.PreparedStatement, idx: Int, valueOpt: Option[T]): Unit
@@ -129,6 +132,51 @@ object SqlWrite {
       case None        => ps.setNull(idx, jsql.Types.TIMESTAMP)
   }
 
+  /* Arrays */
+  given sqlWriteArray1[T: SqlWrite](using stn: SqlTypeName[T], ng: NotGiven[SqlNonScalarType[T]]): SqlWrite[Array[T]]
+  with {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[Array[T]]
+    ): Unit = valueOpt match
+      case Some(value) =>
+        val valuesAsAnyRef = value.map(_.asInstanceOf[AnyRef]) // box primitives like Array[Int]
+        val sqlArray = ps.getConnection().createArrayOf(stn.value, valuesAsAnyRef)
+        ps.setArray(idx, sqlArray)
+      case None => ps.setArray(idx, null)
+  }
+  given sqlWriteArray2[T: SqlWrite](using
+      stn: SqlTypeName[T],
+      ng: NotGiven[SqlNonScalarType[T]]
+  ): SqlWrite[Array[Array[T]]] with {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[Array[Array[T]]]
+    ): Unit = valueOpt match
+      case Some(value) =>
+        val valuesAsAnyRef = value.map(_.map(_.asInstanceOf[AnyRef])) // box primitives like Array[Array[Int]]
+        val sqlArray = ps.getConnection().createArrayOf(stn.value, valuesAsAnyRef.asInstanceOf[Array[AnyRef]])
+        ps.setArray(idx, sqlArray)
+      case None => ps.setArray(idx, null)
+  }
+  given sqlWriteArray3[T: SqlWrite](using
+      stn: SqlTypeName[T],
+      ng: NotGiven[SqlNonScalarType[T]]
+  ): SqlWrite[Array[Array[Array[T]]]] with {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[Array[Array[Array[T]]]]
+    ): Unit = valueOpt match
+      case Some(value) =>
+        val valuesAsAnyRef =
+          value.map(_.map(_.map(_.asInstanceOf[AnyRef]))) // box primitives like Array[Array[Array[Int]]]
+        val sqlArray = ps.getConnection().createArrayOf(stn.value, valuesAsAnyRef.asInstanceOf[Array[AnyRef]])
+        ps.setArray(idx, sqlArray)
+      case None => ps.setArray(idx, null)
+  }
   given SqlWrite[Array[Byte]] with {
     def write(
         ps: jsql.PreparedStatement,
@@ -137,6 +185,47 @@ object SqlWrite {
     ): Unit = valueOpt match
       case Some(value) => ps.setBytes(idx, value)
       case None        => ps.setNull(idx, jsql.Types.BINARY)
+  }
+
+  given sqlWriteVector1[T: SqlWrite: ClassTag](using
+      stn: SqlTypeName[T],
+      ng: NotGiven[SqlNonScalarType[T]]
+  ): SqlWrite[Vector[T]] with {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[Vector[T]]
+    ): Unit = SqlWrite[Array[T]].write(ps, idx, valueOpt.map(_.toArray))
+  }
+
+  given sqlWriteVector2[T: SqlWrite: ClassTag](using
+      stn: SqlTypeName[T],
+      ng: NotGiven[SqlNonScalarType[T]]
+  ): SqlWrite[Vector[Vector[T]]] with {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[Vector[Vector[T]]]
+    ): Unit = SqlWrite[Array[Array[T]]].write(ps, idx, valueOpt.map(_.toArray.map(_.toArray)))
+  }
+
+  given sqlWriteVector3[T: SqlWrite: ClassTag](using
+      stn: SqlTypeName[T],
+      ng: NotGiven[SqlNonScalarType[T]]
+  ): SqlWrite[Vector[Vector[Vector[T]]]] with {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[Vector[Vector[Vector[T]]]]
+    ): Unit = SqlWrite[Array[Array[Array[T]]]].write(ps, idx, valueOpt.map(_.toArray.map(_.toArray.map(_.toArray))))
+  }
+
+  given SqlWrite[Vector[Byte]] with {
+    def write(
+        ps: jsql.PreparedStatement,
+        idx: Int,
+        valueOpt: Option[Vector[Byte]]
+    ): Unit = SqlWrite[Array[Byte]].write(ps, idx, valueOpt.map(_.toArray))
   }
 
   given [T](using sw: SqlWrite[T]): SqlWrite[Option[T]] with {

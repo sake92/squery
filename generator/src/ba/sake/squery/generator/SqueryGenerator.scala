@@ -83,11 +83,13 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       basePackage: String,
       fileGen: Boolean
   ): (Seq[GeneratedFileSource], Seq[GeneratedFileSource]) = {
-    val enumDefs = schemaDef.tables.flatMap {
-      _.columnDefs.map(_.scalaType).collect { case e: ColumnType.Enumeration =>
-        e
+    val enumDefs = schemaDef.tables
+      .flatMap {
+        _.columnDefs.map(_.scalaType).collect { case e: ColumnType.Enumeration =>
+          e
+        }
       }
-    }.distinctBy(_.name)
+      .distinctBy(_.name)
     val enumFiles = enumDefs.map { enumDef =>
       val enumCaseDefs = Defn.RepeatedEnumCase(
         List.empty,
@@ -547,8 +549,8 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       q"import java.util.UUID",
       q"import ba.sake.squery.{*, given}",
       q"import ..${List(dbSpecificImporter)}",
-      q"import ba.sake.squery.read.SqlRead",
-      q"import ba.sake.squery.write.SqlWrite"
+      q"import ba.sake.squery.read.{*, given}",
+      q"import ba.sake.squery.write.{*, given}"
     )
   }
   private def generateDaoImports(dbType: DbType, basePackage: String) = {
