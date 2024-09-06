@@ -58,7 +58,7 @@ object CodeGen extends TutorialPage {
       // now you can use the generated code
       val ctx = SqueryContext(dataSource)
       ctx.run {
-        MyTableCrudDao.findAll()
+        MyTableDao.findAll()
       }
       """.md
   )

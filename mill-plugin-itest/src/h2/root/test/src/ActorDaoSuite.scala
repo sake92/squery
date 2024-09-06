@@ -5,7 +5,7 @@ import ba.sake.squery.{*, given}
 import public.models.*
 import public.daos.*
 
-class ActorCrudDaoSuite extends munit.FunSuite {
+class ActorDaoSuite extends munit.FunSuite {
 
   val matthewRows = Seq(
     ActorRow(
@@ -28,27 +28,27 @@ class ActorCrudDaoSuite extends munit.FunSuite {
     )
   )
 
-  test("ActorCrudDao should work as expected") {
+  test("ActorDao should work as expected") {
     Globals.ctx.run {
       /* count */
-      val totalCount = ActorCrudDao.countAll()
+      val totalCount = ActorDao.countAll()
       assertEquals(totalCount, 200)
 
-      val matthewsCount = ActorCrudDao.countWhere(sql"${ActorRow.firstName} = 'MATTHEW'")
+      val matthewsCount = ActorDao.countWhere(sql"${ActorRow.firstName} = 'MATTHEW'")
       assertEquals(matthewsCount, 3)
 
       /* find */
-      val matthews = ActorCrudDao.findAllWhere(sql"${ActorRow.firstName} = 'MATTHEW'")
+      val matthews = ActorDao.findAllWhere(sql"${ActorRow.firstName} = 'MATTHEW'")
       assertEquals(matthews, matthewRows)
 
       val matthewJohansson =
-        ActorCrudDao.findWhere(sql"${ActorRow.firstName} = 'MATTHEW' AND ${ActorRow.lastName} = 'JOHANSSON'")
+        ActorDao.findWhere(sql"${ActorRow.firstName} = 'MATTHEW' AND ${ActorRow.lastName} = 'JOHANSSON'")
       assertEquals(matthewJohansson, matthewRows(0))
 
-      val matthewJohanssonById = ActorCrudDao.findById(8)
+      val matthewJohanssonById = ActorDao.findById(8)
       assertEquals(matthewJohanssonById, matthewRows(0))
 
-      val matthewsByIds = ActorCrudDao.findByIds(Set(8, 103))
+      val matthewsByIds = ActorDao.findByIds(Set(8, 103))
       assertEquals(matthewsByIds, matthewRows.take(2))
 
       /* insert */
@@ -58,19 +58,19 @@ class ActorCrudDaoSuite extends munit.FunSuite {
         LAST_NAME = "MATTHEWEWICH",
         LAST_UPDATE = LocalDateTime.parse("2006-02-15T04:34:33")
       )
-      ActorCrudDao.insert(newMatthew)
-      val newMatthewInserted = ActorCrudDao.findById(newMatthew.ACTOR_ID)
+      ActorDao.insert(newMatthew)
+      val newMatthewInserted = ActorDao.findById(newMatthew.ACTOR_ID)
       assertEquals(newMatthewInserted, newMatthew)
 
       /* upadte */
       val updateMatthew = newMatthew.copy(LAST_NAME = "MATTHEWROLOMEU")
-      ActorCrudDao.updateById(updateMatthew)
-      val newMatthewUpdated = ActorCrudDao.findById(newMatthew.ACTOR_ID)
+      ActorDao.updateById(updateMatthew)
+      val newMatthewUpdated = ActorDao.findById(newMatthew.ACTOR_ID)
       assertEquals(newMatthewUpdated, updateMatthew)
 
       /* delete */
-      ActorCrudDao.deleteById(newMatthew.ACTOR_ID)
-      val newMatthewOpt = ActorCrudDao.findByIdOpt(newMatthew.ACTOR_ID)
+      ActorDao.deleteById(newMatthew.ACTOR_ID)
+      val newMatthewOpt = ActorDao.findByIdOpt(newMatthew.ACTOR_ID)
       assertEquals(newMatthewOpt, None)
     }
   }
