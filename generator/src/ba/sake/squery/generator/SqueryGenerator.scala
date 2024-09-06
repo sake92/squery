@@ -548,9 +548,9 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       q"import java.time.*",
       q"import java.util.UUID",
       q"import ba.sake.squery.{*, given}",
-      q"import ..${List(dbSpecificImporter)}",
       q"import ba.sake.squery.read.{*, given}",
-      q"import ba.sake.squery.write.{*, given}"
+      q"import ba.sake.squery.write.{*, given}",
+      q"import ..${List(dbSpecificImporter)}"
     )
   }
   private def generateDaoImports(dbType: DbType, basePackage: String) = {

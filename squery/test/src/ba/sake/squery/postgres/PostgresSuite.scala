@@ -23,17 +23,18 @@ case class Datatypes(
     d_array_int: Option[Vector[Int]],
     d_array_array_int: Option[Vector[Vector[Int]]],
     d_array_str: Option[Vector[String]],
-    d_array_array_str: Option[Vector[Vector[String]]]
+    d_array_array_str: Option[Vector[Vector[String]]],
+    d_array_uuid: Option[Vector[UUID]]
 ) derives SqlReadRow:
 
   def insertTuple =
     sql"""(${d_int}, ${d_long}, ${d_double}, ${d_boolean}, ${d_string}, ${d_uuid}, ${d_tstz}, ${d_clr},
-      ${d_array_bytes}, ${d_array_int}, ${d_array_array_int}, ${d_array_str}, ${d_array_array_str}
+      ${d_array_bytes}, ${d_array_int}, ${d_array_array_int}, ${d_array_str}, ${d_array_array_str}, ${d_array_uuid}
     )"""
 
 object Datatypes:
   inline val allCols =
-    "d_int, d_long, d_double, d_boolean, d_string, d_uuid, d_tstz, d_clr, d_array_bytes, d_array_int, d_array_array_int, d_array_str, d_array_array_str"
+    "d_int, d_long, d_double, d_boolean, d_string, d_uuid, d_tstz, d_clr, d_array_bytes, d_array_int, d_array_array_int, d_array_str, d_array_array_str, d_array_uuid"
 
 enum Color derives SqlRead, SqlWrite:
   case red, green, blue
@@ -290,7 +291,8 @@ class PostgresSuite extends munit.FunSuite {
           d_array_int INTEGER[],
           d_array_array_int INTEGER[][],
           d_array_str VARCHAR[],
-          d_array_array_str VARCHAR[][]
+          d_array_array_str VARCHAR[][],
+          d_array_uuid uuid[]
         )
       """.update()
       val dt1 = Datatypes(
@@ -306,9 +308,10 @@ class PostgresSuite extends munit.FunSuite {
         Some(Vector(1, 2, 3)),
         Some(Vector(Vector(1, 1, 1), Vector(2, 2, 2), Vector(3, 3, 3))),
         Some(Vector("abc")),
-        Some(Vector(Vector("aaa"), Vector("bbb"), Vector("ccc")))
+        Some(Vector(Vector("aaa"), Vector("bbb"), Vector("ccc"))),
+        Some(Vector(UUID.randomUUID))
       )
-      val dt2 = Datatypes(None, None, None, None, None, None, None, None, None, None, None, None, None)
+      val dt2 = Datatypes(None, None, None, None, None, None, None, None, None, None, None, None, None, None)
 
       val values = Seq(dt1, dt2)
         .map(_.insertTuple)
@@ -339,6 +342,7 @@ class PostgresSuite extends munit.FunSuite {
       assertEquals(firstRow.d_array_array_int, dt1.d_array_array_int)
       assertEquals(firstRow.d_array_str, dt1.d_array_str)
       assertEquals(firstRow.d_array_array_str, dt1.d_array_array_str)
+      assertEquals(firstRow.d_array_uuid, dt1.d_array_uuid)
     }
   }
 

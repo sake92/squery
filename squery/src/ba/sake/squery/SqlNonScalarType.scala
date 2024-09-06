@@ -10,3 +10,5 @@ trait SqlNonScalarType[T]
 
 given [T]: SqlNonScalarType[Array[T]] = new {}
 given [T]: SqlNonScalarType[Seq[T]] = new {}
+given [T]: SqlNonScalarType[List[T]] = new {}
+given [T]: SqlNonScalarType[Vector[T]] = new {}
