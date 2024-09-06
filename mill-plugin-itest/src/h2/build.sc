@@ -46,7 +46,7 @@ def verify(): Command[Unit] = T.command {
 
   val generatedDaos = os.walk(root.squeryTargetDir() / "public" / "daos").filter(os.isFile)
   assertEquals(generatedDaos.size, 17)
-  assert(generatedDaos.map(_.last).contains("ActorCrudDao.scala"), "ActorCrudDao was not generated")
+  assert(generatedDaos.map(_.last).contains("ActorDao.scala"), "ActorDao was not generated")
 
   root.test.test()()
   ()
