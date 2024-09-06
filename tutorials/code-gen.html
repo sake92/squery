@@ -69,7 +69,7 @@ repl.load(generatedCode)
 // now you can use the generated code
 val ctx = SqueryContext(dataSource)
 ctx.run {
-  MyTableCrudDao.findAll()
+  MyTableDao.findAll()
 }
 </code></pre>
 </section><section id="mill-plugin"><h2>Mill plugin</h2><p>Squery provides a Mill plugin:</p>
