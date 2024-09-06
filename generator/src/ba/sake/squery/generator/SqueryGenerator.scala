@@ -608,6 +608,6 @@ object SqueryGeneratorConfig {
       colNameIdentifierMapper = NameMapper.CamelCase,
       typeNameMapper = NameMapper.CamelCase,
       rowTypeSuffix = "Row",
-      daoTypeSuffix = "CrudDao"
+      daoTypeSuffix = "Dao"
     )
 }

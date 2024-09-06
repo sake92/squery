@@ -44,7 +44,7 @@ object CodeGen extends TutorialPage {
 
       // if using Postgres JSONB
       // import $$ivy.`ba.sake::squery-postgres-jawn:${Consts.ArtifactVersion}`
-      // import ba.sake.squery.postgres.jawn.*
+      // import ba.sake.squery.postgres.jawn.{*, given}
 
       val dataSource = HikariDataSource()
       dataSource.setJdbcUrl("jdbc:postgresql://localhost:5432/mydb")
