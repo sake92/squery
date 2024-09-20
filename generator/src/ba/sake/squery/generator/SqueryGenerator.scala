@@ -213,10 +213,11 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       // so that it works in ammonite where definitions are parsed 1 by 1
       val source =
         if (fileGen) {
-          val requiredImports = schemaDef.tables
-            .flatMap(_.columnDefs.map(_.scalaType).collect { case ThirdParty(_, requiredImport) =>
+          val requiredImports = tableDef.columnDefs
+            .map(_.scalaType)
+            .collect { case ThirdParty(_, requiredImport) =>
               requiredImport
-            })
+            }
             .flatten
             .distinct
           source"""
@@ -568,8 +569,11 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
     )
   }
   private def generateModelImports(dbType: DbType, additionalImportsStr: Seq[String]): List[Import] = {
-    val additionalImports = additionalImportsStr.map(_.parse[Importer].get).toList
-    generateBaseImports(dbType).appended(q"import ..${additionalImports}")
+    val additionalImports = additionalImportsStr.map { importStr =>
+      val importer = importStr.parse[Importer].get
+      q"import ..${List(importer)}"
+    }
+    generateBaseImports(dbType) ++ additionalImports
   }
   private def generateDaoImports(dbType: DbType, basePackage: String): List[Import] = {
     val modelsImporter = s"${basePackage}.models.*".parse[Importer].get

@@ -2,6 +2,7 @@ package files
 
 import utils.*
 import Bundle.*, Tags.*
+import ba.sake.hepek.html.statik.BlogPostPage
 
 object Index extends DocStaticPage {
 
@@ -17,11 +18,27 @@ object Index extends DocStaticPage {
 
     No DSLs, no fuss, just plain SQL.
 
-    Jump right into:
-    - [Tutorials](${files.tutorials.Index.ref}) to get you started
-    - [How-Tos](${files.howtos.Index.ref}) to get answers for some common questions
-    - [Reference](${files.reference.Index.ref}) to see detailed information
-    - [Philosophy](${files.philosophy.Index.ref}) to get insights into design decisions
-    """.md
+    ---
+    Site map:
+
+    """.md,
+    div(cls := "site-map")(
+      siteMap.md
+    )
   )
+
+  private def siteMap =
+    Index.staticSiteSettings.mainPages
+      .map {
+        case mp: BlogPostPage =>
+          val subPages = mp.categoryPosts
+            .drop(1) // skip Index ..
+            .map { cp =>
+              s"  - [${cp.pageSettings.label}](${cp.ref})"
+            }
+            .mkString("\n")
+          s"- [${mp.pageSettings.label}](${mp.ref})\n" + subPages
+        case _ => ""
+      }
+      .mkString("\n")
 }
