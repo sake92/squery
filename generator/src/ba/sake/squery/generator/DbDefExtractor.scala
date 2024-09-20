@@ -161,7 +161,15 @@ sealed abstract class ColumnType {
   def name: String
 }
 object ColumnType {
-  case class Predefined(tpe: scala.meta.Type) extends ColumnType {
+  sealed abstract class ScalarType extends ColumnType {
+    def tpe: scala.meta.Type
+  }
+
+  case class Predefined(tpe: scala.meta.Type) extends ScalarType {
+    override def name: String = tpe.toString()
+  }
+  // e.g. jawn JSON, needs a custom import
+  case class ThirdParty(tpe: scala.meta.Type, requiredImports: Seq[String]) extends ScalarType {
     override def name: String = tpe.toString()
   }
   case class Enumeration(name: String, values: Seq[String]) extends ColumnType

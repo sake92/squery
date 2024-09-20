@@ -82,7 +82,9 @@ class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
 
   }
 
-  private def resolveScalarType(tpe: String) = Try {
+  //
+
+  private def resolveScalarType(tpe: String): Try[ColumnType.ScalarType] = Try {
     tpe match {
       case "boolean"                     => ColumnType.Predefined(t"Boolean")
       case "integer"                     => ColumnType.Predefined(t"Int")
@@ -98,9 +100,17 @@ class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
       case "timestamp with time zone"    => ColumnType.Predefined(t"Instant")
       case "uuid"                        => ColumnType.Predefined(t"UUID")
       case "bytea"                       => ColumnType.Predefined(t"Array[Byte]")
-      case "json"                        => ColumnType.Predefined(t"org.typelevel.jawn.ast.JValue")
-      case "jsonb"                       => ColumnType.Predefined(t"org.typelevel.jawn.ast.JValue")
-      case other                         => throw new RuntimeException(s"Unknown scalar type ${other}")
+      case "json" =>
+        ColumnType.ThirdParty(
+          t"JValue",
+          Seq("org.typelevel.jawn.ast.JValue", "ba.sake.squery.postgres.jawn.{*, given}")
+        )
+      case "jsonb" =>
+        ColumnType.ThirdParty(
+          t"JValue",
+          Seq("org.typelevel.jawn.ast.JValue", "ba.sake.squery.postgres.jawn.{*, given}")
+        )
+      case other => throw new RuntimeException(s"Unknown scalar type ${other}")
     }
   }
 

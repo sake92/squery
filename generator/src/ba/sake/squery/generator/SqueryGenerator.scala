@@ -13,6 +13,7 @@ import scala.meta.dialects.Scala34
 import ba.sake.regenesca._
 import ba.sake.squery.generator.ColumnType.Predefined
 import ba.sake.squery.generator.ColumnType.Unknown
+import ba.sake.squery.generator.ColumnType.ThirdParty
 
 class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGeneratorConfig.Default) {
   private val logger = Logger(getClass.getName)
@@ -33,11 +34,18 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         dbDef.schemas.find(_.name == schemaName) match {
           case Some(schemaDef) =>
             logger.info(s"Started generating schema '${schemaName}'")
+            val requiredImports = schemaDef.tables
+              .flatMap(_.columnDefs.map(_.scalaType).collect { case ThirdParty(_, requiredImports) =>
+                requiredImports
+              })
+              .flatten
+              .distinct
             val (modelFiles, daoFiles) =
               generateSchema(schemaDef, dbType = dbDef.tpe, basePackage = "", fileGen = false)
             // models first because of Ammonite eval order!
             val allFiles = modelFiles ++ daoFiles
-            val allSources = generateBaseImports(dbDef.tpe).map(_.syntax) ++ allFiles.map(_.source.syntax)
+            val allSources =
+              generateModelImports(dbDef.tpe, requiredImports).map(_.syntax) ++ allFiles.map(_.source.syntax)
             logger.info(s"Finished generating schema '${schemaName}'")
             allSources.mkString("\n")
           case None =>
@@ -204,14 +212,20 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       // object goes first, coz class references PK type
       // so that it works in ammonite where definitions are parsed 1 by 1
       val source =
-        if (fileGen)
+        if (fileGen) {
+          val requiredImports = schemaDef.tables
+            .flatMap(_.columnDefs.map(_.scalaType).collect { case ThirdParty(_, requiredImport) =>
+              requiredImport
+            })
+            .flatten
+            .distinct
           source"""
           package ${generatePkgSelect(s"${basePackage}.models")}
-          ..${generateBaseImports(dbType)}
+          ..${generateModelImports(dbType, requiredImports)}
           ${objectDefn}
           ${caseClassDefn}
           """
-        else
+        } else
           source"""
           ${objectDefn}
           ${caseClassDefn}
@@ -542,7 +556,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
     }
   }
 
-  private def generateBaseImports(dbType: DbType) = {
+  private def generateBaseImports(dbType: DbType): List[Import] = {
     val dbSpecificImporter = s"ba.sake.squery.${dbType.squeryPackage}.{*, given}".parse[Importer].get
     List(
       q"import java.time.*",
@@ -553,7 +567,11 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       q"import ..${List(dbSpecificImporter)}"
     )
   }
-  private def generateDaoImports(dbType: DbType, basePackage: String) = {
+  private def generateModelImports(dbType: DbType, additionalImportsStr: Seq[String]): List[Import] = {
+    val additionalImports = additionalImportsStr.map(_.parse[Importer].get).toList
+    generateBaseImports(dbType).appended(q"import ..${additionalImports}")
+  }
+  private def generateDaoImports(dbType: DbType, basePackage: String): List[Import] = {
     val modelsImporter = s"${basePackage}.models.*".parse[Importer].get
     val modelsImport = q"import ..${List(modelsImporter)}"
     generateBaseImports(dbType) ++ List(modelsImport)
@@ -568,6 +586,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
   implicit class ColumnTypeOps(tpe: ColumnType) {
     def safeTypeName: String = tpe match {
       case p: ColumnType.Predefined            => p.name
+      case p: ColumnType.ThirdParty            => p.name
       case ColumnType.Enumeration(enumName, _) => enumName.safeTypeName
       case ColumnType.Unknown(originalName)    => s"<UNKNOWN> // ${originalName}"
     }

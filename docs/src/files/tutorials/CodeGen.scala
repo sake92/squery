@@ -37,14 +37,13 @@ object CodeGen extends TutorialPage {
       ```scala
       import $$ivy.`ba.sake:squery-generator_2.13:${Consts.ArtifactVersion}`
       import $$ivy.`ba.sake::squery:${Consts.ArtifactVersion}`
-      import $$ivy.`org.postgresql:postgresql:42.7.4`
-      import $$ivy.`com.zaxxer:HikariCP:5.1.0`
-      import ba.sake.squery.generator.*
-      import com.zaxxer.hikari.HikariDataSource
-
       // if using Postgres JSONB
       // import $$ivy.`ba.sake::squery-postgres-jawn:${Consts.ArtifactVersion}`
-      // import ba.sake.squery.postgres.jawn.{*, given}
+      import $$ivy.`org.postgresql:postgresql:42.7.4`
+      import $$ivy.`com.zaxxer:HikariCP:5.1.0`
+
+      import ba.sake.squery.generator.*
+      import com.zaxxer.hikari.HikariDataSource
 
       val dataSource = HikariDataSource()
       dataSource.setJdbcUrl("jdbc:postgresql://localhost:5432/mydb")
