@@ -34,9 +34,9 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         dbDef.schemas.find(_.name == schemaName) match {
           case Some(schemaDef) =>
             logger.info(s"Started generating schema '${schemaName}'")
-            val requiredImports = schemaDef.tables
-              .flatMap(_.columnDefs.map(_.scalaType).collect { case ThirdParty(_, requiredImports) =>
-                requiredImports
+            val thirdPartyImports = schemaDef.tables
+              .flatMap(_.columnDefs.map(_.scalaType).collect { case ThirdParty(_, thirdPartyImports) =>
+                thirdPartyImports
               })
               .flatten
               .distinct
@@ -45,7 +45,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
             // models first because of Ammonite eval order!
             val allFiles = modelFiles ++ daoFiles
             val allSources =
-              generateModelImports(dbDef.tpe, requiredImports).map(_.syntax) ++ allFiles.map(_.source.syntax)
+              generateModelImports(dbDef.tpe, thirdPartyImports).map(_.syntax) ++ allFiles.map(_.source.syntax)
             logger.info(s"Finished generating schema '${schemaName}'")
             allSources.mkString("\n")
           case None =>
@@ -112,7 +112,7 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
         if (fileGen)
           source"""
           package ${generatePkgSelect(s"${basePackage}.models")}
-          ..${generateBaseImports(dbType)}
+          ..${generateEnumImports(dbType)}
           enum ${enumTypeName} derives SqlRead, SqlWrite {
             ${enumCaseDefs}
           }
@@ -530,11 +530,18 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       object ${daoObjectName} extends ${Init(daoClassType, Name.Anonymous(), List.empty)}
       """
 
+      val thirdPartyImports = schemaDef.tables
+              .flatMap(_.columnDefs.map(_.scalaType).collect { case ThirdParty(_, thirdPartyImports) =>
+                thirdPartyImports
+              })
+              .flatten
+              .distinct
+
       val source =
         if (fileGen)
           source"""
           package ${generatePkgSelect(s"${basePackage}.daos")}
-          ..${generateDaoImports(dbType, basePackage)}
+          ..${generateDaoImports(dbType, basePackage, thirdPartyImports)}
           ${daoObjectDefn}
           ${daoClassDefn}
           """
@@ -557,9 +564,13 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
     }
   }
 
-  private def generateBaseImports(dbType: DbType): List[Import] = {
-    val dbSpecificImporter = s"ba.sake.squery.${dbType.squeryPackage}.{*, given}".parse[Importer].get
+  private def generateEnumImports(dbType: DbType): List[Import] =
     List(
+      q"import ba.sake.squery.*"
+    )
+  private def generateModelImports(dbType: DbType, thirdPartyImportsStrs: Seq[String]): List[Import] = {
+    val dbSpecificImporter = s"ba.sake.squery.${dbType.squeryPackage}.{*, given}".parse[Importer].get
+    val baseImports = List(
       q"import java.time.*",
       q"import java.util.UUID",
       q"import ba.sake.squery.{*, given}",
@@ -567,18 +578,29 @@ class SqueryGenerator(ds: DataSource, config: SqueryGeneratorConfig = SqueryGene
       q"import ba.sake.squery.write.{*, given}",
       q"import ..${List(dbSpecificImporter)}"
     )
-  }
-  private def generateModelImports(dbType: DbType, additionalImportsStr: Seq[String]): List[Import] = {
-    val additionalImports = additionalImportsStr.map { importStr =>
+    val thirdPartyImports = thirdPartyImportsStrs.map { importStr =>
       val importer = importStr.parse[Importer].get
       q"import ..${List(importer)}"
     }
-    generateBaseImports(dbType) ++ additionalImports
+    baseImports ++ thirdPartyImports
   }
-  private def generateDaoImports(dbType: DbType, basePackage: String): List[Import] = {
+  private def generateDaoImports(dbType: DbType, basePackage: String, thirdPartyImportsStrs: Seq[String]): List[Import] = {
+    val dbSpecificImporter = s"ba.sake.squery.${dbType.squeryPackage}.{*, given}".parse[Importer].get
+    val baseImports = List(
+      q"import java.time.*",
+      q"import java.util.UUID",
+      q"import ba.sake.squery.{*, given}",
+      q"import ba.sake.squery.read.{*, given}",
+      q"import ba.sake.squery.write.{*, given}",
+      q"import ..${List(dbSpecificImporter)}"
+    )
+    val thirdPartyImports = thirdPartyImportsStrs.map { importStr =>
+      val importer = importStr.parse[Importer].get
+      q"import ..${List(importer)}"
+    }
     val modelsImporter = s"${basePackage}.models.*".parse[Importer].get
     val modelsImport = q"import ..${List(modelsImporter)}"
-    generateBaseImports(dbType) ++ List(modelsImport)
+    baseImports ++ thirdPartyImports ++ List(modelsImport)
   }
 
   private def transformName(str: String, nameMapper: NameMapper, capitalizeFirstLetter: Boolean): String =
