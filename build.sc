@@ -32,9 +32,9 @@ object squery extends ScalaModule with ScalafmtModule with CiReleaseModule {
   def ivyDeps = Agg(
     ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
     ivy"com.github.jsqlparser:jsqlparser:4.7",
-    ivy"org.scala-lang.modules::scala-collection-contrib:0.3.0"
+    ivy"org.scala-lang.modules::scala-collection-contrib:0.4.0"
   )
-  def scalacOptions = Seq("-Ywarn-unused", "-deprecation", "-feature")
+  def scalacOptions = Seq("-Ywarn-unused", "-deprecation", "-feature", "-language:implicitConversions")
 
   object `postgres-jawn` extends ScalaModule with ScalafmtModule with CiReleaseModule {
     def artifactName = "squery-postgres-jawn"
@@ -70,7 +70,7 @@ object generator extends ScalaModule with CiReleaseModule with ScalafmtModule {
   def pomSettings = pomSettingsValue
   def scalaVersion = scala213
   def ivyDeps = Agg(
-    ivy"ba.sake::regenesca:0.1.0",
+    ivy"ba.sake::regenesca:0.5.0",
     ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
     ivy"ch.qos.logback:logback-classic:1.5.7",
     ivy"org.apache.commons:commons-text:1.12.0"
