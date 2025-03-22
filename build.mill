@@ -1,33 +1,27 @@
-import $ivy.`io.chris-kipp::mill-ci-release::0.1.10`
-import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.7.1`
-import $ivy.`ba.sake::mill-hepek::0.0.2`
+package build
 
-import mill._, mill.scalalib._
+import $ivy.`com.lihaoyi::mill-contrib-sonatypecentral:`
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.1`
+import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.7.1`
+import $ivy.`ba.sake::mill-hepek::0.1.0`
+
+
+import mill._
+import mill.scalalib._
 import mill.scalalib.scalafmt._
 import mill.scalalib.publish._
 import mill.scalalib.api.ZincWorkerUtil.scalaNativeBinaryVersion
 import de.tobiasroeser.mill.integrationtest._
-
-import io.kipp.mill.ci.release.CiReleaseModule
+import mill.contrib.sonatypecentral.SonatypeCentralPublishModule
+import de.tobiasroeser.mill.vcs.version.VcsVersion
 import ba.sake.millhepek.MillHepekModule
 
 val scala213 = "2.13.14"
 val scala3 = "3.4.2"
-val pomSettingsValue = PomSettings(
-  organization = "ba.sake",
-  url = "https://github.com/sake92/squery",
-  licenses = Seq(License.Common.Apache2),
-  versionControl = VersionControl.github("sake92", "squery"),
-  description = "Squery SQL library",
-  developers = Seq(
-    Developer("sake92", "Sakib Hadžiavdić", "https://sake.ba")
-  )
-)
-val millVersion = "0.11.12"
+val millVersion = "0.12.0"
 
-object squery extends ScalaModule with ScalafmtModule with CiReleaseModule {
+object squery extends ScalaModule with SharafPublishModule with ScalafmtModule {
   def artifactName = "squery"
-  def pomSettings = pomSettingsValue
   def scalaVersion = scala3
   def ivyDeps = Agg(
     ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
@@ -36,9 +30,8 @@ object squery extends ScalaModule with ScalafmtModule with CiReleaseModule {
   )
   def scalacOptions = Seq("-Ywarn-unused", "-deprecation", "-feature", "-language:implicitConversions")
 
-  object `postgres-jawn` extends ScalaModule with ScalafmtModule with CiReleaseModule {
+  object `postgres-jawn` extends ScalaModule with SharafPublishModule with ScalafmtModule{
     def artifactName = "squery-postgres-jawn"
-    def pomSettings = pomSettingsValue
     def scalaVersion = scala3
     def moduleDeps = Seq(squery)
     def ivyDeps = Agg(
@@ -65,9 +58,8 @@ object squery extends ScalaModule with ScalafmtModule with CiReleaseModule {
   }
 }
 
-object generator extends ScalaModule with CiReleaseModule with ScalafmtModule {
+object generator extends ScalaModule with SharafPublishModule with ScalafmtModule {
   def artifactName = "squery-generator"
-  def pomSettings = pomSettingsValue
   def scalaVersion = scala213
   def ivyDeps = Agg(
     ivy"ba.sake::regenesca:0.5.0",
@@ -78,13 +70,11 @@ object generator extends ScalaModule with CiReleaseModule with ScalafmtModule {
 }
 
 /* MILL PLUGIN */
-
-object `mill-plugin` extends ScalaModule with CiReleaseModule with ScalafmtModule {
+object `mill-plugin` extends ScalaModule with SharafPublishModule with ScalafmtModule {
   def artifactName =
     s"mill-squery-generator_mill${millBinaryVersion(millVersion)}"
   def millBinaryVersion(millVersion: String) =
     scalaNativeBinaryVersion(millVersion)
-  def pomSettings = pomSettingsValue
   def scalaVersion = scala213
   def compileIvyDeps = super.compileIvyDeps() ++ Agg(
     ivy"com.lihaoyi::mill-scalalib:${millVersion}"
@@ -126,5 +116,19 @@ object docs extends ScalaModule with MillHepekModule with ScalafmtModule {
   def scalaVersion = scala3
   def ivyDeps = Agg(
     ivy"ba.sake::hepek:0.24.1"
+  )
+}
+
+trait SharafPublishModule extends SonatypeCentralPublishModule {
+  def publishVersion = VcsVersion.vcsState().format()
+  def pomSettings = PomSettings(
+    organization = "ba.sake",
+    url = "https://github.com/sake92/squery",
+    licenses = Seq(License.Common.Apache2),
+    versionControl = VersionControl.github("sake92", "squery"),
+    description = "Squery SQL library",
+    developers = Seq(
+        Developer("sake92", "Sakib Hadžiavdić", "https://sake.ba")
+    )
   )
 }
