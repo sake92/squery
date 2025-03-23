@@ -20,7 +20,7 @@ trait SqueryGeneratorModule extends JavaModule {
   /** List of (schema, basePackage) */
   def squerySchemas: T[Seq[(String, String)]]
 
-  def squeryTargetDir: T[os.Path] = T(millSourcePath / "src")
+  def squeryTargetDir: T[PathRef] = T(PathRef(millSourcePath / "src"))
 
   def squeryGeneratorConfig: T[SqueryGeneratorConfig] = T(SqueryGeneratorConfig.Default)
 
@@ -68,7 +68,7 @@ trait SqueryGeneratorModule extends JavaModule {
       squerySchemas().map { case (schemaName, basePackage) =>
         SchemaConfig(
           name = schemaName,
-          baseFolder = squeryTargetDir().wrapped,
+          baseFolder = squeryTargetDir().path.wrapped,
           basePackage = basePackage
         )
       }

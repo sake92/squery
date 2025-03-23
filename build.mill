@@ -14,6 +14,8 @@ import ba.sake.millhepek.MillHepekModule
 
 val scala213 = "2.13.14"
 val scala3 = "3.4.2"
+
+val millBinaryVersion = "0.11"
 val millVersion = "0.12.0"
 
 object squery extends ScalaModule with SqueryPublishModule with ScalafmtModule {
@@ -67,8 +69,7 @@ object generator extends ScalaModule with SqueryPublishModule with ScalafmtModul
 
 /* MILL PLUGIN */
 object `mill-plugin` extends ScalaModule with SqueryPublishModule with ScalafmtModule {
-  def artifactName = "mill-squery-generator_mill"
-  def platformSuffix = "_mill" + mill.main.BuildInfo.millBinPlatform
+  def artifactName = s"mill-squery-generator_mill${millBinaryVersion}"
 
   def scalaVersion = scala213
   def scalacOptions = Seq("-Ywarn-unused", "-deprecation")
@@ -103,7 +104,7 @@ object `mill-plugin` extends ScalaModule with SqueryPublishModule with ScalafmtM
       def mainClass = Some("mill.runner.client.MillClientMain")
       def resources = Task {
         val p = Task.dest / "mill/local-test-overrides" / s"ba.sake-${`mill-plugin`.artifactId()}"
-        os.write(p, `mill-plugin`.localClasspath().map(_.path).mkString("\n"), createFolders = true)
+        os.write(p, `mill-plugin`.runClasspath().map(_.path).mkString("\n"), createFolders = true)
         Seq(PathRef(Task.dest))
       }
     }

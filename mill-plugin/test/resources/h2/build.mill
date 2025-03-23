@@ -1,10 +1,10 @@
 package build
 
 import $ivy.`com.lihaoyi::mill-contrib-flyway:`
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.1`
-import $ivy.`ba.sake::squery-generator::TODO`
+import $ivy.`ba.sake::mill-squery-generator::TEST`
 
-import mill._, scalalib._
+import mill._
+import mill.scalalib._
 import contrib.flyway.FlywayModule
 import ba.sake.squery.generator.mill._
 
@@ -15,20 +15,25 @@ object `package` extends RootModule with ScalaModule with SqueryGeneratorModule 
   def ivyDeps = Agg(
     ivy"com.zaxxer:HikariCP:4.0.3",
     ivy"com.h2database:h2:2.3.232",
-    ivy"ba.sake::squery::TODO"
+    ivy"ba.sake::squery:0.6.4"
   )
+  
+  // cant just ./h2_pagila because of Mill task sandboxing
+  def h2DbFile = Task { os.pwd / "h2_pagila" }
+
+  def forkEnv = Map("JDBC_URL" -> s"jdbc:h2:${h2DbFile()}")
 
   def flywayDriverDeps = Agg(ivy"com.h2database:h2:2.3.232")
-  def flywayUrl = "jdbc:h2:./h2_pagila"
+  def flywayUrl = s"jdbc:h2:${h2DbFile()}"
 
-  def squeryJdbcUrl = "jdbc:h2:./h2_pagila"
+  def squeryJdbcUrl = s"jdbc:h2:${h2DbFile()}"
   def squeryUsername = ""
   def squeryPassword = ""
   def squerySchemas = Seq("PUBLIC" -> "public")
 
   object test extends ScalaTests with TestModule.Munit {
     def ivyDeps = Agg(
-      ivy"org.scalameta::munit:0.7.29"
+      ivy"org.scalameta::munit:1.0.2"
     )
   }
 }
