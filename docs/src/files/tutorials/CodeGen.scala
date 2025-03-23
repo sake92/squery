@@ -67,7 +67,7 @@ object CodeGen extends TutorialPage {
     s"""
     Squery provides a Mill plugin:
     ```scala
-    import $$ivy.`ba.sake::mill-squery-generator_mill0.11:${Consts.ArtifactVersion}`
+    import $$ivy.`ba.sake::mill-squery-generator::${Consts.ArtifactVersion}`
     import ba.sake.squery.generator._
     import ba.sake.squery.generator.mill.SqueryGeneratorModule
 

@@ -32,6 +32,7 @@ object `package` extends RootModule with ScalaModule with SqueryGeneratorModule 
   def squerySchemas = Seq("PUBLIC" -> "public")
 
   object test extends ScalaTests with TestModule.Munit {
+    def forkEnv = Map("JDBC_URL" -> s"jdbc:h2:${h2DbFile()}")
     def ivyDeps = Agg(
       ivy"org.scalameta::munit:1.0.2"
     )

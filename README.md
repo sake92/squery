@@ -7,6 +7,7 @@ No DSLs, no fuss, just plain SQL.
 Supports *any* JDBC driver.  
 Additional support for Postgres, MySql, MariaDb, Oracle, H2.
 
+Generate models and DAOs automatically from db.
 
 ---
 Scastie example: https://scastie.scala-lang.org/JArud6GGSLOmYyxCNsNdNw

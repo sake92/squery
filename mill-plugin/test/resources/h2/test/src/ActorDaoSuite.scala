@@ -5,7 +5,7 @@ import ba.sake.squery.{*, given}
 import public.models.*
 import public.daos.*
 
-class ActorDaoSuite extends munit.FunSuite {
+class ActorDaoSuite extends munit.FunSuite with TestUtils {
 
   val matthewRows = Seq(
     ActorRow(
@@ -29,7 +29,7 @@ class ActorDaoSuite extends munit.FunSuite {
   )
 
   test("ActorDao should work as expected") {
-    Globals.ctx.run {
+    squeryCtx.run {
       /* count */
       val totalCount = ActorDao.countAll()
       assertEquals(totalCount, 200)
