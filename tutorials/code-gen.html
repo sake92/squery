@@ -46,10 +46,10 @@ When you add a new column for example, it will refactor the <code>*Row</code> an
 This means you can add your own methods/vals to the <em>generated code</em>, without fear that the codegen will remove it.<br />
 Of course, it is best to use <code>scalafmt</code> after codegen so that the diff is minimal.</p>
 </section><section id="standalone-generator"><h2>Standalone generator</h2><p>You can use Ammonite to test the generator:</p>
-<pre><code class="language-scala">import $ivy.`ba.sake:squery-generator_2.13:0.6.4`
-import $ivy.`ba.sake::squery:0.6.4`
+<pre><code class="language-scala">import $ivy.`ba.sake:squery-generator_2.13:0.7.0`
+import $ivy.`ba.sake::squery:0.7.0`
 // if using Postgres JSONB
-// import $ivy.`ba.sake::squery-postgres-jawn:0.6.4`
+// import $ivy.`ba.sake::squery-postgres-jawn:0.7.0`
 import $ivy.`org.postgresql:postgresql:42.7.4`
 import $ivy.`com.zaxxer:HikariCP:5.1.0`
 
@@ -72,7 +72,7 @@ ctx.run {
 }
 </code></pre>
 </section><section id="mill-plugin"><h2>Mill plugin</h2><p>Squery provides a Mill plugin:</p>
-<pre><code class="language-scala">import $ivy.`ba.sake::mill-squery-generator_mill0.11:0.6.4`
+<pre><code class="language-scala">import $ivy.`ba.sake::mill-squery-generator::0.7.0`
 import ba.sake.squery.generator._
 import ba.sake.squery.generator.mill.SqueryGeneratorModule
 
