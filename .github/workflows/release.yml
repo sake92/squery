@@ -3,7 +3,7 @@ name: Release
 
 on:
   push:
-    tags: *
+    tags: "*"
 
 env:
   PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
