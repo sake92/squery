@@ -60,7 +60,7 @@ object generator extends ScalaModule with SqueryPublishModule with ScalafmtModul
   def artifactName = "squery-generator"
   def scalaVersion = scala213
   def ivyDeps = Agg(
-    ivy"ba.sake::regenesca:0.5.0",
+    ivy"ba.sake::regenesca:0.6.0",
     ivy"com.typesafe.scala-logging::scala-logging:3.9.4",
     ivy"ch.qos.logback:logback-classic:1.5.7",
     ivy"org.apache.commons:commons-text:1.12.0"
