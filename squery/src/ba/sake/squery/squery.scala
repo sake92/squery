@@ -17,18 +17,21 @@ val SqlWrite = ba.sake.squery.write.SqlWrite
 
 type DbAction[T] = SqueryConnection ?=> T
 
+enum DbActionType:
+  case Select, Update, General
+
 // ext methods coz overloadinggggggggg
 extension (query: Query) {
 
   // for generic statements like creating stored procedures
   def execute()(using c: SqueryConnection): Unit =
-    Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
+    Using.resource(query.newPreparedStatement(DbActionType.General, c)) { stmt =>
       stmt.execute()
     }
 
   // simple INSERT/UPDATE/DELETE statements
   def update()(using c: SqueryConnection): Int =
-    Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
+    Using.resource(query.newPreparedStatement(DbActionType.Update, c)) { stmt =>
       stmt.executeUpdate()
     }
 
@@ -53,10 +56,10 @@ extension (query: Query) {
       r: SqlRead[A]
   ): Seq[A] =
     Using.resource(
-      query.newPreparedStatement(c.underlying, retGenKeys = true, colNames)
+      query.newPreparedStatement(DbActionType.Update, c, retGenKeys = true, colNames)
     ) { stmt =>
       stmt.executeUpdate()
-      val keysRes = stmt.getGeneratedKeys()
+      val keysRes = stmt.getGeneratedKeys
       val elems = collection.mutable.ListBuffer.empty[A]
       while (keysRes.next()) {
         elems += r
@@ -84,7 +87,7 @@ extension (query: Query) {
       c: SqueryConnection,
       r: SqlReadRow[A]
   ): Seq[A] =
-    Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
+    Using.resource(query.newPreparedStatement(DbActionType.Update, c)) { stmt =>
       Using.resource(stmt.executeQuery()) { res =>
         val elems = collection.mutable.ListBuffer.empty[A]
         while (res.next()) {
@@ -107,7 +110,7 @@ extension (query: Query) {
   // read single column (unnamed)
   def readValues[A]()(using c: SqueryConnection, r: SqlRead[A]): Seq[A] =
     val elems = collection.mutable.ListBuffer.empty[A]
-    Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
+    Using.resource(query.newPreparedStatement(DbActionType.Select, c)) { stmt =>
       Using.resource(stmt.executeQuery()) { res =>
         while (res.next()) {
           elems += r
@@ -129,7 +132,7 @@ extension (query: Query) {
   // read case class (named columns)
   def readRows[A]()(using c: SqueryConnection, r: SqlReadRow[A]): Seq[A] =
     val elems = collection.mutable.ListBuffer.empty[A]
-    Using.resource(query.newPreparedStatement(c.underlying)) { stmt =>
+    Using.resource(query.newPreparedStatement(DbActionType.Select, c)) { stmt =>
       Using.resource(stmt.executeQuery()) { res =>
         while (res.next()) {
           r.readRow(res, None).foreach(elems += _)

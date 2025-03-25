@@ -7,4 +7,4 @@ import java.sql.Connection
     "Make sure to call this in a `ctx.run{ }` or `ctx.runTransaction{ }` block, " +
     "or set the return type to `DbAction[T]`."
 )
-case class SqueryConnection(underlying: Connection)
+case class SqueryConnection(underlying: Connection, lintUpdates: Boolean)

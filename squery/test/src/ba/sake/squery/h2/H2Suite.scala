@@ -2,9 +2,9 @@ package ba.sake.squery
 package h2
 
 import java.util.UUID
-import java.time.Instant
+import java.time.{Duration, Instant}
 import java.time.temporal.ChronoUnit
-import scala.collection.decorators._
+import scala.collection.decorators.*
 
 // UUID, enum.. H2 specific
 case class Datatypes(
@@ -329,6 +329,5 @@ class H2Suite extends munit.FunSuite {
       assertEquals(values, Seq.empty)
     }
   }
-
 
 }
