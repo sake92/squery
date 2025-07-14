@@ -8,8 +8,8 @@ on:
 env:
   PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
   PGP_SECRET: ${{ secrets.PGP_SECRET }}
-  SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-  SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+  MILL_SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+  MILL_SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
 jobs:
   tests:
@@ -33,10 +33,8 @@ jobs:
           passphrase: ${{ secrets.PGP_PASSPHRASE }}
       - name: Publish to Maven Central
         run: >
-          ./mill -i mill.scalalib.PublishModule/publishAll \
+          ./mill -i mill.scalalib.SonatypeCentralPublishModule/publishAll \
               --gpgArgs --passphrase=$PGP_PASSPHRASE,--no-tty,--pinentry-mode,loopback,--batch,--yes,-a,-b \
               --publishArtifacts __.publishArtifacts \
               --readTimeout 600000 \
-              --awaitTimeout 600000 \
-              --release true \
-              --signed true
+              --awaitTimeout 600000
