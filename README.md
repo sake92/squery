@@ -7,14 +7,12 @@ No DSLs, no fuss, just plain SQL.
 Supports *any* JDBC driver.  
 Additional support for Postgres, MySql, MariaDb, Oracle, H2.
 
-Generate models and DAOs automatically from db.
-
----
 Scastie example: https://scastie.scala-lang.org/JArud6GGSLOmYyxCNsNdNw
 
 
----
-Hello world:
+> See also https://github.com/sake92/mill-squery for generating boilerplate models and DAOs automatically from db.
+
+## Hello world:
 ```scala
 
 // table rows
