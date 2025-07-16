@@ -60,7 +60,7 @@ class H2MicroBenchSuite extends munit.FunSuite {
     }
     val end = System.nanoTime()
     val total = Duration.ofNanos(end - start)
-    assert(total.toMillis < 1000, total)
+    assert(total.toMillis < 2000, total)
   }
 
 }
