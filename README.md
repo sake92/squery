@@ -36,3 +36,37 @@ ctx.run {
   """.readRows[CustomerWithPhone]()
 }
 ```
+
+---
+
+## Generator
+
+You can generate boilerplate code for `Row`s and `DAO`s.
+
+### Mill plugin
+
+See https://github.com/sake92/mill-squery
+
+### CLI
+
+You can use `squery-cli` with Coursier launcher to generate your sources:
+
+```shell
+cs launch ba.sake::squery-cli:0.8.1 -M ba.sake.squery.cli.SqueryMain -- \
+  --jdbcUrl jdbc:h2:... \
+  --baseFolder src \
+  --schemaMappings public:com.example.public \
+  --schemaMappings myschema:com.example.myschema \ # this is a repeatable argument
+  # these below are optional
+  -- colNameIdentifierMapper camelcase \ # or noop
+  -- typeNameMapper camelcase \ # or noop
+  -- rowTypeSuffix Row \
+  -- daoTypeSuffix Dao 
+```
+
+
+### Code
+
+You can use `squery-generator` library to generate code directly.  
+This is handy when using Ammonite to explore a database structure and its contents.  
+It can also be used to generate source code manually in scala-cli or in your project (if you dont like CLI or mill plugin).
