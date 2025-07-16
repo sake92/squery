@@ -6,34 +6,25 @@ import java.time.Duration
 
 // just to make sure queries run in a reasonable time
 class H2MicroBenchSuite extends munit.FunSuite {
-  val initDb = new Fixture[SqueryContext]("database") {
-    private var ctx: SqueryContext = null
-
-    def apply() = ctx
-
-    override def beforeAll(): Unit = {
-
-      val ds = com.zaxxer.hikari.HikariDataSource()
-      ds.setJdbcUrl("jdbc:h2:mem:test_squery_micro_bench")
-
-      ctx = SqueryContext(ds)
-
-      ctx.run {
-        sql"""
+  def initDb(name: String) = {
+    val ds = com.zaxxer.hikari.HikariDataSource()
+    val dbName = "jdbc:h2:mem:test_squery_" + name.replaceAll("\\s", "_")
+    ds.setJdbcUrl(dbName)
+    val ctx = SqueryContext(ds)
+    ctx.run {
+      sql"""
             CREATE TABLE customers(
               id SERIAL PRIMARY KEY,
               name VARCHAR NOT NULL,
               street VARCHAR(20)
             )
           """.update()
-      }
     }
+    ctx
   }
 
-  override def munitFixtures = List(initDb)
-
   test("Run 1000 INSERTs microbench") {
-    val ctx = initDb()
+    val ctx = initDb("1000 INSERTs")
     val start = System.nanoTime()
     for (i <- 1 to 1000) {
       ctx.run {
@@ -49,8 +40,9 @@ class H2MicroBenchSuite extends munit.FunSuite {
   }
 
   test("Run 10000 SELECTs microbench") {
-    val ctx = initDb()
-    for (i <- 1 to 1000) {
+    val ctx = initDb("10000 SELECTs")
+    val totalItems = 10_000
+    for (i <- 1 to totalItems) {
       ctx.run {
         sql"""
           INSERT INTO customers(name)
@@ -59,7 +51,7 @@ class H2MicroBenchSuite extends munit.FunSuite {
       }
     }
     val start = System.nanoTime()
-    for (i <- 1 to 1000) {
+    for (i <- 1 to totalItems) {
       ctx.run {
         sql"""
           SELECT id, name, street FROM customers WHERE id = ${i}
@@ -70,5 +62,5 @@ class H2MicroBenchSuite extends munit.FunSuite {
     val total = Duration.ofNanos(end - start)
     assert(total.toMillis < 1000, total)
   }
-  
+
 }
