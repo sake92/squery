@@ -9,22 +9,21 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.CaseUtils
 
 object DbDefExtractor {
-  def apply(ds: DataSource): DbDefExtractor =
-    Using.resource(ds.getConnection()) { connection =>
-      val databaseMetaData = connection.getMetaData()
-      val dbName = databaseMetaData.getDatabaseProductName().toLowerCase
-      dbName match {
-        case "postgresql" => new PostgresDefExtractor(ds)
-        case _            => new JdbcDefExtractor(ds)
-      }
+  def apply(connection: Connection): DbDefExtractor = {
+    val databaseMetaData = connection.getMetaData
+    val dbName = databaseMetaData.getDatabaseProductName.toLowerCase
+    dbName match {
+      case "postgresql" => new PostgresDefExtractor(connection)
+      case _            => new JdbcDefExtractor(connection)
     }
+  }
 }
 
-abstract class DbDefExtractor(ds: DataSource) {
+abstract class DbDefExtractor(connection: Connection) {
 
-  def extract(): DbDef = Using.resource(ds.getConnection()) { connection =>
-    val databaseMetaData = connection.getMetaData()
-    val dbName = databaseMetaData.getDatabaseProductName().toLowerCase
+  def extract(): DbDef =  { 
+    val databaseMetaData = connection.getMetaData
+    val dbName = databaseMetaData.getDatabaseProductName.toLowerCase
     val schemaNames = Using.resource(databaseMetaData.getSchemas()) { rs =>
       val buff = ArrayBuffer.empty[String]
       while (rs.next()) {
@@ -33,7 +32,7 @@ abstract class DbDefExtractor(ds: DataSource) {
       buff.toSeq
     }
     val schemaDefs = schemaNames.map { schemaName =>
-      val tables = extractTables(connection, schemaName, databaseMetaData)
+      val tables = extractTables(schemaName, databaseMetaData)
       SchemaDef(name = schemaName, tables = tables)
     }
     val dbType = DbType.fromDatabaseProductName(dbName)
@@ -46,19 +45,17 @@ abstract class DbDefExtractor(ds: DataSource) {
 
   // (table, column) -> ColumnType
   protected def getColumnTypes(
-      connection: Connection,
       schemaName: String,
       columnsMetadatas: Seq[ColumnMetadata]
   ): Map[(String, String), ColumnType]
 
   private def extractTables(
-      connection: Connection,
       schemaName: String,
       databaseMetaData: DatabaseMetaData
   ): Seq[TableDef] = {
 
     val allColumnsMetadatas = extractColumnMetadatas(databaseMetaData, schemaName)
-    val allColumnTypes = getColumnTypes(connection, schemaName, allColumnsMetadatas)
+    val allColumnTypes = getColumnTypes(schemaName, allColumnsMetadatas)
     val allColumnDefs = allColumnsMetadatas.map { cMeta =>
       val resolvedType = allColumnTypes((cMeta.table, cMeta.name))
       ColumnDef(cMeta, resolvedType)

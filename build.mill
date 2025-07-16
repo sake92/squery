@@ -9,8 +9,10 @@ import mill.util.VcsVersion
 val scala213 = "2.13.15"
 val scala3 = "3.7.1"
 
-object squery extends ScalaModule, SqueryPublishModule {
+object squery extends ScalaModule, SonatypeCentralPublishModule {
   def artifactName = "squery"
+  def pomSettings = buildPomSettings("Squery SQL library")
+  def publishVersion = VcsVersion.vcsState().format()
   def scalaVersion = scala3
   def mvnDeps = Seq(
     mvn"com.typesafe.scala-logging::scala-logging:3.9.4",
@@ -19,8 +21,10 @@ object squery extends ScalaModule, SqueryPublishModule {
   )
   def scalacOptions = Seq("-Ywarn-unused", "-deprecation", "-feature", "-language:implicitConversions")
 
-  object `postgres-jawn` extends ScalaModule, SqueryPublishModule {
+  object `postgres-jawn` extends ScalaModule, SonatypeCentralPublishModule {
     def artifactName = "squery-postgres-jawn"
+    def pomSettings = buildPomSettings("Squery Jawn extension for PostgreSQL")
+    def publishVersion = VcsVersion.vcsState().format()
     def scalaVersion = scala3
     def moduleDeps = Seq(squery)
     def mvnDeps = Seq(
@@ -47,8 +51,10 @@ object squery extends ScalaModule, SqueryPublishModule {
   }
 }
 
-object generator extends ScalaModule, SqueryPublishModule {
+object generator extends ScalaModule, SonatypeCentralPublishModule {
   def artifactName = "squery-generator"
+  def pomSettings = buildPomSettings("Squery generator core")
+  def publishVersion = VcsVersion.vcsState().format()
   def scalaVersion = scala213
   def mvnDeps = Seq(
     mvn"ba.sake::regenesca:0.6.0",
@@ -58,16 +64,24 @@ object generator extends ScalaModule, SqueryPublishModule {
   )
 }
 
-trait SqueryPublishModule extends SonatypeCentralPublishModule {
+object cli extends ScalaModule, SonatypeCentralPublishModule {
+  def artifactName = "squery-cli"
+  def pomSettings = buildPomSettings("Squery generator CLI")
   def publishVersion = VcsVersion.vcsState().format()
-  def pomSettings = PomSettings(
-    organization = "ba.sake",
-    url = "https://github.com/sake92/squery",
-    licenses = Seq(License.Common.Apache2),
-    versionControl = VersionControl.github("sake92", "squery"),
-    description = "Squery SQL library",
-    developers = Seq(
-      Developer("sake92", "Sakib Hadžiavdić", "https://sake.ba")
-    )
+  def scalaVersion = scala213
+  def moduleDeps = Seq(generator)
+  def mvnDeps = Seq(
+    mvn"com.lihaoyi::mainargs:0.7.6"
   )
 }
+
+def buildPomSettings(desc: String) = PomSettings(
+  organization = "ba.sake",
+  url = "https://github.com/sake92/squery",
+  licenses = Seq(License.Common.Apache2),
+  versionControl = VersionControl.github("sake92", "squery"),
+  description = desc,
+  developers = Seq(
+    Developer("sake92", "Sakib Hadžiavdić", "https://sake.ba")
+  )
+)

@@ -1,7 +1,6 @@
 package ba.sake.squery.generator
 
 import java.sql.{Array => _, _}
-import javax.sql.DataSource
 import scala.util._
 import scala.util.chaining._
 import scala.collection.mutable.ArrayBuffer
@@ -10,11 +9,10 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.CaseUtils
 
 // https://stackoverflow.com/a/16624964/4496364
-class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
+class PostgresDefExtractor(connection: Connection) extends DbDefExtractor(connection) {
 
   // (table, column) -> ColumnType
   override protected def getColumnTypes(
-      connection: Connection,
       schemaName: String,
       columnsMetadatas: Seq[ColumnMetadata]
   ): Map[(String, String), ColumnType] = {
@@ -43,7 +41,7 @@ class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
           val displayTypeOriginal = rs.getString("display_type_original")
           val displayTypeResolved = rs.getString("display_type_resolved") // for resolving domain types
           val arrayDim = rs.getInt("array_dim")
-          val resolvedType = resolveType(connection, displayTypeOriginal, displayTypeResolved, arrayDim)
+          val resolvedType = resolveType(displayTypeOriginal, displayTypeResolved, arrayDim)
           buff += (tableName, columnName) -> resolvedType
         }
         buff.toMap
@@ -52,7 +50,6 @@ class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
   }
 
   private def resolveType(
-      connection: Connection,
       displayTypeOriginal: String,
       displayTypeResolved: String,
       arrayDim: Int
@@ -77,7 +74,7 @@ class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
         .orElse(
           resolveScalarType(displayTypeResolved) // domain type (alias)
         )
-        .orElse(resolveEnumType(connection, displayTypeOriginal))
+        .orElse(resolveEnumType(displayTypeOriginal))
         .getOrElse(ColumnType.Unknown(displayTypeOriginal))
 
   }
@@ -114,7 +111,7 @@ class PostgresDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
     }
   }
 
-  private def resolveEnumType(connection: Connection, typeName: String): Try[ColumnType.Enumeration] =
+  private def resolveEnumType(typeName: String): Try[ColumnType.Enumeration] =
     Using(connection.createStatement()) { stmt =>
       val resultSet = stmt.executeQuery(s"select unnest(enum_range(null, null::${typeName}))")
       val enumValues = ArrayBuffer.empty[String]

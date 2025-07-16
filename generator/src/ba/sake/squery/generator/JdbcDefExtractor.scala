@@ -11,17 +11,15 @@ import org.apache.commons.text.CaseUtils
 
 /** General data types extractor, based on JDBC metadata
   *
-  * @param ds
+  * @param connection
   */
-class JdbcDefExtractor(ds: DataSource) extends DbDefExtractor(ds) {
+class JdbcDefExtractor(connection: Connection) extends DbDefExtractor(connection) {
 
   // (table, column) -> ColumnType
   override protected def getColumnTypes(
-      connection: Connection,
       schemaName: String,
       columnsMetadatas: Seq[ColumnMetadata]
   ): Map[(String, String), ColumnType] = {
-    val databaseMetaData = connection.getMetaData()
     columnsMetadatas.map { cMeta =>
       val tpe = cMeta.jdbcType match {
         case Types.BIT                     => ColumnType.Predefined(t"Boolean")
