@@ -4,16 +4,16 @@
 ```sh
 
 
-./mill clean
+./mill -i clean
 
-./mill __.reformat
+./mill -i mill.scalalib.scalafmt/
 
-./mill squery.test
+./mill -i squery.test
 
 ./mill examples.runMain bla
 
 # for local dev/test
-./mill  squery.publishLocal
+./mill -i squery.publishLocal
 
 git diff
 git commit -am "msg"

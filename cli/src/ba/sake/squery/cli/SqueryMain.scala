@@ -17,7 +17,9 @@ object SqueryMain {
       schemaMappings: Seq[String] = Seq.empty,
       @arg(doc = "Base folder for generated sources. Default is 'src/main/scala'")
       baseFolder: String = "src/main/scala",
-      @arg(doc = "Type name identifier mapping function: 'camelcase' or 'noop'. Default is 'camelcase'")
+      @arg(doc = "Column name identifier mapping function: 'camelcase' or 'noop'. Default is 'camelcase'")
+      colNameIdentifierMapper: String = "camelcase",
+      @arg(doc = "Type name mapping function: 'camelcase' or 'noop'. Default is 'camelcase'")
       typeNameMapper: String = "camelcase",
       @arg(doc = "Row type suffix. Default is 'Row'")
       rowTypeSuffix: String = "Row",
@@ -26,26 +28,31 @@ object SqueryMain {
   ) = {
 
     val config = SqueryGeneratorConfig(
-      colNameIdentifierMapper = NameMapper.CamelCase,
-      typeNameMapper = NameMapper.CamelCase,
-      rowTypeSuffix = "Row",
-      daoTypeSuffix = "Dao"
+      colNameIdentifierMapper = NameMapper(colNameIdentifierMapper),
+      typeNameMapper = NameMapper(typeNameMapper),
+      rowTypeSuffix = rowTypeSuffix,
+      daoTypeSuffix = daoTypeSuffix
     )
-    
+
     Using.resource(DriverManager.getConnection(jdbcUrl)) { connection =>
-      val squeryGenerator = new SqueryGenerator(connection, config)
-      val schemaConfigs = schemaMappings.map { case s"${schemaName}:${basePackage}" =>
-          SchemaConfig(
-            name = schemaName,
-            baseFolder = Paths.get(baseFolder),
-            basePackage = basePackage
+      val schemaConfigs = schemaMappings.flatMap {
+        case s"${schemaName}:${basePackage}" =>
+          Some(
+            SchemaConfig(
+              name = schemaName,
+              baseFolder = Paths.get(baseFolder),
+              basePackage = basePackage
+            )
           )
-        }
+        case other =>
+          println(s"Unrecognized schema:package mapping format ${other}")
+          None
+      }
+      val squeryGenerator = new SqueryGenerator(connection, config)
       squeryGenerator.generateFiles(schemaConfigs)
     }
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
 
-  // TODO typeclass NameMapper
 }
