@@ -13,7 +13,8 @@ set howtos = [
   { label: "Queries", url: "/howtos/queries.html" },
   { label: "Updates", url: "/howtos/updates.html" },
   { label: "Interpolation", url: "/howtos/interpolation.html" },
-  { label: "Transactions", url: "/howtos/transactions.html" }
+  { label: "Transactions", url: "/howtos/transactions.html" },
+  { label: "Custom Types", url: "/howtos/custom_types.html" }
 ]
 
 %}
