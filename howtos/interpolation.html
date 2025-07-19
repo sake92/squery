@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Squery How To Interpolation">
+  <title> How To Interpolation | Squery Documentation </title>
+  <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
+ </head>
+ <body>
+  <header class="pico container">
+   <nav>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/">Home</a></li>
+    </ul>
+    <ul>
+     <li>
+      <form action="https://sake92.github.io/squery/search/results.html" method="GET">
+       <input name="q" type="search" placeholder="Search">
+      </form>
+     </li>
+    </ul>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/tutorials">Tutorials</a></li>
+     <li><a href="https://sake92.github.io/squery/howtos">How-Tos</a></li>
+    </ul>
+   </nav>
+  </header>
+  <main class="pico container">
+   <div class="grid">
+    <div>
+     <details>
+      <summary>Table of Contents</summary>
+      <div>
+       <ul>
+        <li><a href="#how-to-interpolation">How To Interpolation</a>
+         <ul>
+          <li><a href="#how-to-interpolate-literal-strings">How To Interpolate Literal Strings?</a></li>
+          <li><a href="#how-to-interpolate-values">How To Interpolate Values?</a></li>
+          <li><a href="#how-to-interpolate-queries">How To Interpolate Queries?</a></li>
+         </ul></li>
+       </ul>
+      </div>
+     </details>
+     <hr>
+    </div>
+    <div></div>
+    <div></div>
+   </div>
+   <h1 id="how-to-interpolation">How To Interpolation<a href="#how-to-interpolation" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+   <h2 id="how-to-interpolate-literal-strings">How To Interpolate Literal Strings?<a href="#how-to-interpolate-literal-strings" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>You can use <code>inline val</code> (literal type) string values in your queries:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">inline</span> <span class="hljs-keyword">val</span> columns = <span class="hljs-string">"id, name, age"</span>
+<span class="hljs-string">sql""</span><span class="hljs-string">"
+  SELECT ${columns}
+  FROM customers
+"</span><span class="hljs-string">""</span>.readRows[<span class="hljs-type">Customer</span>]()
+</code>
+          </pre>
+   <p>This will <strong>not</strong> make a <code>?</code> parameter, it will directly insert the literal string.
+    <br>
+    Same as if you wrote this:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-string">sql""</span><span class="hljs-string">"
+  SELECT id, name, age
+  FROM customers
+"</span><span class="hljs-string">""</span>.readRows[<span class="hljs-type">Customer</span>]()
+</code>
+          </pre>
+   <h2 id="how-to-interpolate-values">How To Interpolate Values?<a href="#how-to-interpolate-values" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>You can use any <code>SqlWrite[T]</code>-able value in your queries:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> customerId = <span class="hljs-number">123</span>
+<span class="hljs-keyword">val</span> phoneNumber = <span class="hljs-string">"123456"</span>
+<span class="hljs-string">sql""</span><span class="hljs-string">"
+  INSERT INTO phones(customer_id, number)
+  VALUES($customerId, $phoneNumber)
+"</span><span class="hljs-string">""</span>.insert()
+</code>
+          </pre>
+   <p>The final query that gets executed will look like this:</p>
+   <pre>            <code class="language-sql hljs" data-highlighted="yes"><span class="hljs-keyword">INSERT INTO</span> phones(customer_id, number)
+<span class="hljs-keyword">VALUES</span>(?, ?)
+</code>
+          </pre>
+   <p>so it is injection-safe.</p>
+   <h2 id="how-to-interpolate-queries">How To Interpolate Queries?<a href="#how-to-interpolate-queries" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>You can interpolate queries in other queries, just like values:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> whereQuery = <span class="hljs-string">sql"WHERE .."</span>
+<span class="hljs-string">sql""</span><span class="hljs-string">"
+  SELECT customer_id, name
+  FROM customers
+  ${whereQuery}
+"</span><span class="hljs-string">""</span>.readRow[<span class="hljs-type">Customer</span>]()
+</code>
+          </pre>
+  </main>
+  <footer class="pico container">Squery Documentation</footer>
+ </body>
+</html>

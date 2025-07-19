@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Squery Quickstart Tutorial">
+  <title> Quickstart | Squery Documentation </title>
+  <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
+ </head>
+ <body>
+  <header class="pico container">
+   <nav>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/">Home</a></li>
+    </ul>
+    <ul>
+     <li>
+      <form action="https://sake92.github.io/squery/search/results.html" method="GET">
+       <input name="q" type="search" placeholder="Search">
+      </form>
+     </li>
+    </ul>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/tutorials">Tutorials</a></li>
+     <li><a href="https://sake92.github.io/squery/howtos">How-Tos</a></li>
+    </ul>
+   </nav>
+  </header>
+  <main class="pico container">
+   <div class="grid">
+    <div>
+     <details>
+      <summary>Table of Contents</summary>
+      <div>
+       <ul>
+        <li><a href="#quickstart">Quickstart</a>
+         <ul>
+          <li><a href="#examples">Examples</a></li>
+         </ul></li>
+       </ul>
+      </div>
+     </details>
+     <hr>
+    </div>
+    <div></div>
+    <div></div>
+   </div>
+   <h1 id="quickstart">Quickstart<a href="#quickstart" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+   <p>First, we need to initialize a <code>SqueryContext</code> with a standard JDBC <code>DataSource</code>.
+    <br>
+    You will probably want to use a connection pool for performance (like HikariCP).</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> ba.sake.squery.{*, <span class="hljs-keyword">given</span>}
+<span class="hljs-comment">// import one of these if needed:</span>
+<span class="hljs-comment">// import ba.sake.squery.postgres.{*, given}</span>
+<span class="hljs-comment">// import ba.sake.squery.mysql.{*, given}</span>
+<span class="hljs-comment">// import ba.sake.squery.mariadb.{*, given}</span>
+<span class="hljs-comment">// import ba.sake.squery.oracle.{*, given}</span>
+<span class="hljs-comment">// import ba.sake.squery.h2.{*, given}</span>
+
+<span class="hljs-keyword">val</span> ds = com.zaxxer.hikari.<span class="hljs-type">HikariDataSource</span>()
+ds.setJdbcUrl(..)
+ds.setUsername(..)
+ds.setPassword(..)
+
+<span class="hljs-keyword">val</span> ctx = <span class="hljs-type">SqueryContext</span>(ds)
+</code>
+          </pre>
+   <p>Now we can run queries inside the context:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes">ctx.run {
+<span class="hljs-comment">// queries go here!</span>
+}
+</code>
+          </pre>
+   <p>or if you want to run them transactionally:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes">ctx.runTransaction {
+<span class="hljs-comment">// queries go here!</span>
+}
+</code>
+          </pre>
+   <p><code>ctx.run*</code> functions provide an implicit JDBC connection under the cover,
+    <br>
+    thanks to scala3's context functions! &lt;3</p>
+   <h2 id="examples">Examples<a href="#examples" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>You can find examples:</p>
+   <ul>
+    <li>in the <a href="https://github.com/sake92/squery/tree/main/examples">examples</a> folder</li>
+    <li>in the <a href="https://github.com/sake92/sharaf-petclinic/tree/main/app/src/ba/sake/sharaf/petclinic/db/daos">sharaf-petclinic demo</a></li>
+    <li>in the <a href="https://github.com/sake92/squery/tree/main/squery/test">squery tests</a></li>
+   </ul>
+  </main>
+  <footer class="pico container">Squery Documentation</footer>
+ </body>
+</html>

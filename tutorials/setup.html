@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Squery Setup Tutorial">
+  <title> Setup | Squery Documentation </title>
+  <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
+ </head>
+ <body>
+  <header class="pico container">
+   <nav>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/">Home</a></li>
+    </ul>
+    <ul>
+     <li>
+      <form action="https://sake92.github.io/squery/search/results.html" method="GET">
+       <input name="q" type="search" placeholder="Search">
+      </form>
+     </li>
+    </ul>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/tutorials">Tutorials</a></li>
+     <li><a href="https://sake92.github.io/squery/howtos">How-Tos</a></li>
+    </ul>
+   </nav>
+  </header>
+  <main class="pico container">
+   <div class="grid">
+    <div>
+     <details>
+      <summary>Table of Contents</summary>
+      <div>
+       <ul>
+        <li><a href="#setup">Setup</a>
+         <ul>
+          <li><a href="#mill">Mill</a></li>
+          <li><a href="#sbt">sbt</a></li>
+          <li><a href="#scala-cli">Scala CLI</a></li>
+          <li><a href="#scastie">Scastie</a></li>
+         </ul></li>
+       </ul>
+      </div>
+     </details>
+     <hr>
+    </div>
+    <div></div>
+    <div></div>
+   </div>
+   <h1 id="setup">Setup<a href="#setup" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+   <h2 id="mill">Mill<a href="#mill" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">mvnDeps</span> </span>= <span class="hljs-keyword">super</span>.mvnDeps() ++ <span class="hljs-type">Seq</span>(
+  <span class="hljs-string">mvn"ba.sake::squery:0.8.1"</span>
+)
+</code>
+          </pre>
+   <h2 id="sbt">sbt<a href="#sbt" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes">libraryDependencies ++= <span class="hljs-type">Seq</span>(
+  <span class="hljs-string">"ba.sake"</span> %% <span class="hljs-string">"squery"</span> % <span class="hljs-string">"0.8.1"</span>
+)
+</code>
+          </pre>
+   <h2 id="scala-cli">Scala CLI<a href="#scala-cli" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">ba.sake::squery:0.8.1</span>
+</code>
+          </pre>
+   <h2 id="scastie">Scastie<a href="#scastie" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>You can also use this <a href="https://scastie.scala-lang.org/39YRVAiHToGTPNE6RcWQ9Q">Scastie example</a> to try Squery online.</p>
+  </main>
+  <footer class="pico container">Squery Documentation</footer>
+ </body>
+</html>

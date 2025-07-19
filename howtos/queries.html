@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Squery How To Queries">
+  <title> How To Queries | Squery Documentation </title>
+  <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
+ </head>
+ <body>
+  <header class="pico container">
+   <nav>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/">Home</a></li>
+    </ul>
+    <ul>
+     <li>
+      <form action="https://sake92.github.io/squery/search/results.html" method="GET">
+       <input name="q" type="search" placeholder="Search">
+      </form>
+     </li>
+    </ul>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/tutorials">Tutorials</a></li>
+     <li><a href="https://sake92.github.io/squery/howtos">How-Tos</a></li>
+    </ul>
+   </nav>
+  </header>
+  <main class="pico container">
+   <div class="grid">
+    <div>
+     <details>
+      <summary>Table of Contents</summary>
+      <div>
+       <ul>
+        <li><a href="#how-to-queries">How To Queries</a>
+         <ul>
+          <li><a href="#how-to-read-one-column-values">How to Read One-Column Values?</a></li>
+          <li><a href="#how-to-read-multi-column-values">How to Read Multi-Column Values?</a></li>
+          <li><a href="#how-to-read-a-full-join">How to Read a Full Join?</a></li>
+          <li><a href="#how-to-read-an-outer-join">How to Read an Outer Join?</a></li>
+          <li><a href="#how-to-map-flat-rows-to-objects">How to Map Flat Rows to Objects</a></li>
+          <li><a href="#how-to-do-dynamic-queries">How To Do Dynamic Queries?</a></li>
+         </ul></li>
+       </ul>
+      </div>
+     </details>
+     <hr>
+    </div>
+    <div></div>
+    <div></div>
+   </div>
+   <h1 id="how-to-queries">How To Queries<a href="#how-to-queries" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+   <h2 id="how-to-read-one-column-values">How to Read One-Column Values?<a href="#how-to-read-one-column-values" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>We use the <code>readValues[T]()</code> to read single-column results:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> ba.sake.squery.{*, <span class="hljs-keyword">given</span>}
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">customersIds</span></span>: <span class="hljs-type">List</span>[<span class="hljs-type">Int</span>] = ctx.run {
+  <span class="hljs-string">sql"SELECT id FROM customers"</span>.readValues[<span class="hljs-type">Int</span>]()
+}
+</code>
+          </pre>
+   <hr>
+   <p>There are also variations that return a single result, depending if you want an <code>Option[T]</code> or <code>T</code>:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-string">sql"SELECT ..."</span>.readValueOpt[<span class="hljs-type">T</span>]() : <span class="hljs-type">Option</span>[<span class="hljs-type">T</span>] <span class="hljs-comment">// first result, if present</span>
+<span class="hljs-string">sql"SELECT ..."</span>.readValue[<span class="hljs-type">T</span>]() : <span class="hljs-type">T</span>            <span class="hljs-comment">// first result, or exception</span>
+</code>
+          </pre>
+   <h2 id="how-to-read-multi-column-values">How to Read Multi-Column Values?<a href="#how-to-read-multi-column-values" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>When reading multi-column results, we care about the column names.
+    <br>
+    A natural fit for that are <code>case class</code>es.
+    <br>
+    We need to add a <code>derives SqlReadRow</code>, and then we can use it:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> ba.sake.squery.{*, <span class="hljs-keyword">given</span>}
+
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Customer</span>(<span class="hljs-params">id: <span class="hljs-type">Int</span>, name: <span class="hljs-type">String</span></span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">customers</span></span>: <span class="hljs-type">List</span>[<span class="hljs-type">Customer</span>] = ctx.run {
+  <span class="hljs-string">sql"SELECT id, name FROM customers"</span>.readRows[<span class="hljs-type">Customer</span>]()
+}
+</code>
+          </pre>
+   <p>Note that the <code>case class</code>' fields need to match the <code>SELECT</code> statement columns!</p>
+   <hr>
+   <p>There are also variations that return a single result, depending if you want an <code>Option[T]</code> or <code>T</code>:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-string">sql"SELECT ..."</span>.readRowOpt[<span class="hljs-type">T</span>]() : <span class="hljs-type">Option</span>[<span class="hljs-type">T</span>] <span class="hljs-comment">// first result, if present</span>
+<span class="hljs-string">sql"SELECT ..."</span>.readRow[<span class="hljs-type">T</span>]() : <span class="hljs-type">T</span>            <span class="hljs-comment">// first result, or exception</span>
+</code>
+          </pre>
+   <h2 id="how-to-read-a-full-join">How to Read a Full Join?<a href="#how-to-read-a-full-join" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>Squery is using <code>case class</code> composition to read <code>JOIN</code>ed tables.
+    <br>
+    Let's say we have tables whose rows are represented by these 2 case classes:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Customer</span>(<span class="hljs-params">id: <span class="hljs-type">Int</span>, name: <span class="hljs-type">String</span></span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Phone</span>(<span class="hljs-params">id: <span class="hljs-type">Int</span>, number: <span class="hljs-type">String</span></span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+</code>
+          </pre>
+   <p>Doing a <code>FULL JOIN</code> on them would look like this:</p>
+   <pre>            <code class="language-sql hljs" data-highlighted="yes"><span class="hljs-keyword">SELECT</span>  c.id, c.name,
+        p.id, p.number
+<span class="hljs-keyword">FROM</span> customers c
+<span class="hljs-keyword">JOIN</span> phones p <span class="hljs-keyword">ON</span> p.customer_id <span class="hljs-operator">=</span> c.id     
+</code>
+          </pre>
+   <p>The result can be expressed as a composition of the 2 <code>case class</code>es above:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CustomerWithPhone</span>(<span class="hljs-params">c: <span class="hljs-type">Customer</span>, p: <span class="hljs-type">Phone</span></span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+</code>
+          </pre>
+   <p>Variables like <code>c: Customer</code> are expected to have <em>corresponding column names</em> in the query: <code>c.id</code> and <code>c.name</code>.
+    <br>
+    The final query is a composition of <code>Customer</code> and <code>Phone</code>, so it maps nicely in your head, it is easier to read and manipulate.</p>
+   <p>You could have additional columns like a <code>COUNT</code>/<code>SUM</code> or whatever you need in <code>CustomerWithPhone</code> query result.</p>
+   <hr>
+   <p>Full example:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> ba.sake.squery.{*, <span class="hljs-keyword">given</span>}
+
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Customer</span>(<span class="hljs-params">id: <span class="hljs-type">Int</span>, name: <span class="hljs-type">String</span></span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Phone</span>(<span class="hljs-params">id: <span class="hljs-type">Int</span>, number: <span class="hljs-type">String</span></span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CustomerWithPhone</span>(<span class="hljs-params">c: <span class="hljs-type">Customer</span>, p: <span class="hljs-type">Phone</span></span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">customerwithPhones</span></span>: <span class="hljs-type">List</span>[<span class="hljs-type">CustomerWithPhone</span>] = ctx.run {
+  <span class="hljs-string">sql""</span><span class="hljs-string">"
+    SELECT c.id, c.name,
+          p.id, p.number
+    FROM customers c
+    JOIN phones p ON p.customer_id = c.id
+  "</span><span class="hljs-string">""</span>.readRows[<span class="hljs-type">CustomerWithPhone</span>]()
+}
+</code>
+          </pre>
+   <h2 id="how-to-read-an-outer-join">How to Read an Outer Join?<a href="#how-to-read-an-outer-join" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>The principle is the same as for <code>FULL JOIN</code>.</p>
+   <p>The only thing you need change is to make the <code>JOIN</code>-ed table an <code>Option[T]</code>:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CustomerWithPhoneOpt</span>(<span class="hljs-params">c: <span class="hljs-type">Customer</span>, p: <span class="hljs-type">Option</span>[<span class="hljs-type">Phone</span>]</span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">customerwithPhoneOpts</span></span>: <span class="hljs-type">List</span>[<span class="hljs-type">CustomerWithPhoneOpt</span>] = ctx.run {
+  <span class="hljs-string">sql"SELECT ..."</span>.readRows[<span class="hljs-type">CustomerWithPhoneOpt</span>]()
+}
+</code>
+          </pre>
+   <p>The <code>p: Option[Phone]</code> will be <code>None</code> when all its returned columns are <code>NULL</code>.</p>
+   <h2 id="how-to-map-flat-rows-to-objects">How to Map Flat Rows to Objects<a href="#how-to-map-flat-rows-to-objects" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>Suppose you have these data <code>class</code>-es:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Customer</span>(<span class="hljs-params">id: <span class="hljs-type">Int</span>, name: <span class="hljs-type">String</span></span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Address</span>(<span class="hljs-params">id: <span class="hljs-type">Int</span>, name: <span class="hljs-type">String</span></span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CustomerWithAddressOpt</span>(<span class="hljs-params">c: <span class="hljs-type">Customer</span>, a: <span class="hljs-type">Option</span>[<span class="hljs-type">Address</span>]</span>) <span class="hljs-title">derives</span> <span class="hljs-title">SqlReadRow</span></span>
+</code>
+          </pre>
+   <p>Now, when you do a <code>SELECT</code> you'll get a <code>Seq[CustomerWithPhoneOpt]</code>, a "flat" result, named tuple.
+    <br>
+    But, on your REST API you'd like to return a structured object:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CustomerDTO</span>(<span class="hljs-params">id: <span class="hljs-type">Int</span>, name: <span class="hljs-type">String</span>, addresses: <span class="hljs-type">Seq</span>[<span class="hljs-type">String</span>]</span>)</span>
+</code>
+          </pre>
+   <p>Squery has utilities for exactly that.
+    <br>
+    Let's see how <code>groupByOrderedOpt</code> works:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> ba.sake.squery.utils.*
+
+<span class="hljs-keyword">val</span> groupedByCustomer: <span class="hljs-type">Map</span>[<span class="hljs-type">Customer</span>, <span class="hljs-type">Seq</span>[<span class="hljs-type">Address</span>]] = rowsLeftJoin.groupByOrderedOpt(_.c, _.a)
+<span class="hljs-keyword">val</span> dtos = groupedByCustomer.map { <span class="hljs-keyword">case</span> (c, addresses) =&gt;
+  <span class="hljs-type">CustomerDTO</span>(c.id, c.name, addresses.map(_.name))
+}.toSeq
+</code>
+          </pre>
+   <p>We can see that it returns a <code>Map[Customer, Seq[Address]]</code>, just as we wanted.
+    <br>
+    Then we just map over it and populate the DTO object, can't be simpler!</p>
+   <hr>
+   <p>This does a few thing for us:</p>
+   <ul>
+    <li>keeps the list of results <em>ordered</em>, so you don't have to sort it twice (once in DB, and again in memory)</li>
+    <li>extracts the value that we need from the raw row result</li>
+    <li>handles the <code>None</code> case</li>
+    <li>handles the starting, empty Seq of results case</li>
+   </ul>
+   <h2 id="how-to-do-dynamic-queries">How To Do Dynamic Queries?<a href="#how-to-do-dynamic-queries" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>Of course, in the real world, you will need to compose queries dynamically at runtime.
+    <br>
+    You can use the <code>++</code> operator on queries:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">customers</span></span>(): <span class="hljs-type">Seq</span>[<span class="hljs-type">Customer</span>] = ctx.run {
+  <span class="hljs-keyword">val</span> conds = <span class="hljs-type">List</span>(<span class="hljs-string">sql"id = 123"</span>, <span class="hljs-string">sql"name LIKE 'Bob%'"</span>)
+  <span class="hljs-keyword">val</span> condsQuery = conds.reduce(_ ++ _)
+  <span class="hljs-keyword">val</span> query = <span class="hljs-string">sql"SELECT id, name FROM customers <span class="hljs-subst">${condsQuery}</span>"</span>
+  query.readRows[<span class="hljs-type">Customer</span>]()
+}
+</code>
+          </pre>
+   <hr>
+   <p>There are also some utils in the <code>ba.sake.squery.utils</code> package.
+    <br>
+    For example, if you want to optionally filter on some columns, you can use <code>concatenate</code> function:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-type">Seq</span>(<span class="hljs-type">Option</span>(<span class="hljs-string">sql"q1"</span>), <span class="hljs-type">None</span>, <span class="hljs-type">Option</span>(<span class="hljs-string">sql"q2"</span>))
+  .concatenate(sep = <span class="hljs-string">sql"AND"</span>, <span class="hljs-keyword">default</span> = <span class="hljs-string">sql"true"</span>)
+
+<span class="hljs-comment">// same as this:</span>
+<span class="hljs-string">sql"q1 AND q2"</span>
+</code>
+          </pre>
+  </main>
+  <footer class="pico container">Squery Documentation</footer>
+ </body>
+</html>

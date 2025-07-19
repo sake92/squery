@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Squery Generating Code Tutorial">
+  <title> Generating Code | Squery Documentation </title>
+  <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
+ </head>
+ <body>
+  <header class="pico container">
+   <nav>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/">Home</a></li>
+    </ul>
+    <ul>
+     <li>
+      <form action="https://sake92.github.io/squery/search/results.html" method="GET">
+       <input name="q" type="search" placeholder="Search">
+      </form>
+     </li>
+    </ul>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/tutorials">Tutorials</a></li>
+     <li><a href="https://sake92.github.io/squery/howtos">How-Tos</a></li>
+    </ul>
+   </nav>
+  </header>
+  <main class="pico container">
+   <div class="grid">
+    <div>
+     <details>
+      <summary>Table of Contents</summary>
+      <div>
+       <ul>
+        <li><a href="#generating-code">Generating Code</a>
+         <ul>
+          <li><a href="#standalone-generator">Standalone generator</a></li>
+          <li><a href="#mill-plugin">Mill plugin</a></li>
+         </ul></li>
+       </ul>
+      </div>
+     </details>
+     <hr>
+    </div>
+    <div></div>
+    <div></div>
+   </div>
+   <h1 id="generating-code">Generating Code<a href="#generating-code" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+   <p>Squery has a code generator that can generate code for various databases:
+    <br>
+    Postgres, MySQL, MariaDB, Oracle, H2 etc.</p>
+   <p>It generates models for table rows and DAOs with various utility methods:</p>
+   <ul>
+    <li>countAll, countWhere</li>
+    <li>findAll, findWhere, findWhereOpt, findAllWhere, findById, findByIdOpt, findByIds</li>
+    <li>insert, updateById</li>
+    <li>deleteWhere, deleteById, deleteIds</li>
+   </ul>
+   <p>Squery codegen is a bit special since it is using <a href="https://github.com/sake92/regenesca">Regenesca library</a>.
+    <br>
+    When you add a new column for example, it will <strong>refactor</strong> the <code>*Row</code> and <code>*Dao</code> code in place!
+    <br>
+    This means you can add your own methods/vals to the <em>generated code</em>, without fear that the codegen will remove it.
+    <br>
+    Of course, it is best to use <code>scalafmt</code> after codegen so that the diff is minimal.</p>
+   <h2 id="standalone-generator">Standalone generator<a href="#standalone-generator" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>You can use it with Ammonite to test the generator:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> $ivy.`ba.sake:squery-generator_2<span class="hljs-number">.13</span>:<span class="hljs-number">0.8</span><span class="hljs-number">.1</span>`
+<span class="hljs-keyword">import</span> $ivy.`ba.sake::squery:<span class="hljs-number">0.8</span><span class="hljs-number">.1</span>`
+<span class="hljs-comment">// if using Postgres JSONB</span>
+<span class="hljs-comment">// import $ivy.`ba.sake::squery-postgres-jawn:0.8.1`</span>
+
+<span class="hljs-keyword">import</span> ba.sake.squery.generator.*
+
+<span class="hljs-keyword">val</span> dataSource = ...
+<span class="hljs-keyword">val</span> generator = <span class="hljs-type">SqueryGenerator</span>(dataSource)
+<span class="hljs-keyword">val</span> generatedCode = generator.generateString(<span class="hljs-type">Seq</span>(<span class="hljs-string">"myschema"</span>))
+repl.load(generatedCode)
+
+<span class="hljs-comment">// now you can use the generated code</span>
+<span class="hljs-keyword">val</span> ctx = <span class="hljs-type">SqueryContext</span>(dataSource)
+ctx.run {
+  <span class="hljs-type">MyTableDao</span>.findAll()
+}
+</code>
+          </pre>
+   <h2 id="mill-plugin">Mill plugin<a href="#mill-plugin" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>See how it works in the dedicated GitHub repo <a href="https://github.com/sake92/mill-squery">https://github.com/sake92/mill-squery</a></p>
+  </main>
+  <footer class="pico container">Squery Documentation</footer>
+ </body>
+</html>
