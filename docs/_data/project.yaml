@@ -1,0 +1,13 @@
+name: Squery
+
+gh:
+  handle: "sake92"
+  projectName: "squery"
+  url: "https://github.com/sake92/squery"
+  sourcesUrl: "https://github.com/sake92/squery/tree/main"
+
+artifact:
+  org: "ba.sake"
+  name: "squery"
+  version: "0.8.1"
+

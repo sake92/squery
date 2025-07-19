@@ -14,8 +14,8 @@ out/
 
 .scala-build/
 
-hepek_output/
-
+.flatmark-cache/
+_site/
 
 
 

@@ -57,7 +57,7 @@ cs launch ba.sake::squery-cli:0.8.1 -M ba.sake.squery.cli.SqueryMain -- \
   --baseFolder src \
   --schemaMappings public:com.example.public \
   --schemaMappings myschema:com.example.myschema \ # this is a repeatable argument
-  # these below are optional
+  # these are optional:
   -- colNameIdentifierMapper camelcase \ # or noop
   -- typeNameMapper camelcase \ # or noop
   -- rowTypeSuffix Row \

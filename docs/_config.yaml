@@ -1,0 +1,11 @@
+
+name: Squery Documentation
+
+categories:
+  tutorials:
+    label: Tutorials
+    description: Squery Tutorials
+  howtos:
+    label: How-Tos
+    description: Squery How-Tos
+
