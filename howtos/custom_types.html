@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Squery How To Custom Types">
+  <title> How To Custom Types | Squery Documentation </title>
+  <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
+ </head>
+ <body>
+  <header class="pico container">
+   <nav>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/">Home</a></li>
+    </ul>
+    <ul>
+     <li>
+      <form action="https://sake92.github.io/squery/search/results.html" method="GET">
+       <input name="q" type="search" placeholder="Search">
+      </form>
+     </li>
+    </ul>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/tutorials">Tutorials</a></li>
+     <li><a href="https://sake92.github.io/squery/howtos">How-Tos</a></li>
+    </ul>
+   </nav>
+  </header>
+  <main class="pico container">
+   <div class="grid">
+    <div>
+     <details>
+      <summary>Table of Contents</summary>
+      <div>
+       <ul>
+        <li><a href="#how-to-custom-types">How To Custom Types</a>
+         <ul>
+          <li><a href="#how-to-read-custom-type-column">How to Read Custom Type Column?</a></li>
+          <li><a href="#how-to-read-singleton-enum">How to Read Singleton enum?</a></li>
+         </ul></li>
+       </ul>
+      </div>
+     </details>
+     <hr>
+    </div>
+    <div></div>
+    <div></div>
+   </div>
+   <h1 id="how-to-custom-types">How To Custom Types<a href="#how-to-custom-types" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+   <h2 id="how-to-read-custom-type-column">How to Read Custom Type Column?<a href="#how-to-read-custom-type-column" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>You can read any column that has an instance of <code>SqlRead</code> typeclass. To support your custom type, make a <code>given SqlRead</code> with proper implementation:</p>
+   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">given</span> <span class="hljs-type">SqlRead</span>[<span class="hljs-type">MyType</span>] <span class="hljs-keyword">with</span> {
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">readByName</span></span>(jRes: jsql.<span class="hljs-type">ResultSet</span>, colName: <span class="hljs-type">String</span>): <span class="hljs-type">Option</span>[<span class="hljs-type">MyType</span>] =
+    <span class="hljs-type">Option</span>(jRes.getString(colName)).map(parseMyCustomType(...))
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">readByIdx</span></span>(jRes: jsql.<span class="hljs-type">ResultSet</span>, colIdx: <span class="hljs-type">Int</span>): <span class="hljs-type">Option</span>[<span class="hljs-type">MyType</span>] =
+    <span class="hljs-type">Option</span>(jRes.getString(colIdx)).map(parseMyCustomType(...))
+}
+</code>
+          </pre>
+   <h2 id="how-to-read-singleton-enum">How to Read Singleton enum?<a href="#how-to-read-singleton-enum" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>Say you have a column with fixed set of values:</p>
+   <pre>            <code class="language- hljs language-processing" data-highlighted="yes"><span class="hljs-keyword">enum</span> Color:
+  <span class="hljs-keyword">case</span> <span class="hljs-built_in">red</span>, <span class="hljs-built_in">blue</span>, <span class="hljs-built_in">green</span>
+</code>
+          </pre>
+   <p>Squery can automatically derive instances of <code>SqlRead</code> and<code>SqlWrite</code>:</p>
+   <pre>            <code class="language- hljs language-angelscript" data-highlighted="yes"><span class="hljs-keyword">enum</span> Color derives SqlRead, SqlWrite
+</code>
+          </pre>
+   <p>It uses stringified values of the enum cases: <code>red</code>, <code>green</code> and <code>blue</code>.</p>
+  </main>
+  <footer class="pico container">Squery Documentation</footer>
+ </body>
+</html>

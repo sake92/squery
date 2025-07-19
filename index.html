@@ -51,6 +51,13 @@
    <h1 id="squery">Squery<a href="#squery" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
    <p>Simple SQL queries in Scala 3.</p>
    <p>No DSLs, no fuss, just plain SQL.</p>
+   <p>Squery supports basic scala/java types out of the box:</p>
+   <ul>
+    <li><code>String</code>, <code>Int</code>, <code>Double</code> etc</li>
+    <li><code>Option[T]</code> for nullable columns</li>
+    <li><code>Vector[T]</code> for SQL arrays, up to 3 dimensions</li>
+    <li>semiauto derivation for singleton (java-esque) enums, just add <code>derives SqlRead, SqlWrite</code></li>
+   </ul>
   </main>
   <footer class="pico container">Squery Documentation</footer>
  </body>
