@@ -58,7 +58,7 @@ object generator extends ScalaModule, SonatypeCentralPublishModule {
   def publishVersion = VcsVersion.vcsState().format()
   def scalaVersion = scala213
   def mvnDeps = Seq(
-    mvn"ba.sake::regenesca:0.6.0",
+    mvn"ba.sake::regenesca:0.6.3",
     mvn"com.typesafe.scala-logging::scala-logging:3.9.4",
     mvn"ch.qos.logback:logback-classic:1.5.7",
     mvn"org.apache.commons:commons-text:1.12.0"
