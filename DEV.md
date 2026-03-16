@@ -2,29 +2,25 @@
 
 
 ```sh
+brew install sake92/tap/deder
 
+# clear local Deder state if needed
+deder shutdown || true
+rm -rf .deder
 
-./mill -i clean
-
-./mill -i mill.scalalib.scalafmt/
-
-./mill -i squery.test
-
-./mill examples.runMain bla
+deder exec -t runMvnApp -m squery fmt
+deder exec -t test
 
 # for local dev/test
-./mill -i squery.publishLocal
+deder exec -t publishLocal
 
 git diff
 git commit -am "msg"
 
-
 VERSION="0.8.1"
 git commit --allow-empty -am "Release $VERSION"
 git tag -a $VERSION -m "Release $VERSION"
-git push  --atomic origin main $VERSION
-
-
+git push --atomic origin main $VERSION
 ```
 
 # TODOs

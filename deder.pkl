@@ -1,0 +1,126 @@
+amends "https://sake92.github.io/deder/config/DederProject.pkl"
+
+local const baseScala3: ScalaModule = new {
+  scalaVersion = "3.7.1"
+  scalacOptions {
+    "-Ywarn-unused"
+    "-deprecation"
+    "-feature"
+    "-language:implicitConversions"
+  }
+}
+
+local const baseScala213: ScalaModule = new {
+  scalaVersion = "2.13.15"
+}
+
+local const squeryPomTemplate: PomSettings = new {
+  groupId = "ba.sake"
+  url = "https://github.com/sake92/squery"
+  licenses {
+    new PomLicense {
+      name = "Apache 2.0 License"
+      url = "https://opensource.org/license/apache-2.0"
+    }
+  }
+  developers {
+    new PomDeveloper {
+      id = "sake92"
+      name = "Sakib Hadžiavdić"
+      email = "sake92@sake.ba"
+    }
+  }
+  scm {
+    url = "git@github.com:sake92/squery.git"
+  }
+}
+
+local const squeryModules =
+  new CreateScalaModules {
+    root = "squery"
+    template = (baseScala3) {
+      deps {
+        "com.typesafe.scala-logging::scala-logging:3.9.4"
+        "com.github.jsqlparser:jsqlparser:4.7"
+        "org.scala-lang.modules::scala-collection-contrib:0.4.0"
+      }
+      pomSettings = (squeryPomTemplate) {
+        artifactId = "squery"
+        name = "squery"
+        description = "Squery SQL library"
+      }
+    }
+    testTemplate = (template.asTest()) {
+      deps {
+        "org.scalameta::munit:1.0.0"
+        "ch.qos.logback:logback-classic:1.5.7"
+        "com.zaxxer:HikariCP:4.0.3"
+        "com.h2database:h2:2.3.232"
+        "org.testcontainers:testcontainers:1.21.4"
+        "org.testcontainers:postgresql:1.17.6"
+        "org.postgresql:postgresql:42.7.4"
+        "org.testcontainers:mysql:1.19.3"
+        "mysql:mysql-connector-java:8.0.33"
+        "org.testcontainers:mariadb:1.19.3"
+        "org.mariadb.jdbc:mariadb-java-client:3.3.2"
+        "org.testcontainers:oracle-free:1.19.3"
+        "com.oracle.database.jdbc:ojdbc8:23.3.0.23.09"
+      }
+    }
+  }.get
+
+local const squeryPostgresJawn: ScalaModule = (baseScala3) {
+  id = "squery-postgres-jawn"
+  root = "squery/postgres-jawn"
+  moduleDeps {
+    squeryModules.main
+  }
+  deps {
+    "org.typelevel::jawn-ast:1.6.0"
+  }
+  pomSettings = (squeryPomTemplate) {
+    artifactId = "squery-postgres-jawn"
+    name = "squery-postgres-jawn"
+    description = "Squery Jawn extension for PostgreSQL"
+  }
+}
+
+local const generator: ScalaModule = (baseScala213) {
+  id = "generator"
+  root = "generator"
+  deps {
+    "ba.sake::regenesca:0.6.3"
+    "com.typesafe.scala-logging::scala-logging:3.9.4"
+    "ch.qos.logback:logback-classic:1.5.7"
+    "org.apache.commons:commons-text:1.12.0"
+  }
+  pomSettings = (squeryPomTemplate) {
+    artifactId = "squery-generator"
+    name = "squery-generator"
+    description = "Squery generator core"
+  }
+}
+
+local const cli: ScalaModule = (baseScala213) {
+  id = "cli"
+  root = "cli"
+  moduleDeps {
+    generator
+  }
+  deps {
+    "com.lihaoyi::mainargs:0.7.6"
+  }
+  mainClass = "ba.sake.squery.cli.SqueryMain"
+  pomSettings = (squeryPomTemplate) {
+    artifactId = "squery-cli"
+    name = "squery-cli"
+    description = "Squery generator CLI"
+  }
+}
+
+modules {
+  ...squeryModules.all
+  squeryPostgresJawn
+  generator
+  cli
+}

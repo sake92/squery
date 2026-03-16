@@ -18,6 +18,8 @@ out/
 _site/
 
 
+**/.deder/**
+!**/.deder/server.properties
 
 
 
