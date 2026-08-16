@@ -2,7 +2,6 @@ package ba.sake.squery
 
 import scala.language.implicitConversions
 import scala.compiletime.*
-import scala.compiletime.ops.any.*
 import scala.collection.mutable.ListBuffer
 import ba.sake.squery.write.*
 import ba.sake.squery.Query
@@ -18,9 +17,9 @@ type LiteralOrDynamicString = LiteralString | DynamicArg[String]
 // - dynamic strings are interpolated with ?, of course
 given string2LiteralString[T <: Singleton & String]: Conversion[T, LiteralOrDynamicString] with
   transparent inline def apply(value: T): LiteralOrDynamicString =
-    inline constValue[IsConst[T]] match
-      case true  => LiteralString(value)
-      case false => DynamicArg(value)(using SqlWrite[String])
+    inline constValueOpt[T] match
+      case Some(_) => LiteralString(value)
+      case _       => DynamicArg(value)(using SqlWrite[String])
 
 given sqlWrite2DynamicArg[T: SqlWrite]: Conversion[T, DynamicArg[T]] with
   def apply(value: T): DynamicArg[T] =
