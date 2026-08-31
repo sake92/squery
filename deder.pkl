@@ -65,6 +65,7 @@ local const squeryModules =
         "org.mariadb.jdbc:mariadb-java-client:3.3.2"
         "org.testcontainers:oracle-free:1.19.3"
         "com.oracle.database.jdbc:ojdbc8:23.3.0.23.09"
+        "org.xerial:sqlite-jdbc:3.46.1.0"
       }
     }
   }.get
