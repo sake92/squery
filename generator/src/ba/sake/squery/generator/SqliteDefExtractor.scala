@@ -21,8 +21,8 @@ class SqliteDefExtractor(
     }.getOrElse {
       val declaredType = metadata.declaredType.trim.toUpperCase
       val name = metadata.name.toLowerCase
-      if (declaredType == "INTEGER" && name.matches("(?:is|has|can)_.+")) ColumnType.Predefined(t"Boolean")
-      else if (declaredType == "INTEGER") ColumnType.Predefined(t"Long")
+      if (isIntegerAffinity(declaredType) && name.matches("(?:is|has|can)_.+")) ColumnType.Predefined(t"Boolean")
+      else if (isIntegerAffinity(declaredType)) ColumnType.Predefined(t"Long")
       else if (declaredType == "REAL") ColumnType.Predefined(t"Double")
       else if (declaredType == "TEXT") {
         if (name.endsWith("_at")) ColumnType.Predefined(t"Instant")
@@ -31,6 +31,10 @@ class SqliteDefExtractor(
       } else if (declaredType == "BLOB") ColumnType.Predefined(t"Array[Byte]")
       else ColumnType.Unknown(metadata.declaredType)
     }
+
+  private def isIntegerAffinity(declaredType: String): Boolean =
+    Set("INT", "INTEGER", "BIGINT", "SMALLINT", "MEDIUMINT", "TINYINT", "INT2", "INT8", "UNSIGNED BIG INT")
+      .contains(declaredType.replaceAll("\\s+", " ").trim)
 }
 
 case class SqliteTypeMappingRule(

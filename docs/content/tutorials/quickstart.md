@@ -26,7 +26,8 @@ ds.setPassword(..)
 val ctx = SqueryContext(ds)
 ```
 
-SQLite support requires SQLite JDBC 3.46.1 or newer and Squery 0.9.0 or newer.
+SQLite support requires SQLite JDBC 3.46.1 or newer and Squery 0.9.0 or newer. Generated
+`RETURNING` SQL requires SQLite 3.35 or newer; `STRICT` tables require SQLite 3.37 or newer.
 
 
 
@@ -61,4 +62,3 @@ You can find examples:
 - in the [examples]({{site.data.project.gh.sourcesUrl}}/examples) folder
 - in the [sharaf-petclinic demo](https://github.com/sake92/sharaf-petclinic/tree/main/app/src/ba/sake/sharaf/petclinic/db/daos)
 - in the [squery tests]({{site.data.project.gh.sourcesUrl}}/squery/test)
-

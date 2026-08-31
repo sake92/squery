@@ -21,6 +21,9 @@ class SqliteDefExtractorSuite extends FunSuite {
         created_at TEXT,
         birth_date TEXT,
         custom_id TEXT,
+        has_flag INT,
+        any_value ANY,
+        mystery CUSTOM,
         PRIMARY KEY (tenant_id, id)
       )
     """)
@@ -45,6 +48,9 @@ class SqliteDefExtractorSuite extends FunSuite {
       assertEquals(types("is_active"), "Boolean")
       assertEquals(types("created_at"), "Instant")
       assertEquals(types("birth_date"), "LocalDate")
+      assertEquals(types("has_flag"), "Boolean")
+      assertEquals(types("any_value"), "ANY")
+      assertEquals(types("mystery"), "CUSTOM")
     } finally conn.close()
   }
 
@@ -53,7 +59,9 @@ class SqliteDefExtractorSuite extends FunSuite {
     try {
       val config = SqueryGeneratorConfig.Default.copy(
         sqliteTypeMappingRules = Seq(
-          SqliteTypeMappingRule("custom_id", "TEXT", t"UUID", Seq("java.util.UUID"))
+          SqliteTypeMappingRule("custom_id", "INTEGER", t"Long"),
+          SqliteTypeMappingRule("custom_id", "TEXT", t"UUID", Seq("java.util.UUID")),
+          SqliteTypeMappingRule("custom_id", "TEXT", t"String")
         )
       )
       val generated = new SqueryGenerator(conn, config).generateString(Seq("main"))
@@ -61,6 +69,15 @@ class SqliteDefExtractorSuite extends FunSuite {
       assert(generated.contains("main.users"))
       assert(generated.contains("custom_id: Option[UUID]"))
       assert(!generated.contains("custom_id: Option[String]"))
+    } finally conn.close()
+  }
+
+  test("custom SQLite rule declared type guard rejects mismatches") {
+    val conn = connection
+    try {
+      val dbDef = new SqliteDefExtractor(conn, Seq(SqliteTypeMappingRule("custom_id", "INTEGER", t"Long"))).extract()
+      val custom = dbDef.schemas.head.tables.head.columnDefs.find(_.metadata.name == "custom_id").get
+      assertEquals(custom.scalaType.name, "String")
     } finally conn.close()
   }
 }

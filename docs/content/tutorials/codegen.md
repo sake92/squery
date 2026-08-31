@@ -52,12 +52,13 @@ storage mappings are `INTEGER` → `Long`, `REAL` → `Double`, `TEXT` → `Stri
 The default conventions map integer `is_*`/`has_*`/`can_*` columns to `Boolean`, text
 `*_at` columns to `Instant`, and text `*_date` columns to `LocalDate`. Ordered
 `SqliteTypeMappingRule`s take precedence and match both column name and declared type.
+Generated `RETURNING` SQL requires SQLite 3.35 or newer. If using `STRICT` tables, use
+SQLite 3.37 or newer; the SQLite JDBC driver version alone does not set the engine version.
 
 
 ## Mill plugin
 
 See how it works in the dedicated GitHub repo https://github.com/sake92/mill-squery
-
 
 
 

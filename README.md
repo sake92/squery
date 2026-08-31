@@ -76,4 +76,5 @@ SQLite code generation reads only the `main` schema. It maps `INTEGER`, `REAL`, 
 `NUMERIC` remain unknown. `is_*`, `has_*`, and `can_*` integer columns map to `Boolean`,
 `*_at` text columns to `Instant`, and `*_date` text columns to `LocalDate`. Ordered
 `SqliteTypeMappingRule`s override these conventions and require both column-name and
-declared-type regex matches.
+declared-type regex matches. Generated `RETURNING` SQL requires SQLite 3.35 or newer;
+if using SQLite `STRICT` tables, use SQLite 3.37 or newer.
