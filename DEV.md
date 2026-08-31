@@ -5,10 +5,10 @@
 brew install sake92/tap/deder
 
 # clear local Deder state if needed
-deder shutdown || true
+deder shutdown
 rm -rf .deder
 
-deder exec -t runMvnApp -m squery fmt
+deder exec -t runMvnApp fmt
 deder exec -t test
 
 # for local dev/test
