@@ -86,21 +86,29 @@ local const squeryPostgresJawn: ScalaModule = (baseScala3) {
   }
 }
 
-local const generator: ScalaModule = (baseScala213) {
-  id = "generator"
+local const generatorModules = new CreateScalaModules {
   root = "generator"
-  deps {
-    "ba.sake::regenesca:0.6.3"
-    "com.typesafe.scala-logging::scala-logging:3.9.4"
-    "ch.qos.logback:logback-classic:1.5.7"
-    "org.apache.commons:commons-text:1.12.0"
+  template = (baseScala213) {
+    deps {
+      "ba.sake::regenesca:0.6.3"
+      "com.typesafe.scala-logging::scala-logging:3.9.4"
+      "ch.qos.logback:logback-classic:1.5.7"
+      "org.apache.commons:commons-text:1.12.0"
+    }
+    pomSettings = (squeryPomTemplate) {
+      artifactId = "squery-generator"
+      name = "squery-generator"
+      description = "Squery generator core"
+    }
   }
-  pomSettings = (squeryPomTemplate) {
-    artifactId = "squery-generator"
-    name = "squery-generator"
-    description = "Squery generator core"
+  testTemplate = (template.asTest()) {
+    deps {
+      "org.xerial:sqlite-jdbc:3.46.1.0"
+      "org.scalameta::munit:1.0.0"
+    }
   }
-}
+}.get
+local const generator = generatorModules.main
 
 local const cli: ScalaModule = (baseScala213) {
   id = "cli"
@@ -122,6 +130,6 @@ local const cli: ScalaModule = (baseScala213) {
 modules {
   ...squeryModules.all
   squeryPostgresJawn
-  generator
+  ...generatorModules.all
   cli
 }

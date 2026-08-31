@@ -9,11 +9,12 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.CaseUtils
 
 object DbDefExtractor {
-  def apply(connection: Connection): DbDefExtractor = {
+  def apply(connection: Connection, sqliteRules: Seq[SqliteTypeMappingRule] = Seq.empty): DbDefExtractor = {
     val databaseMetaData = connection.getMetaData
     val dbName = databaseMetaData.getDatabaseProductName.toLowerCase
     dbName match {
       case "postgresql" => new PostgresDefExtractor(connection)
+      case "sqlite"     => new SqliteDefExtractor(connection, sqliteRules)
       case _            => new JdbcDefExtractor(connection)
     }
   }
@@ -24,13 +25,7 @@ abstract class DbDefExtractor(connection: Connection) {
   def extract(): DbDef =  { 
     val databaseMetaData = connection.getMetaData
     val dbName = databaseMetaData.getDatabaseProductName.toLowerCase
-    val schemaNames = Using.resource(databaseMetaData.getSchemas()) { rs =>
-      val buff = ArrayBuffer.empty[String]
-      while (rs.next()) {
-        buff += rs.getString("TABLE_SCHEM")
-      }
-      buff.toSeq
-    }
+    val schemaNames = schemaNamesFrom(databaseMetaData)
     val schemaDefs = schemaNames.map { schemaName =>
       val tables = extractTables(schemaName, databaseMetaData)
       SchemaDef(name = schemaName, tables = tables)
@@ -43,13 +38,22 @@ abstract class DbDefExtractor(connection: Connection) {
     )
   }
 
+  protected def schemaNamesFrom(databaseMetaData: DatabaseMetaData): Seq[String] =
+    Using.resource(databaseMetaData.getSchemas()) { rs =>
+      val buff = ArrayBuffer.empty[String]
+      while (rs.next()) {
+        buff += rs.getString("TABLE_SCHEM")
+      }
+      buff.toSeq
+    }
+
   // (table, column) -> ColumnType
   protected def getColumnTypes(
       schemaName: String,
       columnsMetadatas: Seq[ColumnMetadata]
   ): Map[(String, String), ColumnType]
 
-  private def extractTables(
+  protected def extractTables(
       schemaName: String,
       databaseMetaData: DatabaseMetaData
   ): Seq[TableDef] = {
@@ -67,14 +71,15 @@ abstract class DbDefExtractor(connection: Connection) {
         val tableName = tablesRS.getString("TABLE_NAME")
         val tableColumnDefs = allColumnDefs.filter(_.metadata.table == tableName)
         val pkColumns = Using.resource(databaseMetaData.getPrimaryKeys(null, schemaName, tableName)) { pksRS =>
-          val pkColumnRes = ArrayBuffer.empty[ColumnDef]
+          val pkColumnRes = ArrayBuffer.empty[(Short, ColumnDef)]
           while (pksRS.next()) {
             val pkColName = pksRS.getString("COLUMN_NAME")
-            pkColumnRes += tableColumnDefs
+            val pkColumn = tableColumnDefs
               .find(_.metadata.name == pkColName)
               .getOrElse(throw new RuntimeException(s"PK column not found: ${pkColName}"))
+            pkColumnRes += ((pksRS.getShort("KEY_SEQ"), pkColumn))
           }
-          pkColumnRes.toSeq
+          pkColumnRes.sortBy(_._1).map(_._2).toSeq
         }
         tableDefsRes += TableDef(schemaName, tableName, tableColumnDefs, pkColumns)
       }
@@ -101,6 +106,7 @@ abstract class DbDefExtractor(connection: Connection) {
           schemaName,
           tableName,
           columnName,
+          typeName,
           jdbcType,
           isNullable,
           isAutoInc,
@@ -178,6 +184,7 @@ case class ColumnMetadata(
     schema: String,
     table: String,
     name: String,
+    declaredType: String,
     jdbcType: Int,
     isNullable: Boolean,
     isAutoInc: Boolean,

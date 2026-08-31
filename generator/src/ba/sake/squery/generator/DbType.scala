@@ -12,6 +12,7 @@ object DbType {
     else if (dbName.contains("mysql")) MySQL
     else if (dbName.contains("mariadb")) MariaDB
     else if (dbName.contains("oracle")) Oracle
+    else if (dbName.contains("sqlite")) SQLite
     else throw new RuntimeException(s"Unknown database type $dbName")
   }
 
@@ -22,4 +23,7 @@ object DbType {
   case object MySQL extends DbType("mysql")
   case object MariaDB extends DbType("mariadb")
   case object Oracle extends DbType("oracle")
+  case object SQLite extends DbType("sqlite") {
+    override def supportsReturning: Boolean = true
+  }
 }

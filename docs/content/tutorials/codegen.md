@@ -8,7 +8,7 @@ description: Squery Generating Code Tutorial
 
 
 Squery has a code generator that can generate code for various databases:  
-Postgres, MySQL, MariaDB, Oracle, H2 etc.  
+Postgres, MySQL, MariaDB, Oracle, H2, SQLite, etc.
 
 It generates models for table rows and DAOs with various utility methods:
 - countAll, countWhere
@@ -46,12 +46,17 @@ ctx.run {
 }
 ```
 
+For SQLite, generate the `main` schema with `generateString(Seq("main"))`. The safe
+storage mappings are `INTEGER` → `Long`, `REAL` → `Double`, `TEXT` → `String`, and
+`BLOB` → `Array[Byte]`; ambiguous declarations such as `NUMERIC` remain unknown.
+The default conventions map integer `is_*`/`has_*`/`can_*` columns to `Boolean`, text
+`*_at` columns to `Instant`, and text `*_date` columns to `LocalDate`. Ordered
+`SqliteTypeMappingRule`s take precedence and match both column name and declared type.
+
 
 ## Mill plugin
 
 See how it works in the dedicated GitHub repo https://github.com/sake92/mill-squery
-
-
 
 
 

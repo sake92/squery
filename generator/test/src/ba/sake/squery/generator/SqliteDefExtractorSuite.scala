@@ -1,0 +1,66 @@
+package ba.sake.squery.generator
+
+import java.sql.DriverManager
+import munit.FunSuite
+import scala.meta._
+
+class SqliteDefExtractorSuite extends FunSuite {
+  private def connection = {
+    Class.forName("org.sqlite.JDBC")
+    val connection = DriverManager.getConnection("jdbc:sqlite::memory:")
+    val statement = connection.createStatement()
+    statement.executeUpdate("""
+      CREATE TABLE main.users (
+        tenant_id INTEGER NOT NULL,
+        id INTEGER NOT NULL,
+        name TEXT,
+        score REAL,
+        payload BLOB,
+        amount NUMERIC,
+        is_active INTEGER,
+        created_at TEXT,
+        birth_date TEXT,
+        custom_id TEXT,
+        PRIMARY KEY (tenant_id, id)
+      )
+    """)
+    statement.close()
+    connection
+  }
+
+  test("extracts SQLite main schema with storage mappings and ordered primary key") {
+    val conn = connection
+    try {
+      val dbDef = new SqliteDefExtractor(conn).extract()
+      assertEquals(dbDef.tpe, DbType.SQLite)
+      assertEquals(dbDef.schemas.map(_.name), Seq("main"))
+      val table = dbDef.schemas.head.tables.find(_.name == "users").get
+      assertEquals(table.pkColumns.map(_.metadata.name), Seq("tenant_id", "id"))
+      val types = table.columnDefs.map(c => c.metadata.name -> c.scalaType.name).toMap
+      assertEquals(types("id"), "Long")
+      assertEquals(types("score"), "Double")
+      assertEquals(types("name"), "String")
+      assertEquals(types("payload"), "Array[Byte]")
+      assertEquals(types("amount"), "NUMERIC")
+      assertEquals(types("is_active"), "Boolean")
+      assertEquals(types("created_at"), "Instant")
+      assertEquals(types("birth_date"), "LocalDate")
+    } finally conn.close()
+  }
+
+  test("custom SQLite rules take precedence and generated main code imports SQLite") {
+    val conn = connection
+    try {
+      val config = SqueryGeneratorConfig.Default.copy(
+        sqliteTypeMappingRules = Seq(
+          SqliteTypeMappingRule("custom_id", "TEXT", t"UUID", Seq("java.util.UUID"))
+        )
+      )
+      val generated = new SqueryGenerator(conn, config).generateString(Seq("main"))
+      assert(generated.contains("import ba.sake.squery.sqlite.{ *, given }"), generated)
+      assert(generated.contains("main.users"))
+      assert(generated.contains("custom_id: Option[UUID]"))
+      assert(!generated.contains("custom_id: Option[String]"))
+    } finally conn.close()
+  }
+}

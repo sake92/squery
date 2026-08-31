@@ -5,7 +5,7 @@ Simple SQL queries in Scala 3.
 No DSLs, no fuss, just plain SQL.
 
 Supports *any* JDBC driver.  
-Additional support for Postgres, MySql, MariaDb, Oracle, H2.
+Additional support for Postgres, MySql, MariaDb, Oracle, H2, and SQLite.
 
 Scastie example: https://scastie.scala-lang.org/JArud6GGSLOmYyxCNsNdNw
 
@@ -70,3 +70,10 @@ cs launch ba.sake::squery-cli:0.8.1 -M ba.sake.squery.cli.SqueryMain -- \
 You can use `squery-generator` library to generate code directly.  
 This is handy when using Ammonite to explore a database structure and its contents.  
 It can also be used to generate source code manually in scala-cli or in your project (if you dont like CLI or mill plugin).
+
+SQLite code generation reads only the `main` schema. It maps `INTEGER`, `REAL`, `TEXT`, and
+`BLOB` to `Long`, `Double`, `String`, and `Array[Byte]`; ambiguous declarations such as
+`NUMERIC` remain unknown. `is_*`, `has_*`, and `can_*` integer columns map to `Boolean`,
+`*_at` text columns to `Instant`, and `*_date` text columns to `LocalDate`. Ordered
+`SqliteTypeMappingRule`s override these conventions and require both column-name and
+declared-type regex matches.
