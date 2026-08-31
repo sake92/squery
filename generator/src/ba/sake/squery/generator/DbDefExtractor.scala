@@ -47,6 +47,9 @@ abstract class DbDefExtractor(connection: Connection) {
       buff.toSeq
     }
 
+  protected def includeTable(schemaName: String, tableSchema: String): Boolean = true
+  protected def includeColumn(schemaName: String, columnSchema: String): Boolean = true
+
   // (table, column) -> ColumnType
   protected def getColumnTypes(
       schemaName: String,
@@ -68,8 +71,10 @@ abstract class DbDefExtractor(connection: Connection) {
     Using.resource(databaseMetaData.getTables(null, schemaName, null, Array("TABLE"))) { tablesRS =>
       val tableDefsRes = ArrayBuffer.empty[TableDef]
       while (tablesRS.next()) {
+        val tableSchema = Option(tablesRS.getString("TABLE_SCHEM")).getOrElse(schemaName)
         val tableName = tablesRS.getString("TABLE_NAME")
-        val tableColumnDefs = allColumnDefs.filter(_.metadata.table == tableName)
+        if (includeTable(schemaName, tableSchema)) {
+          val tableColumnDefs = allColumnDefs.filter(c => c.metadata.table == tableName && includeColumn(schemaName, c.metadata.schema))
         val pkColumns = Using.resource(databaseMetaData.getPrimaryKeys(null, schemaName, tableName)) { pksRS =>
           val pkColumnRes = ArrayBuffer.empty[(Short, ColumnDef)]
           while (pksRS.next()) {
@@ -81,7 +86,8 @@ abstract class DbDefExtractor(connection: Connection) {
           }
           pkColumnRes.sortBy(_._1).map(_._2).toSeq
         }
-        tableDefsRes += TableDef(schemaName, tableName, tableColumnDefs, pkColumns)
+          tableDefsRes += TableDef(schemaName, tableName, tableColumnDefs, pkColumns)
+        }
       }
       tableDefsRes.toSeq
     }
@@ -94,6 +100,7 @@ abstract class DbDefExtractor(connection: Connection) {
     val res = ArrayBuffer.empty[ColumnMetadata]
     Using.resource(databaseMetaData.getColumns(null, schemaName, null, null)) { resultSet =>
       while (resultSet.next()) {
+        val tableSchema = Option(resultSet.getString("TABLE_SCHEM")).getOrElse(schemaName)
         val tableName = resultSet.getString("TABLE_NAME")
         val columnName = resultSet.getString("COLUMN_NAME")
         val typeName = resultSet.getString("TYPE_NAME")
@@ -102,8 +109,8 @@ abstract class DbDefExtractor(connection: Connection) {
         val isAutoInc = resultSet.getString("IS_AUTOINCREMENT") == "YES"
         val isGenerated = resultSet.getString("IS_GENERATEDCOLUMN") == "YES"
         val defaultValue = Option(resultSet.getString("COLUMN_DEF"))
-        res += ColumnMetadata(
-          schemaName,
+        if (includeColumn(schemaName, tableSchema)) res += ColumnMetadata(
+          tableSchema,
           tableName,
           columnName,
           typeName,

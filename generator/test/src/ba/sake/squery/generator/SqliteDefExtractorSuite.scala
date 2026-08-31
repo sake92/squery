@@ -24,6 +24,9 @@ class SqliteDefExtractorSuite extends FunSuite {
         has_flag INT,
         any_value ANY,
         mystery CUSTOM,
+        is_integer8 INTEGER(8),
+        has_myint MYINT,
+        can_flag UNSIGNED BIG INT,
         PRIMARY KEY (tenant_id, id)
       )
     """)
@@ -51,6 +54,9 @@ class SqliteDefExtractorSuite extends FunSuite {
       assertEquals(types("has_flag"), "Boolean")
       assertEquals(types("any_value"), "ANY")
       assertEquals(types("mystery"), "CUSTOM")
+      assertEquals(types("is_integer8"), "Boolean")
+      assertEquals(types("has_myint"), "Boolean")
+      assertEquals(types("can_flag"), "Boolean")
     } finally conn.close()
   }
 
@@ -78,6 +84,17 @@ class SqliteDefExtractorSuite extends FunSuite {
       val dbDef = new SqliteDefExtractor(conn, Seq(SqliteTypeMappingRule("custom_id", "INTEGER", t"Long"))).extract()
       val custom = dbDef.schemas.head.tables.head.columnDefs.find(_.metadata.name == "custom_id").get
       assertEquals(custom.scalaType.name, "String")
+    } finally conn.close()
+  }
+
+  test("SQLite extraction excludes temporary tables") {
+    val conn = connection
+    try {
+      val statement = conn.createStatement()
+      statement.executeUpdate("CREATE TEMP TABLE temp_only (id INTEGER)")
+      statement.close()
+      val tables = new SqliteDefExtractor(conn).extract().schemas.head.tables.map(_.name)
+      assert(!tables.contains("temp_only"))
     } finally conn.close()
   }
 }

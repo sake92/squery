@@ -8,6 +8,8 @@ class SqliteDefExtractor(
     rules: Seq[SqliteTypeMappingRule] = Seq.empty
 ) extends DbDefExtractor(connection) {
   override protected def schemaNamesFrom(databaseMetaData: DatabaseMetaData): Seq[String] = Seq("main")
+  override protected def includeTable(schemaName: String, tableSchema: String): Boolean = tableSchema == "main"
+  override protected def includeColumn(schemaName: String, columnSchema: String): Boolean = columnSchema == "main"
 
   override protected def getColumnTypes(
       schemaName: String,
@@ -33,8 +35,7 @@ class SqliteDefExtractor(
     }
 
   private def isIntegerAffinity(declaredType: String): Boolean =
-    Set("INT", "INTEGER", "BIGINT", "SMALLINT", "MEDIUMINT", "TINYINT", "INT2", "INT8", "UNSIGNED BIG INT")
-      .contains(declaredType.replaceAll("\\s+", " ").trim)
+    declaredType.toUpperCase.contains("INT")
 }
 
 case class SqliteTypeMappingRule(

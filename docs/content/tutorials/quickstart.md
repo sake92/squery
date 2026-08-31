@@ -26,8 +26,8 @@ ds.setPassword(..)
 val ctx = SqueryContext(ds)
 ```
 
-SQLite support requires SQLite JDBC 3.46.1 or newer and Squery 0.9.0 or newer. Generated
-`RETURNING` SQL requires SQLite 3.35 or newer; `STRICT` tables require SQLite 3.37 or newer.
+Generated SQLite `RETURNING` SQL requires SQLite 3.35 or newer; `STRICT` tables require
+SQLite 3.37 or newer.
 
 
 
