@@ -31,7 +31,7 @@ private[squery] object SqlSelectAliasParser {
         }
       }
     }
-    val separator = if suffix.nonEmpty && !suffix.startsWith(";") then " " else ""
+    val separator = if suffix.nonEmpty && !suffix.startsWith(";") && !suffix.head.isWhitespace then " " else ""
     Option.when(valid)(prefix + enriched.result().mkString(", ") + separator + suffix)
   }
 
@@ -55,7 +55,7 @@ private[squery] object SqlSelectAliasParser {
 
   /** Captures one top-level projection, so commas and FROM inside expressions are harmless. */
   private def projection[$: P]: P[String] =
-    P((!"," ~ !";" ~ !keyword("from") ~ projectionAtom).rep(1).!).map(_.trim)
+    P((!"," ~ !";" ~ !(padding ~ keyword("from")) ~ !keyword("from") ~ projectionAtom).rep(1).!).map(_.trim)
 
   private def tail[$: P]: P[String] =
     P((padding ~ keyword("from") ~ AnyChar.rep ~ End).! | (padding ~ ";".? ~ padding ~ End).!)
