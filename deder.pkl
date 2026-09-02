@@ -104,6 +104,7 @@ local const generatorModules = new CreateScalaModules {
   testTemplate = (template.asTest()) {
     deps {
       "org.xerial:sqlite-jdbc:3.46.1.0"
+      "com.h2database:h2:2.3.232"
       "org.scalameta::munit:1.0.0"
     }
   }

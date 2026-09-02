@@ -97,4 +97,23 @@ class SqliteDefExtractorSuite extends FunSuite {
       assert(!tables.contains("temp_only"))
     } finally conn.close()
   }
+
+  test("generated identity columns are omitted from generated inserts") {
+    Class.forName("org.sqlite.JDBC")
+    val conn = DriverManager.getConnection("jdbc:sqlite::memory:")
+    try {
+      val statement = conn.createStatement()
+      statement.executeUpdate("""
+        CREATE TABLE generated_rows (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL
+        )
+      """)
+      statement.close()
+
+      val generated = new SqueryGenerator(conn).generateString(Seq("main"))
+      assert(generated.contains("INSERT INTO main.generated_rows(name)"), generated)
+      assert(!generated.contains("INSERT INTO main.generated_rows(id, name)"), generated)
+    } finally conn.close()
+  }
 }

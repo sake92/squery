@@ -160,6 +160,8 @@ case class TableDef(schema: String, name: String, columnDefs: Seq[ColumnDef], pk
   def hasPk: Boolean = pkColumns.nonEmpty
   def hasCompositePk: Boolean = pkColumns.length > 1
   def nonPkColDefs: Seq[ColumnDef] = columnDefs.filterNot(pkColumns.contains)
+  def insertableColumnDefs: Seq[ColumnDef] =
+    columnDefs.filterNot(column => column.metadata.isAutoInc || column.metadata.isGenerated)
 }
 
 case class ColumnDef(

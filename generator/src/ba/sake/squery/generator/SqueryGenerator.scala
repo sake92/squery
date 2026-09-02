@@ -400,10 +400,10 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
         """
       }
 
-      // TODO if cols are autoinc
-      // https://www.jooq.org/doc/latest/manual/sql-building/sql-statements/insert-statement/insert-returning/
       val genInsert = {
-        val colValues = tableDef.columnDefs
+        val insertableColumns = tableDef.insertableColumnDefs
+        val insertColumnNames = insertableColumns.map(_.metadata.name).mkString(", ")
+        val colValues = insertableColumns
           .map { colDef =>
             val rowTerm = q"row"
             val colTerm = Term.Name(colDef.metadata.name)
@@ -413,9 +413,12 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
           val sqlInterpolate = Term.Interpolate(
             Term.Name("sql"),
             parts =
-              List(Lit.String(s"INSERT INTO ${tableNameLit.value}(${allColsLit.value}) \n    VALUES (\n      ")) ++
-                tableDef.columnDefs.tail.map(_ => Lit.String(",")) ++
-                List(Lit.String(s"\n    )\n    RETURNING ${allColsLit.value}")),
+              if (insertableColumns.isEmpty)
+                List(Lit.String(s"${dbType.insertDefaultValues(tableNameLit.value)} RETURNING ${allColsLit.value}"))
+              else
+                List(Lit.String(s"INSERT INTO ${tableNameLit.value}(${insertColumnNames}) \n    VALUES (\n      ")) ++
+                  insertableColumns.tail.map(_ => Lit.String(",")) ++
+                  List(Lit.String(s"\n    )\n    RETURNING ${allColsLit.value}")),
             args = colValues.toList
           )
           q"""def insert(row: ${rowClassType}): DbAction[${rowClassType}] =
@@ -424,9 +427,12 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
         } else {
           val sqlInterpolate = Term.Interpolate(
             Term.Name("sql"),
-            parts = List(Lit.String(s"INSERT INTO ${tableNameLit.value}(${allColsLit.value}) \nVALUES (\n      ")) ++
-              tableDef.columnDefs.tail.map(_ => Lit.String(",")) ++
-              List(Lit.String(s"    \n)")),
+            parts =
+              if (insertableColumns.isEmpty) List(Lit.String(dbType.insertDefaultValues(tableNameLit.value)))
+              else
+                List(Lit.String(s"INSERT INTO ${tableNameLit.value}(${insertColumnNames}) \nVALUES (\n      ")) ++
+                  insertableColumns.tail.map(_ => Lit.String(",")) ++
+                  List(Lit.String(s"    \n)")),
             args = colValues.toList
           )
           q"""def insert(row: ${rowClassType}): DbAction[Int] =
