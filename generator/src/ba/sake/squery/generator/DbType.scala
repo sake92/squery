@@ -27,7 +27,9 @@ object DbType {
   case object MariaDB extends DbType("mariadb") {
     override def insertDefaultValues(tableName: String): String = s"INSERT INTO $tableName() VALUES ()"
   }
-  case object Oracle extends DbType("oracle")
+  case object Oracle extends DbType("oracle") {
+    override def insertDefaultValues(tableName: String): String = s"INSERT INTO $tableName VALUES (DEFAULT)"
+  }
   case object SQLite extends DbType("sqlite") {
     override def supportsReturning: Boolean = true
   }

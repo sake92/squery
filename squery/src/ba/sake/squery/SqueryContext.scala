@@ -22,8 +22,7 @@ final class SqueryContext(ds: DataSource, lintUpdates: Boolean = false) {
         res
       } catch {
         case NonFatal(error) =>
-          conn.rollback()
-          throw error
+          rollbackAndRethrow(conn, error)
       }
     }
 
@@ -37,9 +36,16 @@ final class SqueryContext(ds: DataSource, lintUpdates: Boolean = false) {
         res
       } catch {
         case NonFatal(error) =>
-          conn.rollback()
-          throw error
+          rollbackAndRethrow(conn, error)
       }
     }
+
+  private def rollbackAndRethrow(conn: java.sql.Connection, error: Throwable): Nothing = {
+    try conn.rollback()
+    catch {
+      case NonFatal(rollbackError) => error.addSuppressed(rollbackError)
+    }
+    throw error
+  }
 
 }
