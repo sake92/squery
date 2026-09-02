@@ -3,10 +3,13 @@ package ba.sake.squery
 import java.{sql => jsql}
 import java.util.concurrent.ConcurrentHashMap
 import scala.util.Using
+import net.sf.jsqlparser.parser.CCJSqlParserUtil
+import net.sf.jsqlparser.statement.select.Select
+import net.sf.jsqlparser.statement.update.Update
+import net.sf.jsqlparser.statement.delete.Delete
+import net.sf.jsqlparser.JSQLParserException
 import com.typesafe.scalalogging.Logger
 import ba.sake.squery.DynamicArg
-import ba.sake.squery.parser.SqlSelectAliasParser
-import ba.sake.squery.parser.SqlStatementLinter
 
 case class Query(
     private[squery] val sqlString: String,
@@ -71,22 +74,36 @@ object Query {
       try {
         val cached = selectStmtsCache.get(query)
         if cached != null then return cached
-        if dbActionType == DbActionType.Select then
-          SqlSelectAliasParser
-            .addAliases(query)
-            .map(enriched => selectStmtsCache.computeIfAbsent(query, _ => enriched))
-            .getOrElse(query)
-        else {
-          if (lintUpdates && SqlStatementLinter.isUpdateOrDeleteWithoutWhere(query))
-            logger.warn(
-              s"""There is no WHERE clause in the UPDATE or DELETE statement. This is a dangerous action.
-                  Statement: $query"""
+        // proceed with parsing
+        val stmt = CCJSqlParserUtil.parse(query)
+        stmt match {
+          case selectStmt: Select =>
+            selectStmtsCache.computeIfAbsent(
+              query,
+              _ => {
+                selectStmt.getSelectBody.accept(SqueryAddAliasesVisitor())
+                selectStmt.getSelectBody.toString
+              }
             )
-          query
+          case updateStmt: Update =>
+            if updateStmt.getWhere() == null then
+              logger.warn(
+                s"""There is no WHERE clause in the UPDATE statement. This is a dangerous action.
+                    Statement: $query"""
+              )
+            query
+          case deleteStmt: Delete =>
+            if deleteStmt.getWhere() == null then
+              logger.warn(
+                s"""There is no WHERE clause in the DELETE statement. This is a dangerous action.
+                    Statement: $query"""
+              )
+            query
+          case _ => query
         }
       } catch {
         // do nothing if can't parse, db will throw anyways
-        case _: RuntimeException =>
+        case _: JSQLParserException =>
           logger.warn(s"""Could not parse query but will run it anyways: $query""")
           query
       }
