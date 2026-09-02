@@ -55,7 +55,7 @@
    <h1 id="generating-code">Generating Code<a href="#generating-code" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
    <p>Squery has a code generator that can generate code for various databases:
     <br>
-    Postgres, MySQL, MariaDB, Oracle, H2 etc.</p>
+    Postgres, MySQL, MariaDB, Oracle, H2, SQLite, etc.</p>
    <p>It generates models for table rows and DAOs with various utility methods:</p>
    <ul>
     <li>countAll, countWhere</li>
@@ -91,6 +91,7 @@ ctx.run {
 }
 </code>
           </pre>
+   <p>For SQLite, generate the <code>main</code> schema with <code>generateString(Seq("main"))</code>. The safe storage mappings are <code>INTEGER</code> → <code>Long</code>, <code>REAL</code> → <code>Double</code>, <code>TEXT</code> → <code>String</code>, and <code>BLOB</code> → <code>Array[Byte]</code>; ambiguous declarations such as <code>NUMERIC</code> remain unknown. The default conventions map integer <code>is_*</code>/<code>has_*</code>/<code>can_*</code> columns to <code>Boolean</code>, text <code>*_at</code> columns to <code>Instant</code>, and text <code>*_date</code> columns to <code>LocalDate</code>. Ordered <code>SqliteTypeMappingRule</code>s take precedence and match both column name and declared type. Generated <code>RETURNING</code> SQL requires SQLite 3.35 or newer. If using <code>STRICT</code> tables, use SQLite 3.37 or newer; the SQLite JDBC driver version alone does not set the engine version.</p>
    <h2 id="mill-plugin">Mill plugin<a href="#mill-plugin" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>See how it works in the dedicated GitHub repo <a href="https://github.com/sake92/mill-squery">https://github.com/sake92/mill-squery</a></p>
   </main>
