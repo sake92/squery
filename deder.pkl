@@ -2,6 +2,7 @@ amends "https://sake92.github.io/deder/config/v0.20.0/DederProject.pkl"
 
 local const baseScala3: ScalaModule = new {
   scalaVersion = "3.7.1"
+  publish = true
   scalacOptions {
     "-Ywarn-unused"
     "-deprecation"
@@ -12,6 +13,7 @@ local const baseScala3: ScalaModule = new {
 
 local const baseScala213: ScalaModule = new {
   scalaVersion = "2.13.15"
+  publish = true
 }
 
 local const squeryPomTemplate: PomSettings = new {
