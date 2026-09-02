@@ -2,6 +2,7 @@ package ba.sake.squery.generator
 
 sealed abstract class DbType(val squeryPackage: String) {
   def supportsReturning: Boolean = false
+  def insertDefaultValues(tableName: String): String = s"INSERT INTO $tableName DEFAULT VALUES"
 }
 
 object DbType {
@@ -20,8 +21,12 @@ object DbType {
   case object PostgreSQL extends DbType("postgres") {
     override def supportsReturning: Boolean = true
   }
-  case object MySQL extends DbType("mysql")
-  case object MariaDB extends DbType("mariadb")
+  case object MySQL extends DbType("mysql") {
+    override def insertDefaultValues(tableName: String): String = s"INSERT INTO $tableName() VALUES ()"
+  }
+  case object MariaDB extends DbType("mariadb") {
+    override def insertDefaultValues(tableName: String): String = s"INSERT INTO $tableName() VALUES ()"
+  }
   case object Oracle extends DbType("oracle")
   case object SQLite extends DbType("sqlite") {
     override def supportsReturning: Boolean = true

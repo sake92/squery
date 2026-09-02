@@ -106,6 +106,24 @@ extension (query: Query) {
       throw SqueryException("No value returned from query")
     )
 
+  /** Updates rows and returns their values from a `RETURNING` clause. */
+  def updateReturningRows[A]()(using c: SqueryConnection, r: SqlReadRow[A]): Seq[A] =
+    insertReturningRows()
+
+  def updateReturningRow[A]()(using c: SqueryConnection, r: SqlReadRow[A]): A =
+    updateReturningRows().headOption.getOrElse(
+      throw SqueryException("No value returned from query")
+    )
+
+  /** Deletes rows and returns their values from a `RETURNING` clause. */
+  def deleteReturningRows[A]()(using c: SqueryConnection, r: SqlReadRow[A]): Seq[A] =
+    insertReturningRows()
+
+  def deleteReturningRow[A]()(using c: SqueryConnection, r: SqlReadRow[A]): A =
+    deleteReturningRows().headOption.getOrElse(
+      throw SqueryException("No value returned from query")
+    )
+
   /* SELECT */
   // read single column (unnamed)
   def readValues[A]()(using c: SqueryConnection, r: SqlRead[A]): Seq[A] =

@@ -2,6 +2,7 @@ package ba.sake.squery
 
 import javax.sql.DataSource
 import scala.util.Using
+import scala.util.control.NonFatal
 
 final class SqueryContext(ds: DataSource, lintUpdates: Boolean = false) {
 
@@ -15,18 +16,30 @@ final class SqueryContext(ds: DataSource, lintUpdates: Boolean = false) {
   def runTransaction[T](dbAction: SqueryConnection ?=> T): T =
     Using.resource(ds.getConnection()) { conn =>
       conn.setAutoCommit(false)
-      val res = dbAction(using SqueryConnection(conn, lintUpdates))
-      conn.commit()
-      res
+      try {
+        val res = dbAction(using SqueryConnection(conn, lintUpdates))
+        conn.commit()
+        res
+      } catch {
+        case NonFatal(error) =>
+          conn.rollback()
+          throw error
+      }
     }
 
   def runTransactionWithIsolation[T](level: TransactionIsolation)(dbAction: SqueryConnection ?=> T): T =
     Using.resource(ds.getConnection()) { conn =>
       conn.setAutoCommit(false)
       conn.setTransactionIsolation(level.jdbcLevel)
-      val res = dbAction(using SqueryConnection(conn, lintUpdates))
-      conn.commit()
-      res
+      try {
+        val res = dbAction(using SqueryConnection(conn, lintUpdates))
+        conn.commit()
+        res
+      } catch {
+        case NonFatal(error) =>
+          conn.rollback()
+          throw error
+      }
     }
 
 }

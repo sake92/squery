@@ -268,6 +268,26 @@ class PostgresSuite extends munit.FunSuite {
     }
   }
 
+  test("UPDATE and DELETE returning columns") {
+    val ctx = initDb()
+    ctx.run {
+      val updated = sql"""
+        UPDATE customers
+        SET name = 'updated'
+        WHERE id = ${customer2.id}
+        RETURNING id, name, street
+      """.updateReturningRow[Customer]()
+      assertEquals(updated.name, "updated")
+
+      val deleted = sql"""
+        DELETE FROM customers
+        WHERE id = ${updated.id}
+        RETURNING id, name, street
+      """.deleteReturningRow[Customer]()
+      assertEquals(deleted, updated)
+    }
+  }
+
   test("Data types") {
     val ctx = initDb()
     ctx.run {
