@@ -99,21 +99,21 @@ class SqliteDefExtractorSuite extends FunSuite {
   }
 
   test("generated identity columns are omitted from generated inserts") {
-    Class.forName("org.h2.Driver")
-    val conn = DriverManager.getConnection("jdbc:h2:mem:generated_identity")
+    Class.forName("org.sqlite.JDBC")
+    val conn = DriverManager.getConnection("jdbc:sqlite::memory:")
     try {
       val statement = conn.createStatement()
       statement.executeUpdate("""
         CREATE TABLE generated_rows (
-          id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-          name VARCHAR NOT NULL
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL
         )
       """)
       statement.close()
 
-      val generated = new SqueryGenerator(conn).generateString(Seq("PUBLIC"))
-      assert(generated.contains("INSERT INTO PUBLIC.GENERATED_ROWS(NAME)"), generated)
-      assert(!generated.contains("INSERT INTO PUBLIC.GENERATED_ROWS(ID, NAME)"), generated)
+      val generated = new SqueryGenerator(conn).generateString(Seq("main"))
+      assert(generated.contains("INSERT INTO main.generated_rows(name)"), generated)
+      assert(!generated.contains("INSERT INTO main.generated_rows(id, name)"), generated)
     } finally conn.close()
   }
 }
