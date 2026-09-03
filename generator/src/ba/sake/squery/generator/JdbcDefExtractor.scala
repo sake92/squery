@@ -13,7 +13,11 @@ import org.apache.commons.text.CaseUtils
   *
   * @param connection
   */
-class JdbcDefExtractor(connection: Connection) extends DbDefExtractor(connection) {
+class JdbcDefExtractor(
+    connection: Connection,
+    typeMappingRules: Seq[TypeMappingRule] = Seq.empty,
+    tableFilter: TableFilter = TableFilter.All
+) extends DbDefExtractor(connection, typeMappingRules, tableFilter) {
 
   // (table, column) -> ColumnType
   override protected def getColumnTypes(

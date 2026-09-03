@@ -22,7 +22,7 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
   private val generator = RegenescaGenerator(merger)
 
   def generateString(schemaNames: Seq[String]): String = {
-    val extractor = DbDefExtractor(connection, config.sqliteTypeMappingRules)
+    val extractor = DbDefExtractor(connection, config.typeMappingRules, config.tableFilter)
     val dbDef = extractor.extract()
     val missingSchemaNames = schemaNames.toSet.diff(dbDef.schemas.map(_.name).toSet)
     if (missingSchemaNames.nonEmpty)
@@ -55,7 +55,7 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
   }
 
   def generateFiles(schemaConfigs: Seq[SchemaConfig]): Unit = {
-    val extractor = DbDefExtractor(connection, config.sqliteTypeMappingRules)
+    val extractor = DbDefExtractor(connection, config.typeMappingRules, config.tableFilter)
     val dbDef = extractor.extract()
     val missingSchemaNames = schemaConfigs.map(_.name).toSet.diff(dbDef.schemas.map(_.name).toSet)
     if (missingSchemaNames.nonEmpty)
@@ -655,7 +655,8 @@ case class SqueryGeneratorConfig(
     typeNameMapper: NameMapper,
     rowTypeSuffix: String,
     daoTypeSuffix: String,
-    sqliteTypeMappingRules: Seq[SqliteTypeMappingRule] = Seq.empty
+    typeMappingRules: Seq[TypeMappingRule] = Seq.empty,
+    tableFilter: TableFilter = TableFilter.All
 )
 
 object SqueryGeneratorConfig {

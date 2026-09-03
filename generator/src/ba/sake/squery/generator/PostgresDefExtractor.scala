@@ -9,13 +9,18 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.CaseUtils
 
 // https://stackoverflow.com/a/16624964/4496364
-class PostgresDefExtractor(connection: Connection) extends DbDefExtractor(connection) {
+class PostgresDefExtractor(
+    connection: Connection,
+    typeMappingRules: Seq[TypeMappingRule] = Seq.empty,
+    tableFilter: TableFilter = TableFilter.All
+) extends DbDefExtractor(connection, typeMappingRules, tableFilter) {
 
   // (table, column) -> ColumnType
   override protected def getColumnTypes(
       schemaName: String,
       columnsMetadatas: Seq[ColumnMetadata]
   ): Map[(String, String), ColumnType] = {
+    val columnsToResolve = columnsMetadatas.map(metadata => (metadata.table, metadata.name)).toSet
     val query = s"""
       SELECT  ns.nspname AS schema_name,
               tbl.relname AS table_name,
@@ -38,11 +43,13 @@ class PostgresDefExtractor(connection: Connection) extends DbDefExtractor(connec
         while (rs.next()) {
           val tableName = rs.getString("table_name")
           val columnName = rs.getString("column_name")
-          val displayTypeOriginal = rs.getString("display_type_original")
-          val displayTypeResolved = rs.getString("display_type_resolved") // for resolving domain types
-          val arrayDim = rs.getInt("array_dim")
-          val resolvedType = resolveType(displayTypeOriginal, displayTypeResolved, arrayDim)
-          buff += (tableName, columnName) -> resolvedType
+          if (columnsToResolve.contains((tableName, columnName))) {
+            val displayTypeOriginal = rs.getString("display_type_original")
+            val displayTypeResolved = rs.getString("display_type_resolved") // for resolving domain types
+            val arrayDim = rs.getInt("array_dim")
+            val resolvedType = resolveType(displayTypeOriginal, displayTypeResolved, arrayDim)
+            buff += (tableName, columnName) -> resolvedType
+          }
         }
         buff.toMap
       }

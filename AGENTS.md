@@ -14,10 +14,13 @@
 |---|---|
 | Development and release commands | `DEV.md` |
 | User-facing usage | `README.md` |
+| Code generator usage | `docs/content/tutorials/codegen.md` |
 | CI test command | `.github/workflows/ci.yml` |
 
 ## Conventions
 
 - Keep database-specific codecs under `squery/src/ba/sake/squery/<database>/`.
 - Keep database integration tests under `squery/test/src/ba/sake/squery/<database>/`.
+- Keep generator implementation and tests under `generator/src/` and `generator/test/src/`.
+- Keep CLI argument parsing under `cli/src/ba/sake/squery/cli/`.
 - Do not commit specs, plans, or other agent planning artifacts, including `docs/superpowers/specs/` and `docs/superpowers/plans/`.

@@ -9,18 +9,55 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.CaseUtils
 
 object DbDefExtractor {
-  def apply(connection: Connection, sqliteRules: Seq[SqliteTypeMappingRule] = Seq.empty): DbDefExtractor = {
+  def apply(
+      connection: Connection,
+      typeMappingRules: Seq[TypeMappingRule] = Seq.empty,
+      tableFilter: TableFilter = TableFilter.All
+  ): DbDefExtractor = {
     val databaseMetaData = connection.getMetaData
     val dbName = databaseMetaData.getDatabaseProductName.toLowerCase
     dbName match {
-      case "postgresql" => new PostgresDefExtractor(connection)
-      case "sqlite"     => new SqliteDefExtractor(connection, sqliteRules)
-      case _            => new JdbcDefExtractor(connection)
+      case "postgresql" => new PostgresDefExtractor(connection, typeMappingRules, tableFilter)
+      case "sqlite"     => new SqliteDefExtractor(connection, typeMappingRules, tableFilter)
+      case _              => new JdbcDefExtractor(connection, typeMappingRules, tableFilter)
     }
   }
 }
 
-abstract class DbDefExtractor(connection: Connection) {
+case class TableFilter(
+    includePatterns: Seq[String] = Seq(".*"),
+    excludePatterns: Seq[String] = Seq.empty
+) {
+  private val compiledIncludes = includePatterns.map(_.r.pattern)
+  private val compiledExcludes = excludePatterns.map(_.r.pattern)
+
+  def includes(schema: String, table: String): Boolean = {
+    val qualifiedName = s"$schema.$table"
+    compiledIncludes.exists(_.matcher(qualifiedName).matches()) &&
+    !compiledExcludes.exists(_.matcher(qualifiedName).matches())
+  }
+}
+
+object TableFilter {
+  val All: TableFilter = TableFilter()
+}
+
+case class TypeMappingRule(
+    columnNameRegex: String,
+    declaredTypeRegex: String,
+    scalaType: scala.meta.Type,
+    requiredImports: Seq[String] = Seq.empty
+) {
+  def matches(metadata: ColumnMetadata): Boolean =
+    columnNameRegex.r.pattern.matcher(metadata.name).matches() &&
+      declaredTypeRegex.r.pattern.matcher(metadata.declaredType).matches()
+}
+
+abstract class DbDefExtractor(
+    connection: Connection,
+    typeMappingRules: Seq[TypeMappingRule] = Seq.empty,
+    tableFilter: TableFilter = TableFilter.All
+) {
 
   def extract(): DbDef =  { 
     val databaseMetaData = connection.getMetaData
@@ -47,7 +84,8 @@ abstract class DbDefExtractor(connection: Connection) {
       buff.toSeq
     }
 
-  protected def includeTable(schemaName: String, tableSchema: String): Boolean = true
+  protected def includeTable(schemaName: String, tableSchema: String, tableName: String): Boolean =
+    tableFilter.includes(tableSchema, tableName)
   protected def includeColumn(schemaName: String, columnSchema: String): Boolean = true
 
   // (table, column) -> ColumnType
@@ -62,7 +100,16 @@ abstract class DbDefExtractor(connection: Connection) {
   ): Seq[TableDef] = {
 
     val allColumnsMetadatas = extractColumnMetadatas(databaseMetaData, schemaName)
-    val allColumnTypes = getColumnTypes(schemaName, allColumnsMetadatas)
+    val configuredColumnTypes = allColumnsMetadatas.flatMap { metadata =>
+      typeMappingRules.collectFirst {
+        case rule if rule.matches(metadata) => (metadata.table, metadata.name) -> ColumnType.ThirdParty(rule.scalaType, rule.requiredImports)
+      }
+    }.toMap
+    val inferredColumnTypes = getColumnTypes(
+      schemaName,
+      allColumnsMetadatas.filterNot(metadata => configuredColumnTypes.contains((metadata.table, metadata.name)))
+    )
+    val allColumnTypes = inferredColumnTypes ++ configuredColumnTypes
     val allColumnDefs = allColumnsMetadatas.map { cMeta =>
       val resolvedType = allColumnTypes((cMeta.table, cMeta.name))
       ColumnDef(cMeta, resolvedType)
@@ -73,7 +120,7 @@ abstract class DbDefExtractor(connection: Connection) {
       while (tablesRS.next()) {
         val tableSchema = Option(tablesRS.getString("TABLE_SCHEM")).getOrElse(schemaName)
         val tableName = tablesRS.getString("TABLE_NAME")
-        if (includeTable(schemaName, tableSchema)) {
+        if (includeTable(schemaName, tableSchema, tableName)) {
           val tableColumnDefs = allColumnDefs.filter(c => c.metadata.table == tableName && includeColumn(schemaName, c.metadata.schema))
         val pkColumns = Using.resource(databaseMetaData.getPrimaryKeys(null, schemaName, tableName)) { pksRS =>
           val pkColumnRes = ArrayBuffer.empty[(Short, ColumnDef)]

@@ -51,15 +51,34 @@ storage mappings are `INTEGER` → `Long`, `REAL` → `Double`, `TEXT` → `Stri
 `BLOB` → `Array[Byte]`; ambiguous declarations such as `NUMERIC` remain unknown.
 The default conventions map integer `is_*`/`has_*`/`can_*` columns to `Boolean`, text
 `*_at` columns to `Instant`, and text `*_date` columns to `LocalDate`. Ordered
-`SqliteTypeMappingRule`s take precedence and match both column name and declared type.
+`TypeMappingRule`s take precedence over built-in mappings and match both column name and declared type.
 Generated `RETURNING` SQL requires SQLite 3.35 or newer. If using `STRICT` tables, use
 SQLite 3.37 or newer; the SQLite JDBC driver version alone does not set the engine version.
+
+The CLI accepts ordered, repeatable type mapping rules for every supported database in the format
+`column-name-regex|declared-type-regex|Scala-type`. The first matching rule overrides the
+built-in mapping. Both regexes must match the complete column name and the JDBC driver's declared
+type, so use `.*` when a partial match is intended. Fully qualify a type when it needs no
+additional import:
+
+```shell
+--typeMappingRule '.*_id|UUID|java.util.UUID'
+```
+
+Use repeatable `--includeTables` and `--excludeTables` regexes to select generated tables.
+They match fully qualified `schema.table` names; exclusions take precedence.
+
+When launching the CLI with Coursier, add your JDBC driver as another dependency. For SQLite:
+
+```shell
+cs launch org.xerial:sqlite-jdbc:3.46.1.0 \
+  ba.sake:squery-cli_2.13:0.8.1 \
+  -M ba.sake.squery.cli.SqueryMain -- \
+  --jdbcUrl jdbc:sqlite:database.db \
+  --schemaMappings main:com.example
+```
 
 
 ## Mill plugin
 
 See how it works in the dedicated GitHub repo https://github.com/sake92/mill-squery
-
-
-
-

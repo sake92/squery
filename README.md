@@ -52,16 +52,38 @@ See https://github.com/sake92/mill-squery
 You can use `squery-cli` with Coursier launcher to generate your sources:
 
 ```shell
-cs launch ba.sake::squery-cli:0.8.1 -M ba.sake.squery.cli.SqueryMain -- \
+cs launch ba.sake:squery-cli_2.13:0.10.0 -M ba.sake.squery.cli.SqueryMain -- \
   --jdbcUrl jdbc:h2:... \
   --baseFolder src \
   --schemaMappings public:com.example.public \
-  --schemaMappings myschema:com.example.myschema \ # this is a repeatable argument
-  # these are optional:
-  -- colNameIdentifierMapper camelcase \ # or noop
-  -- typeNameMapper camelcase \ # or noop
-  -- rowTypeSuffix Row \
-  -- daoTypeSuffix Dao 
+  --schemaMappings myschema:com.example.myschema \
+  --colNameIdentifierMapper camelcase \
+  --typeNameMapper camelcase \
+  --rowTypeSuffix Row \
+  --daoTypeSuffix Dao \
+  --typeMappingRule '.*_id|UUID|java.util.UUID' \
+  --includeTables 'main\\.(users|orders)' \
+  --excludeTables 'main\\.audit_.*'
+```
+
+`--schemaMappings`, `--typeMappingRule`, `--includeTables`, and `--excludeTables` are
+repeatable. Table patterns match `schema.table`; exclusions take precedence.
+
+Type mapping rules use `column-name-regex|declared-type-regex|Scala-type`. Rules are evaluated
+in order, and the first matching rule overrides the database's built-in mapping. Both regexes
+must match the complete column name and the JDBC driver's declared type, so use `.*` when a
+partial match is intended. Use a fully-qualified Scala type in CLI rules, for example
+`.*_id|UUID|java.util.UUID`.
+
+The CLI does not bundle JDBC drivers. Add the appropriate driver as another `cs launch`
+dependency. For SQLite:
+
+```shell
+cs launch org.xerial:sqlite-jdbc:3.46.1.0 \
+  ba.sake:squery-cli_2.13:0.10.0 \
+  -M ba.sake.squery.cli.SqueryMain -- \
+  --jdbcUrl jdbc:sqlite:database.db \
+  --schemaMappings main:com.example
 ```
 
 
@@ -75,6 +97,6 @@ SQLite code generation reads only the `main` schema. It maps `INTEGER`, `REAL`, 
 `BLOB` to `Long`, `Double`, `String`, and `Array[Byte]`; ambiguous declarations such as
 `NUMERIC` remain unknown. `is_*`, `has_*`, and `can_*` integer columns map to `Boolean`,
 `*_at` text columns to `Instant`, and `*_date` text columns to `LocalDate`. Ordered
-`SqliteTypeMappingRule`s override these conventions and require both column-name and
-declared-type regex matches. Generated `RETURNING` SQL requires SQLite 3.35 or newer;
+`TypeMappingRule`s override the built-in mappings and require both column-name and declared-type
+regex matches. Generated `RETURNING` SQL requires SQLite 3.35 or newer;
 if using SQLite `STRICT` tables, use SQLite 3.37 or newer.

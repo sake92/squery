@@ -5,6 +5,7 @@ import mainargs.{ParserForMethods, arg, main}
 
 import java.nio.file.Paths
 import java.sql.DriverManager
+import scala.meta._
 import scala.util.Using
 
 object SqueryMain {
@@ -24,14 +25,31 @@ object SqueryMain {
       @arg(doc = "Row type suffix. Default is 'Row'")
       rowTypeSuffix: String = "Row",
       @arg(doc = "DAO type suffix. Default is 'Dao'")
-      daoTypeSuffix: String = "Dao"
+      daoTypeSuffix: String = "Dao",
+      @arg(
+        name = "typeMappingRule",
+        doc = "Type mapping rule in the format 'column-name-regex|declared-type-regex|Scala-type'. Repeatable."
+      )
+      typeMappingRule: Seq[String] = Seq.empty,
+      @arg(
+        name = "includeTables",
+        doc = "Table name regex to include. Matches 'schema.table'. Repeatable; defaults to all tables."
+      )
+      includeTables: Seq[String] = Seq(".*"),
+      @arg(
+        name = "excludeTables",
+        doc = "Table name regex to exclude. Matches 'schema.table'. Repeatable and takes precedence over includes."
+      )
+      excludeTables: Seq[String] = Seq.empty
   ) = {
 
     val config = SqueryGeneratorConfig(
       colNameIdentifierMapper = NameMapper(colNameIdentifierMapper),
       typeNameMapper = NameMapper(typeNameMapper),
       rowTypeSuffix = rowTypeSuffix,
-      daoTypeSuffix = daoTypeSuffix
+      daoTypeSuffix = daoTypeSuffix,
+      typeMappingRules = typeMappingRule.map(parseTypeMappingRule),
+      tableFilter = TableFilter(includeTables, excludeTables)
     )
 
     Using.resource(DriverManager.getConnection(jdbcUrl)) { connection =>
@@ -54,5 +72,17 @@ object SqueryMain {
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+
+  private def parseTypeMappingRule(value: String): TypeMappingRule = {
+    value.split("\\|", 3) match {
+      case Array(columnNameRegex, declaredTypeRegex, scalaType)
+          if columnNameRegex.nonEmpty && declaredTypeRegex.nonEmpty && scalaType.nonEmpty =>
+        TypeMappingRule(columnNameRegex, declaredTypeRegex, scalaType.parse[Type].get)
+      case _ =>
+        throw new IllegalArgumentException(
+          s"Invalid type mapping rule '$value'. Expected column-name-regex|declared-type-regex|Scala-type."
+        )
+    }
+  }
 
 }

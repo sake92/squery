@@ -60,14 +60,14 @@ class SqliteDefExtractorSuite extends FunSuite {
     } finally conn.close()
   }
 
-  test("custom SQLite rules take precedence and generated main code imports SQLite") {
+  test("custom type mapping rules take precedence and generated main code imports SQLite") {
     val conn = connection
     try {
       val config = SqueryGeneratorConfig.Default.copy(
-        sqliteTypeMappingRules = Seq(
-          SqliteTypeMappingRule("custom_id", "INTEGER", t"Long"),
-          SqliteTypeMappingRule("custom_id", "TEXT", t"UUID", Seq("java.util.UUID")),
-          SqliteTypeMappingRule("custom_id", "TEXT", t"String")
+        typeMappingRules = Seq(
+          TypeMappingRule("custom_id", "INTEGER", t"Long"),
+          TypeMappingRule("custom_id", "TEXT", t"UUID", Seq("java.util.UUID")),
+          TypeMappingRule("custom_id", "TEXT", t"String")
         )
       )
       val generated = new SqueryGenerator(conn, config).generateString(Seq("main"))
@@ -78,12 +78,30 @@ class SqliteDefExtractorSuite extends FunSuite {
     } finally conn.close()
   }
 
-  test("custom SQLite rule declared type guard rejects mismatches") {
+  test("custom type mapping rule declared type guard rejects mismatches") {
     val conn = connection
     try {
-      val dbDef = new SqliteDefExtractor(conn, Seq(SqliteTypeMappingRule("custom_id", "INTEGER", t"Long"))).extract()
+      val dbDef = DbDefExtractor(conn, Seq(TypeMappingRule("custom_id", "INTEGER", t"Long"))).extract()
       val custom = dbDef.schemas.head.tables.head.columnDefs.find(_.metadata.name == "custom_id").get
       assertEquals(custom.scalaType.name, "String")
+    } finally conn.close()
+  }
+
+  test("custom type mapping rules apply to generic JDBC extractors") {
+    Class.forName("org.h2.Driver")
+    val conn = DriverManager.getConnection("jdbc:h2:mem:type_mapping_rules")
+    try {
+      val statement = conn.createStatement()
+      statement.executeUpdate("CREATE TABLE users (custom_id INTEGER)")
+      statement.close()
+
+      val dbDef = DbDefExtractor(conn, Seq(TypeMappingRule("CUSTOM_ID", "INTEGER", t"Long"))).extract()
+      val customId = dbDef.schemas
+        .flatMap(_.tables)
+        .flatMap(_.columnDefs)
+        .find(_.metadata.name == "CUSTOM_ID")
+        .get
+      assertEquals(customId.scalaType.name, "Long")
     } finally conn.close()
   }
 
@@ -95,6 +113,25 @@ class SqliteDefExtractorSuite extends FunSuite {
       statement.close()
       val tables = new SqliteDefExtractor(conn).extract().schemas.head.tables.map(_.name)
       assert(!tables.contains("temp_only"))
+    } finally conn.close()
+  }
+
+  test("table filters include qualified names and exclusions take precedence") {
+    val conn = connection
+    try {
+      val statement = conn.createStatement()
+      statement.executeUpdate("CREATE TABLE audit_log (id INTEGER)")
+      statement.close()
+
+      val config = SqueryGeneratorConfig.Default.copy(
+        tableFilter = TableFilter(
+          includePatterns = Seq("main\\.(users|audit_log)"),
+          excludePatterns = Seq("main\\.audit_log")
+        )
+      )
+      val tables = new SqueryGenerator(conn, config).generateString(Seq("main"))
+      assert(tables.contains("main.users"), tables)
+      assert(!tables.contains("main.audit_log"), tables)
     } finally conn.close()
   }
 
