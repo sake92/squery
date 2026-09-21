@@ -1,9 +1,8 @@
 //> using scala 3.7.4
 //> using platform native
 //> using nativeVersion 0.5.12
-//> using repositories m2Local
 //> using dep com.github.lolgab::scala-native-jdbc-sqlite::0.0.6
-//> using dep ba.sake::squery::0.10.1-SNAPSHOT
+//> using dep ba.sake::squery::0.11.0
 
 import ba.sake.squery.{*, given}
 import org.sqlite.SQLiteDataSource
