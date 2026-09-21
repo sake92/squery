@@ -6,6 +6,7 @@ No DSLs, no fuss, just plain SQL.
 
 Supports *any* JDBC driver.  
 Additional support for Postgres, MySql, MariaDb, Oracle, H2, and SQLite.
+Scala Native is supported since 0.11.0 with a Scala Native-compatible JDBC driver.
 
 Scastie example: https://scastie.scala-lang.org/JArud6GGSLOmYyxCNsNdNw
 
@@ -90,8 +91,8 @@ cs launch org.xerial:sqlite-jdbc:3.46.1.0 \
 ### Code
 
 You can use `squery-generator` library to generate code directly.  
-This is handy when using Ammonite to explore a database structure and its contents.  
-It can also be used to generate source code manually in scala-cli or in your project (if you dont like CLI or mill plugin).
+This is handy when using scala-cli to explore a database structure and its contents.
+It can also be used to generate source code manually in scala-cli or in your project (if you don't like the CLI or Mill plugin).
 
 SQLite code generation reads only the `main` schema. It maps `INTEGER`, `REAL`, `TEXT`, and
 `BLOB` to `Long`, `Double`, `String`, and `Array[Byte]`; ambiguous declarations such as

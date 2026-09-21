@@ -25,26 +25,27 @@ Of course, it is best to use `scalafmt` after codegen so that the diff is minima
 
 ## Standalone generator
 
-You can use it with Ammonite to test the generator:
+You can use it with scala-cli to test the generator and write the generated source to a file:
 ```scala
-import $ivy.`ba.sake:squery-generator_2.13:{{site.data.project.artifact.version}}`
-import $ivy.`ba.sake::squery:{{site.data.project.artifact.version}}`
-// if using Postgres JSONB
-// import $ivy.`ba.sake::squery-postgres-jawn:{{site.data.project.artifact.version}}`
+//> using dep "ba.sake::squery-generator:{{site.data.project.artifact.version}}"
+//> using dep "ba.sake::squery:{{site.data.project.artifact.version}}"
+// If using Postgres JSONB, also add:
+// //> using dep "ba.sake::squery-postgres-jawn:{{site.data.project.artifact.version}}"
 
+import java.nio.file.{Files, Paths}
+import scala.util.Using
 import ba.sake.squery.generator.*
 
 val dataSource = ...
-val generator = SqueryGenerator(dataSource)
-val generatedCode = generator.generateString(Seq("myschema"))
-repl.load(generatedCode)
-
-// now you can use the generated code
-val ctx = SqueryContext(dataSource)
-ctx.run {
-  MyTableDao.findAll()
+Using.resource(dataSource.getConnection) { connection =>
+  val generator = SqueryGenerator(connection)
+  val generatedCode = generator.generateString(Seq("myschema"))
+  Files.writeString(Paths.get("Generated.scala"), generatedCode)
+  println("Generated source written to Generated.scala")
 }
 ```
+
+Run the script with `scala-cli run generate.scala`, then include `Generated.scala` in your project.
 
 For SQLite, generate the `main` schema with `generateString(Seq("main"))`. The safe
 storage mappings are `INTEGER` → `Long`, `REAL` → `Double`, `TEXT` → `String`, and
