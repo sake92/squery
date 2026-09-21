@@ -55,8 +55,12 @@ extension (query: Query) {
       c: SqueryConnection,
       r: SqlRead[A]
   ): Seq[A] =
+    val queryWithGeneratedKeys =
+      if colNames.nonEmpty then query.withGeneratedKeys(GeneratedKeys.ColumnNames(colNames))
+      else if query.statementOptions.generatedKeys.nonEmpty then query
+      else query.withGeneratedKeys()
     Using.resource(
-      query.newPreparedStatement(DbActionType.Update, c, retGenKeys = true, colNames)
+      queryWithGeneratedKeys.newPreparedStatement(DbActionType.Update, c)
     ) { stmt =>
       stmt.executeUpdate()
       val keysRes = stmt.getGeneratedKeys

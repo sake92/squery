@@ -25,6 +25,18 @@ def insertCustomer: Seq[Int] = ctx.run {
 }
 ```
 
+Generated keys can also be selected by JDBC column name or index:
+
+```scala
+sql"INSERT INTO customers(name) VALUES('my_customer')"
+  .withGeneratedKeys(GeneratedKeys.ColumnNames(Seq("id")))
+  .insertReturningGenKeys[Int]()
+
+sql"INSERT INTO customers(name) VALUES('my_customer')"
+  .withGeneratedKeys(GeneratedKeys.ColumnIndexes(Seq(1)))
+  .insertReturningGenKeys[Int]()
+```
+
 ---
 
 There are also variations that return a single result, depending if you want an `Option[T]` or `T` (throws if no row returned):
@@ -110,6 +122,7 @@ def createTable: Unit = ctx.run {
   """.update()
 }
 ```
+
 
 
 

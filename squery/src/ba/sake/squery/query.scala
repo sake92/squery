@@ -2,6 +2,7 @@ package ba.sake.squery
 
 import java.{sql => jsql}
 import java.util.concurrent.ConcurrentHashMap
+import scala.concurrent.duration.FiniteDuration
 import scala.collection.mutable.ListBuffer
 import scala.util.Using
 import ba.sake.squery.DynamicArg
@@ -10,32 +11,74 @@ import ba.sake.squery.parser.SqlStatementLinter
 
 case class Query(
     private[squery] val sqlString: String,
-    private[squery] val arguments: Seq[DynamicArg[?]]
+    private[squery] val arguments: Seq[DynamicArg[?]],
+    statementOptions: StatementOptions = StatementOptions()
 ) {
 
   private val logger = SqueryLoggerFactory(getClass.getName)
 
   def ++(other: Query): Query =
-    Query(
-      sqlString + " " + other.sqlString,
-      arguments ++ other.arguments
+    copy(sqlString = sqlString + " " + other.sqlString, arguments = arguments ++ other.arguments)
+
+  def withStatementOptions(options: StatementOptions): Query =
+    copy(statementOptions = options)
+
+  def withFetchSize(fetchSize: Int): Query =
+    copy(statementOptions = statementOptions.copy(fetchSize = Some(fetchSize)))
+
+  def withTimeout(timeout: FiniteDuration): Query =
+    copy(statementOptions = statementOptions.copy(timeout = Some(timeout)))
+
+  def withMaxRows(maxRows: Int): Query =
+    copy(statementOptions = statementOptions.copy(maxRows = Some(maxRows)))
+
+  def withResultSet(resultSetType: ResultSetType, concurrency: ResultSetConcurrency): Query =
+    copy(
+      statementOptions = statementOptions.copy(
+        resultSetType = Some(resultSetType),
+        resultSetConcurrency = Some(concurrency),
+        generatedKeys = None
+      )
+    )
+
+  def withGeneratedKeys(generatedKeys: GeneratedKeys = GeneratedKeys.All): Query =
+    copy(
+      statementOptions = statementOptions.copy(
+        resultSetType = None,
+        resultSetConcurrency = None,
+        generatedKeys = Some(generatedKeys)
+      )
     )
 
   private[squery] def newPreparedStatement(
       dbActionType: DbActionType,
-      c: SqueryConnection,
-      retGenKeys: Boolean = false,
-      colNames: Seq[String] = Seq.empty
+      c: SqueryConnection
   ): jsql.PreparedStatement = {
     val enrichedQueryString = Query.enrichSqlQuery(sqlString, dbActionType, c.lintUpdates)
     logger.debug(s"Executing statement: $enrichedQueryString")
     val jdbcConnection = c.underlying
-    val stat =
-      if retGenKeys then
-        if colNames.isEmpty then
-          jdbcConnection.prepareStatement(enrichedQueryString, jsql.Statement.RETURN_GENERATED_KEYS)
-        else jdbcConnection.prepareStatement(enrichedQueryString, colNames.toArray)
-      else jdbcConnection.prepareStatement(enrichedQueryString)
+    val stat = statementOptions.generatedKeys match
+      case Some(GeneratedKeys.All) =>
+        jdbcConnection.prepareStatement(enrichedQueryString, jsql.Statement.RETURN_GENERATED_KEYS)
+      case Some(GeneratedKeys.ColumnNames(names)) =>
+        jdbcConnection.prepareStatement(enrichedQueryString, names.toArray)
+      case Some(GeneratedKeys.ColumnIndexes(indexes)) =>
+        jdbcConnection.prepareStatement(enrichedQueryString, indexes.toArray)
+      case None =>
+        (statementOptions.resultSetType, statementOptions.resultSetConcurrency) match
+          case (Some(resultSetType), Some(concurrency)) =>
+            jdbcConnection.prepareStatement(enrichedQueryString, resultSetType.jdbcValue, concurrency.jdbcValue)
+          case _ => jdbcConnection.prepareStatement(enrichedQueryString)
+
+    statementOptions.fetchSize.foreach(stat.setFetchSize)
+    statementOptions.timeout.foreach { timeout =>
+      val wholeSeconds = timeout.toSeconds
+      val jdbcSeconds =
+        if timeout > FiniteDuration(wholeSeconds, java.util.concurrent.TimeUnit.SECONDS) then wholeSeconds + 1
+        else wholeSeconds
+      stat.setQueryTimeout(jdbcSeconds.toInt)
+    }
+    statementOptions.maxRows.foreach(stat.setMaxRows)
 
     bindArguments(stat)
 
