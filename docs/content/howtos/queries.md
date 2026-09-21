@@ -41,6 +41,31 @@ def customers: List[Customer] = ctx.run {
 ```
 Note that the `case class`' fields need to match the `SELECT` statement columns!
 
+## How to Configure Statement Execution?
+
+Statement options are immutable and can be chained on any query:
+
+```scala
+import scala.concurrent.duration.*
+
+sql"SELECT id, name FROM customers"
+  .withFetchSize(512)
+  .withTimeout(5.seconds)
+  .withMaxRows(1000)
+  .readRows[Customer]()
+```
+
+Scrollable or updatable result sets can be requested when the JDBC driver supports them:
+
+```scala
+sql"SELECT id, name FROM customers"
+  .withResultSet(ResultSetType.ScrollInsensitive, ResultSetConcurrency.ReadOnly)
+  .readRows[Customer]()
+```
+
+JDBC does not provide a statement-preparation overload that combines result-set settings with generated-key selection.
+When both fluent options are used, the last one replaces the earlier preparation option.
+
 ---
 
 There are also variations that return a single result, depending if you want an `Option[T]` or `T`:
@@ -208,8 +233,6 @@ Seq(Option(sql"q1"), None, Option(sql"q2"))
 // same as this:
 sql"q1 AND q2"
 ```
-
-
 
 
 

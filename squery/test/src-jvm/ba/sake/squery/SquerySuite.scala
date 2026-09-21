@@ -4,8 +4,10 @@ import java.util.UUID
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.lang.reflect.Proxy
-import java.sql.Connection
+import java.sql.{Connection, PreparedStatement}
 import javax.sql.DataSource
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.duration.*
 import org.testcontainers.containers.PostgreSQLContainer
 import ba.sake.squery.DynamicArg
 
@@ -61,6 +63,61 @@ class SquerySuite extends munit.FunSuite {
       """SELECT id FROM customers WHERE name = ? OR name = ?"""
     )
     assertEquals(q.arguments, Seq(p1, p2).map(DynamicArg.apply))
+  }
+
+  test("statement execution options are immutable and applied before execution") {
+    val (ctx, preparedStatements, statementSettings) = recordingContext()
+    val query = sql"UPDATE customers SET name = 'updated'"
+
+    ctx.run {
+      query
+        .withFetchSize(512)
+        .withTimeout(1500.millis)
+        .withMaxRows(1000)
+        .update()
+    }
+
+    assertEquals(query.statementOptions, StatementOptions())
+    assertEquals(preparedStatements.toSeq, Seq(Seq.empty))
+    assertEquals(statementSettings.toSeq, Seq("setFetchSize" -> 512, "setQueryTimeout" -> 2, "setMaxRows" -> 1000))
+  }
+
+  test("result-set type and concurrency select the corresponding JDBC preparation") {
+    val (ctx, preparedStatements, _) = recordingContext()
+
+    ctx.run {
+      sql"UPDATE customers SET name = 'updated'"
+        .withResultSet(ResultSetType.ScrollInsensitive, ResultSetConcurrency.Updatable)
+        .update()
+    }
+
+    assertEquals(
+      preparedStatements.head,
+      Seq(ConnectionPrepareArgument.IntValue(java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE), ConnectionPrepareArgument.IntValue(java.sql.ResultSet.CONCUR_UPDATABLE))
+    )
+  }
+
+  test("generated keys can be requested by flag, column names, or column indexes") {
+    val (ctx, preparedStatements, _) = recordingContext()
+
+    ctx.run {
+      sql"INSERT INTO customers(name) VALUES ('a')".withGeneratedKeys().update()
+      sql"INSERT INTO customers(name) VALUES ('b')"
+        .withGeneratedKeys(GeneratedKeys.ColumnNames(Seq("id")))
+        .update()
+      sql"INSERT INTO customers(name) VALUES ('c')"
+        .withGeneratedKeys(GeneratedKeys.ColumnIndexes(Seq(1)))
+        .update()
+    }
+
+    assertEquals(
+      preparedStatements.toSeq,
+      Seq(
+        Seq(ConnectionPrepareArgument.IntValue(java.sql.Statement.RETURN_GENERATED_KEYS)),
+        Seq(ConnectionPrepareArgument.StringArray(Seq("id"))),
+        Seq(ConnectionPrepareArgument.IntArray(Seq(1)))
+      )
+    )
   }
 
   test("DbAction") {
@@ -127,5 +184,56 @@ class SquerySuite extends munit.FunSuite {
     else if returnType == java.lang.Byte.TYPE then Byte.box(0.toByte)
     else if returnType == java.lang.Character.TYPE then Char.box(0.toChar)
     else null
+
+  private enum ConnectionPrepareArgument:
+    case IntValue(value: Int)
+    case StringArray(value: Seq[String])
+    case IntArray(value: Seq[Int])
+
+  private def recordingContext()
+      : (SqueryContext, ListBuffer[Seq[ConnectionPrepareArgument]], ListBuffer[(String, Int)]) = {
+    val preparations = ListBuffer.empty[Seq[ConnectionPrepareArgument]]
+    val statementSettings = ListBuffer.empty[(String, Int)]
+    val statement = Proxy
+      .newProxyInstance(
+        getClass.getClassLoader,
+        Array(classOf[PreparedStatement]),
+        (_, method, args) =>
+          method.getName match
+            case "setFetchSize" | "setQueryTimeout" | "setMaxRows" =>
+              statementSettings += method.getName -> args(0).asInstanceOf[Int]
+              null
+            case "executeUpdate" => Int.box(0)
+            case _               => defaultValue(method.getReturnType)
+      )
+      .asInstanceOf[PreparedStatement]
+    val connection = Proxy
+      .newProxyInstance(
+        getClass.getClassLoader,
+        Array(classOf[Connection]),
+        (_, method, args) =>
+          method.getName match
+            case "prepareStatement" =>
+              val preparation = args.drop(1).toSeq.map {
+                case value: java.lang.Integer => ConnectionPrepareArgument.IntValue(value)
+                case value: Array[String]     => ConnectionPrepareArgument.StringArray(value.toSeq)
+                case value: Array[Int]        => ConnectionPrepareArgument.IntArray(value.toSeq)
+              }
+              preparations += preparation
+              statement
+            case _ => defaultValue(method.getReturnType)
+      )
+      .asInstanceOf[Connection]
+    val dataSource = Proxy
+      .newProxyInstance(
+        getClass.getClassLoader,
+        Array(classOf[DataSource]),
+        (_, method, _) =>
+          if method.getName == "getConnection" then connection
+          else defaultValue(method.getReturnType)
+      )
+      .asInstanceOf[DataSource]
+    (SqueryContext(dataSource), preparations, statementSettings)
+  }
 
 }
