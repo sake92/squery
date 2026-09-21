@@ -1,7 +1,7 @@
 amends "https://sake92.github.io/deder/config/v0.20.0/DederProject.pkl"
 
 local const baseScala3: ScalaModule = new {
-  scalaVersion = "3.7.1"
+  scalaVersion = "3.7.4"
   publish = true
   scalacOptions {
     "-Ywarn-unused"
@@ -39,7 +39,7 @@ local const squeryPomTemplate: PomSettings = new {
 }
 
 local const squeryModules =
-  new CreateScalaModules {
+  new CreateCrossModules {
     root = "squery"
     template = (baseScala3) {
       deps {
@@ -71,13 +71,35 @@ local const squeryModules =
         "org.xerial:sqlite-jdbc:3.46.1.0"
       }
     }
+    jsTemplate = (template.asJs()) {
+      scalaJsVersion = "1.20.2"
+    }
+    nativeTemplate = (baseScala3.asNative()) {
+      scalaNativeVersion = "0.5.12"
+      deps {
+        "com.lihaoyi::fastparse::3.1.1"
+        "com.github.lolgab::scala-native-jdbc::0.0.6"
+        "io.github.cquiroz::scala-java-time::2.6.0"
+      }
+      pomSettings = (squeryPomTemplate) {
+        artifactId = "squery"
+        name = "squery"
+        description = "Squery SQL library"
+      }
+    }
+    nativeTestTemplate = (nativeTemplate.asTest()) {
+      deps {
+        "org.scalameta::munit::1.0.0"
+        "com.github.lolgab::scala-native-jdbc-sqlite::0.0.6"
+      }
+    }
   }.get
 
 local const squeryPostgresJawn: ScalaModule = (baseScala3) {
   id = "squery-postgres-jawn"
   root = "squery/postgres-jawn"
   moduleDeps {
-    squeryModules.main
+    squeryModules.jvm
   }
   deps {
     "org.typelevel::jawn-ast:1.6.0"
@@ -132,7 +154,10 @@ local const cli: ScalaModule = (baseScala213) {
 }
 
 modules {
-  ...squeryModules.all
+  squeryModules.jvm
+  squeryModules.jvm_test
+  squeryModules.native
+  squeryModules.native_test
   squeryPostgresJawn
   ...generatorModules.all
   cli

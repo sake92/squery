@@ -3,7 +3,6 @@ package ba.sake.squery
 import java.{sql => jsql}
 import java.util.concurrent.ConcurrentHashMap
 import scala.util.Using
-import com.typesafe.scalalogging.Logger
 import ba.sake.squery.DynamicArg
 import ba.sake.squery.parser.SqlSelectAliasParser
 import ba.sake.squery.parser.SqlStatementLinter
@@ -13,7 +12,7 @@ case class Query(
     private[squery] val arguments: Seq[DynamicArg[?]]
 ) {
 
-  private val logger = Logger(getClass.getName)
+  private val logger = SqueryLoggerFactory(getClass.getName)
 
   def ++(other: Query): Query =
     Query(
@@ -41,12 +40,7 @@ case class Query(
       arg.sqlWrite.write(stat, i + 1, Option(arg.value))
     }
 
-    // print warnings if any
-    var warning = stat.getWarnings
-    while (warning != null) {
-      logger.warn(warning.getMessage)
-      warning = warning.getNextWarning
-    }
+    SqueryJdbcWarnings.log(stat, logger)
     stat
   }
 
@@ -54,7 +48,7 @@ case class Query(
 }
 
 object Query {
-  private val logger = Logger(getClass.getName)
+  private val logger = SqueryLoggerFactory(getClass.getName)
 
   private val selectStmtsCache = new ConcurrentHashMap[String, String]()
 
@@ -66,7 +60,7 @@ object Query {
   }
 
   // try to avoid parsing, or at least cache the results
-  private def getEnrichedSqlQuery(query: String, dbActionType: DbActionType, lintUpdates: Boolean): String = 
+  private def getEnrichedSqlQuery(query: String, dbActionType: DbActionType, lintUpdates: Boolean): String =
     if dbActionType == DbActionType.Select || lintUpdates then
       try {
         val cached = selectStmtsCache.get(query)
