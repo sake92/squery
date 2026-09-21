@@ -27,5 +27,7 @@ jobs:
         uses: Homebrew/actions/setup-homebrew@main
       - name: Install deder
         run: brew install sake92/tap/deder
+      - name: Compile Scala Native
+        run: deder exec -t compile -m squery-native-3.7.4
       - name: Test
         run: deder exec -t test
