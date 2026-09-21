@@ -153,4 +153,18 @@ class SqliteDefExtractorSuite extends FunSuite {
       assert(!generated.contains("INSERT INTO main.generated_rows(id, name)"), generated)
     } finally conn.close()
   }
+
+  test("generated ID collection operations use Query.in") {
+    Class.forName("org.sqlite.JDBC")
+    val conn = DriverManager.getConnection("jdbc:sqlite::memory:")
+    try {
+      val statement = conn.createStatement()
+      statement.executeUpdate("CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT NOT NULL)")
+      statement.close()
+
+      val generated = new SqueryGenerator(conn).generateString(Seq("main"))
+      assertEquals(generated.split("Query.in\\(ids\\)", -1).length - 1, 2)
+      assert(!generated.contains(".reduce("), generated)
+    } finally conn.close()
+  }
 }

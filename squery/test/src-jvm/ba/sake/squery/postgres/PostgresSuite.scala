@@ -4,7 +4,6 @@ package postgres
 import java.util.UUID
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import scala.collection.decorators._
 import org.testcontainers.containers.PostgreSQLContainer
 import ba.sake.squery.read.{*, given}
 import ba.sake.squery.write.{*, given}
@@ -333,10 +332,7 @@ class PostgresSuite extends munit.FunSuite {
       )
       val dt2 = Datatypes(None, None, None, None, None, None, None, None, None, None, None, None, None, None)
 
-      val values = Seq(dt1, dt2)
-        .map(_.insertTuple)
-        .intersperse(sql",")
-        .reduce(_ ++ _)
+      val values = Query.values(Seq(dt1, dt2).map(_.insertTuple))
       sql"""
         INSERT INTO datatypes(${Datatypes.allCols})
         VALUES ${values}

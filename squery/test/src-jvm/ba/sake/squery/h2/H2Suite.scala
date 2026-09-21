@@ -4,7 +4,6 @@ package h2
 import java.util.UUID
 import java.time.{Duration, Instant}
 import java.time.temporal.ChronoUnit
-import scala.collection.decorators.*
 
 // UUID, enum.. H2 specific
 case class Datatypes(
@@ -132,6 +131,21 @@ class H2Suite extends munit.FunSuite {
         sql"SELECT numbr FROM phones WHERE customer_id = ${customer1.id}"
           .readValues[String](),
         phones.map(_.numbr)
+      )
+    }
+  }
+
+  test("empty Query.in matches no rows and deletes nothing") {
+    val ctx = initDb()
+    ctx.run {
+      val ids = Seq.empty[Int]
+      assertEquals(
+        sql"SELECT id FROM customers WHERE id IN ${Query.in(ids)}".readValues[Int](),
+        Seq.empty
+      )
+      assertEquals(
+        sql"DELETE FROM customers WHERE id IN ${Query.in(ids)}".update(),
+        0
       )
     }
   }
@@ -306,10 +320,7 @@ class H2Suite extends munit.FunSuite {
       )
       val dt2 = Datatypes(None, None, None, None, None, None, None, None)
 
-      val values = Seq(dt1, dt2)
-        .map(_.insertTuple)
-        .intersperse(sql",")
-        .reduce(_ ++ _)
+      val values = Query.values(Seq(dt1, dt2).map(_.insertTuple))
       sql"""
         INSERT INTO datatypes(${Datatypes.*})
         VALUES ${values}
