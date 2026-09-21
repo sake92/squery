@@ -36,13 +36,16 @@ case class Query(
         else jdbcConnection.prepareStatement(enrichedQueryString, colNames.toArray)
       else jdbcConnection.prepareStatement(enrichedQueryString)
 
-    arguments.zipWithIndex.foreach { (arg, i) =>
-      arg.sqlWrite.write(stat, i + 1, Option(arg.value))
-    }
+    bindArguments(stat)
 
     SqueryJdbcWarnings.log(stat, logger)
     stat
   }
+
+  private[squery] def bindArguments(stat: jsql.PreparedStatement): Unit =
+    arguments.zipWithIndex.foreach { (arg, i) =>
+      arg.sqlWrite.write(stat, i + 1, Option(arg.value))
+    }
 
   override def toString: String = sqlString
 }
