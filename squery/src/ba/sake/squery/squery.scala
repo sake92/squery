@@ -172,3 +172,30 @@ extension (query: Query) {
     )
 
 }
+
+extension (queries: IterableOnce[Query]) {
+
+  /** Executes queries with the same SQL shape as a JDBC prepared statement batch. */
+  def batchUpdate()(using c: SqueryConnection): Seq[Int] =
+    val batch = queries.iterator.toSeq
+    batch.headOption match
+      case None => Seq.empty
+      case Some(first) =>
+        val expectedSql = first.sqlString
+        val expectedArgumentCount = first.arguments.size
+        batch.zipWithIndex.foreach { (query, index) =>
+          if query.sqlString != expectedSql || query.arguments.size != expectedArgumentCount then
+            throw SqueryException(
+              s"All queries in batchUpdate must have the same SQL and argument count; query at index $index differs"
+            )
+        }
+
+        Using.resource(first.newPreparedStatement(DbActionType.Update, c)) { stmt =>
+          stmt.addBatch()
+          batch.tail.foreach { query =>
+            query.bindArguments(stmt)
+            stmt.addBatch()
+          }
+          stmt.executeBatch().toSeq
+        }
+}

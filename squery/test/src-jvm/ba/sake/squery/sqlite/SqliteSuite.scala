@@ -84,3 +84,29 @@ class SqliteSuite extends munit.FunSuite:
       ds.close()
       Files.deleteIfExists(dbPath)
   }
+
+  test("SQLite executes batch updates") {
+    val dbPath = Files.createTempFile("squery-sqlite-batch-", ".db")
+    val ds = HikariDataSource()
+    ds.setJdbcUrl(s"jdbc:sqlite:${dbPath.toAbsolutePath}")
+    try
+      val ctx = SqueryContext(ds)
+      ctx.run {
+        sql"CREATE TABLE batch_rows(id INTEGER PRIMARY KEY, value TEXT NOT NULL)".update()
+
+        val counts = Seq(1 -> "one", 2 -> "two")
+          .map { (id, value) =>
+            sql"INSERT INTO batch_rows(id, value) VALUES ($id, $value)"
+          }
+          .batchUpdate()
+
+        assertEquals(counts, Seq(1, 1))
+        assertEquals(
+          sql"SELECT value FROM batch_rows ORDER BY id".readValues[String](),
+          Seq("one", "two")
+        )
+      }
+    finally
+      ds.close()
+      Files.deleteIfExists(dbPath)
+  }

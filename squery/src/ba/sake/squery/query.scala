@@ -3,6 +3,8 @@ package ba.sake.squery
 import java.{sql => jsql}
 import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.duration.FiniteDuration
+import scala.collection.mutable.ListBuffer
+import scala.util.Using
 import ba.sake.squery.DynamicArg
 import ba.sake.squery.parser.SqlSelectAliasParser
 import ba.sake.squery.parser.SqlStatementLinter
@@ -78,13 +80,16 @@ case class Query(
     }
     statementOptions.maxRows.foreach(stat.setMaxRows)
 
-    arguments.zipWithIndex.foreach { (arg, i) =>
-      arg.sqlWrite.write(stat, i + 1, Option(arg.value))
-    }
+    bindArguments(stat)
 
     SqueryJdbcWarnings.log(stat, logger)
     stat
   }
+
+  private[squery] def bindArguments(stat: jsql.PreparedStatement): Unit =
+    arguments.zipWithIndex.foreach { (arg, i) =>
+      arg.sqlWrite.write(stat, i + 1, Option(arg.value))
+    }
 
   override def toString: String = sqlString
 }
@@ -93,6 +98,59 @@ object Query {
   private val logger = SqueryLoggerFactory(getClass.getName)
 
   private val selectStmtsCache = new ConcurrentHashMap[String, String]()
+
+  private val empty = Query("", Seq.empty)
+
+  /** Joins query fragments using the separator exactly as supplied. Returns an empty fragment when `fragments` is
+    * empty.
+    */
+  def join(fragments: IterableOnce[Query], separator: Query): Query =
+    join(fragments.iterator, separator)
+
+  /** Creates a parenthesized parameter list for a positive SQL `IN` predicate. Empty input becomes `(NULL)` and
+    * therefore matches no rows. This empty behavior is not suitable for `NOT IN`.
+    */
+  def in[T: SqlWrite](values: IterableOnce[T]): Query = {
+    val valuesIterator = values.iterator
+    if !valuesIterator.hasNext then Query("(NULL)", Seq.empty)
+    else {
+      val sqlString = StringBuilder("(?")
+      val arguments = ListBuffer(DynamicArg(valuesIterator.next()))
+      while valuesIterator.hasNext do {
+        sqlString.append(", ?")
+        arguments += DynamicArg(valuesIterator.next())
+      }
+      sqlString.append(")")
+      Query(sqlString.toString, arguments.toSeq)
+    }
+  }
+
+  /** Joins already-parenthesized row fragments for a SQL `VALUES` clause. */
+  def values(rows: IterableOnce[Query]): Query = {
+    val rowsIterator = rows.iterator
+    if !rowsIterator.hasNext then throw IllegalArgumentException("Query.values requires at least one row")
+    join(rowsIterator, Query(", ", Seq.empty))
+  }
+
+  /** Returns `fragment` when `condition` is true, or an empty fragment otherwise. The fragment is evaluated lazily. */
+  def when(condition: Boolean)(fragment: => Query): Query =
+    if condition then fragment else empty
+
+  private def join(fragments: Iterator[Query], separator: Query): Query =
+    if !fragments.hasNext then empty
+    else {
+      val first = fragments.next()
+      val sqlString = StringBuilder(first.sqlString)
+      val arguments = ListBuffer.from(first.arguments)
+      while fragments.hasNext do {
+        val fragment = fragments.next()
+        sqlString.append(separator.sqlString)
+        sqlString.append(fragment.sqlString)
+        arguments ++= separator.arguments
+        arguments ++= fragment.arguments
+      }
+      Query(sqlString.toString, arguments.toSeq)
+    }
 
   private def enrichSqlQuery(query: String, dbActionType: DbActionType, lintUpdates: Boolean): String = {
     logger.trace(s"""Enriching query: $query""")

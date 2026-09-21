@@ -387,14 +387,14 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
           Term.Name("sql"),
           parts = List(
             Lit.String(
-              s"SELECT ${allColsLit.value} FROM ${tableName} WHERE ${tableDef.pkColumns.head.metadata.name} IN ("
+              s"SELECT ${allColsLit.value} FROM ${tableName} WHERE ${tableDef.pkColumns.head.metadata.name} IN "
             ),
-            Lit.String(")")
+            Lit.String("")
           ),
           args = List(Term.Name("idsExpr"))
         )
         q"""def findByIds(ids: Set[${pkType}]): DbAction[Seq[${rowClassType}]] = {
-              val idsExpr = ids.map(id => sql"$${id}").reduce(_ ++ sql"," ++ _)
+              val idsExpr = Query.in(ids)
               ${sqlInterpolate}.readRows()
             }
         """
@@ -496,15 +496,14 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
       def genDeleteByIds = Option.when(tableDef.hasPk && !tableDef.hasCompositePk) {
         val sqlInterpolate = Term.Interpolate(
           Term.Name("sql"),
-          parts = List(
-            Lit.String(s"DELETE FROM ${tableName} WHERE ${tableDef.pkColumns.head.metadata.name} IN (")
-          ) ++ List(Lit.String(")")),
+          parts = List(Lit.String(s"DELETE FROM ${tableName} WHERE ${tableDef.pkColumns.head.metadata.name} IN ")) ++
+            List(Lit.String("")),
           args = List(Term.Name("idsExpr"))
         )
         val pkColName = Term.Name(tableDef.pkColumns.head.metadata.name.safeColNameIdentifier)
         val pkColRef = q"${rowObjectRef}.${pkColName}"
         q"""def deleteByIds(ids: Set[${pkType}]): DbAction[Int] =
-              val idsExpr = ids.map(id => sql"$${id}").reduce(_ ++ sql"," ++ _)
+              val idsExpr = Query.in(ids)
               ${sqlInterpolate}.update()
         """
       }
