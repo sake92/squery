@@ -188,6 +188,48 @@ class H2Suite extends munit.FunSuite {
     }
   }
 
+  test("SELECT rows into named tuples") {
+    val ctx = initDb()
+    ctx.run {
+      val customer = sql"SELECT name, id FROM customers WHERE id = ${customer1.id}"
+        .readRow[(id: Int, name: String)]()
+
+      assertEquals(customer.id, customer1.id)
+      assertEquals(customer.name, customer1.name)
+
+      val customersWithPhones = sql"""
+        SELECT c.id, c.name, c.street,
+          p.id, p.numbr
+        FROM customers c
+        LEFT JOIN phones p ON p.customer_id = c.id
+        ORDER BY c.id, p.id
+      """.readRows[
+        (
+            c: (id: Int, name: String, street: Option[String]),
+            p: Option[(id: Int, numbr: String)]
+        )
+      ]()
+
+      assertEquals(
+        customersWithPhones,
+        Seq(
+          (
+            c = (id = customer1.id, name = customer1.name, street = customer1.street),
+            p = Some((id = phone1.id, numbr = phone1.numbr))
+          ),
+          (
+            c = (id = customer1.id, name = customer1.name, street = customer1.street),
+            p = Some((id = phone2.id, numbr = phone2.numbr))
+          ),
+          (
+            c = (id = customer2.id, name = customer2.name, street = customer2.street),
+            p = None
+          )
+        )
+      )
+    }
+  }
+
   test("BAD SELECT throws") {
     val ctx = initDb()
     intercept[SqueryException] {

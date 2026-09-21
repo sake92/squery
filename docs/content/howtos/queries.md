@@ -50,6 +50,37 @@ sql"SELECT ...".readRow[T]() : T            // first result, or exception
 ```
 
 
+## How to Read Rows as Named Tuples?
+
+On Scala 3.7 or newer, a named tuple can be used instead of declaring a `case class`:
+```scala
+def customers: Seq[(id: Int, name: String)] = ctx.run {
+  sql"SELECT id, name FROM customers"
+    .readRows[(id: Int, name: String)]()
+}
+
+val firstCustomerName = customers.head.name
+```
+
+Named tuples can also be nested for joins. The outer field name becomes the column prefix, just as it does with composed `case class`es:
+```scala
+type Customer = (id: Int, name: String)
+type Phone = (id: Int, number: String)
+type CustomerWithPhone = (c: Customer, p: Phone)
+
+def customersWithPhones: Seq[CustomerWithPhone] = ctx.run {
+  sql"""
+    SELECT c.id, c.name,
+           p.id, p.number
+    FROM customers c
+    JOIN phones p ON p.customer_id = c.id
+  """.readRows[CustomerWithPhone]()
+}
+```
+
+For an outer join, use an optional nested tuple such as `p: Option[Phone]`.
+
+
 ## How to Read a Full Join?
 
 Squery is using `case class` composition to read `JOIN`ed tables.  
@@ -177,7 +208,6 @@ Seq(Option(sql"q1"), None, Option(sql"q2"))
 // same as this:
 sql"q1 AND q2"
 ```
-
 
 
 
