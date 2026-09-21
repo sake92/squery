@@ -43,6 +43,7 @@
          <ul>
           <li><a href="#how-to-read-one-column-values">How to Read One-Column Values?</a></li>
           <li><a href="#how-to-read-multi-column-values">How to Read Multi-Column Values?</a></li>
+          <li><a href="#how-to-read-rows-as-named-tuples">How to Read Rows as Named Tuples?</a></li>
           <li><a href="#how-to-read-a-full-join">How to Read a Full Join?</a></li>
           <li><a href="#how-to-read-an-outer-join">How to Read an Outer Join?</a></li>
           <li><a href="#how-to-map-flat-rows-to-objects">How to Map Flat Rows to Objects</a></li>
@@ -90,6 +91,30 @@
    <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-string">sql"SELECT ..."</span>.readRowOpt[<span class="hljs-type">T</span>]() : <span class="hljs-type">Option</span>[<span class="hljs-type">T</span>] <span class="hljs-comment">// first result, if present</span>
 <span class="hljs-string">sql"SELECT ..."</span>.readRow[<span class="hljs-type">T</span>]() : <span class="hljs-type">T</span>            <span class="hljs-comment">// first result, or exception</span>
 </code></pre>
+   <h2 id="how-to-read-rows-as-named-tuples">How to Read Rows as Named Tuples?<a href="#how-to-read-rows-as-named-tuples" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>On Scala 3.7 or newer, a named tuple can be used instead of declaring a <code>case class</code>:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">customers</span></span>: <span class="hljs-type">Seq</span>[(id: <span class="hljs-type">Int</span>, name: <span class="hljs-type">String</span>)] = ctx.run {
+  <span class="hljs-string">sql"SELECT id, name FROM customers"</span>
+    .readRows[(id: <span class="hljs-type">Int</span>, name: <span class="hljs-type">String</span>)]()
+}
+
+<span class="hljs-keyword">val</span> firstCustomerName = customers.head.name
+</code></pre>
+   <p>Named tuples can also be nested for joins. The outer field name becomes the column prefix, just as it does with composed <code>case class</code>es:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Customer</span> </span>= (id: <span class="hljs-type">Int</span>, name: <span class="hljs-type">String</span>)
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Phone</span> </span>= (id: <span class="hljs-type">Int</span>, number: <span class="hljs-type">String</span>)
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">CustomerWithPhone</span> </span>= (c: <span class="hljs-type">Customer</span>, p: <span class="hljs-type">Phone</span>)
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">customersWithPhones</span></span>: <span class="hljs-type">Seq</span>[<span class="hljs-type">CustomerWithPhone</span>] = ctx.run {
+  <span class="hljs-string">sql""</span><span class="hljs-string">"
+    SELECT c.id, c.name,
+           p.id, p.number
+    FROM customers c
+    JOIN phones p ON p.customer_id = c.id
+  "</span><span class="hljs-string">""</span>.readRows[<span class="hljs-type">CustomerWithPhone</span>]()
+}
+</code></pre>
+   <p>For an outer join, use an optional nested tuple such as <code>p: Option[Phone]</code>.</p>
    <h2 id="how-to-read-a-full-join">How to Read a Full Join?<a href="#how-to-read-a-full-join" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>Squery is using <code>case class</code> composition to read <code>JOIN</code>ed tables.
     <br>
