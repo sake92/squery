@@ -87,18 +87,13 @@ local const squeryModules =
         description = "Squery SQL library"
       }
     }
+    nativeTestTemplate = (nativeTemplate.asTest()) {
+      deps {
+        "org.scalameta::munit::1.0.0"
+        "com.github.lolgab::scala-native-jdbc-sqlite::0.0.6"
+      }
+    }
   }.get
-
-local const squeryNativeTest: ScalaNativeTestModule = (squeryModules.native.asTest()) {
-  id = "squery-native-test-\(baseScala3.scalaVersion)"
-  root = "squery/test"
-  sources = new Listing { "src-native" }
-  moduleDeps { squeryModules.native }
-  deps {
-    "org.scalameta::munit::1.0.0"
-    "com.github.lolgab::scala-native-jdbc-sqlite::0.0.6"
-  }
-}
 
 local const squeryPostgresJawn: ScalaModule = (baseScala3) {
   id = "squery-postgres-jawn"
@@ -162,7 +157,7 @@ modules {
   squeryModules.jvm
   squeryModules.jvm_test
   squeryModules.native
-  squeryNativeTest
+  squeryModules.native_test
   squeryPostgresJawn
   ...generatorModules.all
   cli
