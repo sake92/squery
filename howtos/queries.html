@@ -198,13 +198,33 @@
    <h2 id="how-to-do-dynamic-queries">How To Do Dynamic Queries?<a href="#how-to-do-dynamic-queries" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>Of course, in the real world, you will need to compose queries dynamically at runtime.
     <br>
-    You can use the <code>++</code> operator on queries:</p>
+    Use <code>Query.join</code> to combine any number of fragments with a separator:</p>
    <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">customers</span></span>(): <span class="hljs-type">Seq</span>[<span class="hljs-type">Customer</span>] = ctx.run {
-  <span class="hljs-keyword">val</span> conds = <span class="hljs-type">List</span>(<span class="hljs-string">sql"id = 123"</span>, <span class="hljs-string">sql"name LIKE 'Bob%'"</span>)
-  <span class="hljs-keyword">val</span> condsQuery = conds.reduce(_ ++ _)
-  <span class="hljs-keyword">val</span> query = <span class="hljs-string">sql"SELECT id, name FROM customers <span class="hljs-subst">${condsQuery}</span>"</span>
+  <span class="hljs-keyword">val</span> filters = <span class="hljs-type">List</span>(<span class="hljs-string">sql"id = 123"</span>, <span class="hljs-string">sql"name LIKE 'Bob%'"</span>)
+  <span class="hljs-keyword">val</span> where = <span class="hljs-type">Query</span>.when(filters.nonEmpty) {
+    <span class="hljs-string">sql"WHERE <span class="hljs-subst">${Query.join(filters, sql" AND ")}</span>"</span>
+  }
+  <span class="hljs-keyword">val</span> query = <span class="hljs-string">sql"SELECT id, name FROM customers <span class="hljs-subst">${where}</span>"</span>
   query.readRows[<span class="hljs-type">Customer</span>]()
 }
+</code></pre>
+   <p><code>Query.join</code> returns an empty fragment for an empty collection and preserves the separator exactly as supplied. Values interpolated into any fragment remain prepared statement parameters.</p>
+   <p>Use <code>Query.when</code> for conditional fragments:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> orderBy = <span class="hljs-type">Query</span>.when(sortByName)(<span class="hljs-string">sql"ORDER BY name"</span>)
+<span class="hljs-string">sql"SELECT id, name FROM customers <span class="hljs-subst">${orderBy}</span>"</span>
+</code></pre>
+   <p>Use <code>Query.in</code> for a dynamic <code>IN</code> list:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> ids = <span class="hljs-type">Seq</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>)
+<span class="hljs-string">sql"SELECT id, name FROM customers WHERE id IN <span class="hljs-subst">${Query.in(ids)}</span>"</span>
+</code></pre>
+   <p>An empty collection produces <code>(NULL)</code>, so a positive <code>IN</code> predicate safely matches no rows. Do not use that empty-list behavior for <code>NOT IN</code>, where SQL <code>NULL</code> semantics are different.</p>
+   <p>Use <code>Query.values</code> to join already-parenthesized rows for a multi-row insert:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> rows = customers.map(customer =&gt; <span class="hljs-string">sql"(<span class="hljs-subst">${customer.name}</span>, <span class="hljs-subst">${customer.street}</span>)"</span>)
+<span class="hljs-string">sql"INSERT INTO customers(name, street) VALUES <span class="hljs-subst">${Query.values(rows)}</span>"</span>
+</code></pre>
+   <p><code>Query.values</code> requires at least one row and reports an <code>IllegalArgumentException</code> before executing SQL when the collection is empty.</p>
+   <p>You can still use <code>++</code> when directly appending two fragments:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-string">sql"name = 'Alice'"</span> ++ <span class="hljs-string">sql"AND active = true"</span>
 </code></pre>
    <hr>
    <p>There are also some utils in the <code>ba.sake.squery.utils</code> package.
