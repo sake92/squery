@@ -68,6 +68,35 @@ def updateCustomers: Int = ctx.run {
 }
 ```
 
+## How To Batch Updates?
+
+Use `batchUpdate()` when the same SQL statement needs to run with multiple sets of values:
+
+```scala
+val customers = Seq(
+  Customer("Alice", "alice@example.com"),
+  Customer("Bob", "bob@example.com")
+)
+
+val updateCounts: Seq[Int] = ctx.runTransaction {
+  customers
+    .map { customer =>
+      sql"""
+        INSERT INTO customers(name, email)
+        VALUES (${customer.name}, ${customer.email})
+      """
+    }
+    .batchUpdate()
+}
+```
+
+Every query in the batch must have the same SQL shape and argument count. `batchUpdate()` returns
+the JDBC update count for each query in input order. A driver may return
+`java.sql.Statement.SUCCESS_NO_INFO` when it cannot provide an exact count.
+
+Batching does not start a transaction automatically. Use `runTransaction` when the whole batch
+must succeed or fail together. The JDBC driver must implement prepared statement batching.
+
 ---
 
 But of course you can do other commands as well:
@@ -81,8 +110,6 @@ def createTable: Unit = ctx.run {
   """.update()
 }
 ```
-
-
 
 
 
