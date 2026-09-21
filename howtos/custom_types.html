@@ -55,24 +55,21 @@
    <h1 id="how-to-custom-types">How To Custom Types<a href="#how-to-custom-types" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
    <h2 id="how-to-read-custom-type-column">How to Read Custom Type Column?<a href="#how-to-read-custom-type-column" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>You can read any column that has an instance of <code>SqlRead</code> typeclass. To support your custom type, make a <code>given SqlRead</code> with proper implementation:</p>
-   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">given</span> <span class="hljs-type">SqlRead</span>[<span class="hljs-type">MyType</span>] <span class="hljs-keyword">with</span> {
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">given</span> <span class="hljs-type">SqlRead</span>[<span class="hljs-type">MyType</span>] <span class="hljs-keyword">with</span> {
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">readByName</span></span>(jRes: jsql.<span class="hljs-type">ResultSet</span>, colName: <span class="hljs-type">String</span>): <span class="hljs-type">Option</span>[<span class="hljs-type">MyType</span>] =
     <span class="hljs-type">Option</span>(jRes.getString(colName)).map(parseMyCustomType(...))
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">readByIdx</span></span>(jRes: jsql.<span class="hljs-type">ResultSet</span>, colIdx: <span class="hljs-type">Int</span>): <span class="hljs-type">Option</span>[<span class="hljs-type">MyType</span>] =
     <span class="hljs-type">Option</span>(jRes.getString(colIdx)).map(parseMyCustomType(...))
 }
-</code>
-          </pre>
+</code></pre>
    <h2 id="how-to-read-singleton-enum">How to Read Singleton enum?<a href="#how-to-read-singleton-enum" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>Say you have a column with fixed set of values:</p>
-   <pre>            <code class="language- hljs language-processing" data-highlighted="yes"><span class="hljs-keyword">enum</span> Color:
+   <pre><code class="language- hljs language-processing" data-highlighted="yes"><span class="hljs-keyword">enum</span> Color:
   <span class="hljs-keyword">case</span> <span class="hljs-built_in">red</span>, <span class="hljs-built_in">blue</span>, <span class="hljs-built_in">green</span>
-</code>
-          </pre>
+</code></pre>
    <p>Squery can automatically derive instances of <code>SqlRead</code> and<code>SqlWrite</code>:</p>
-   <pre>            <code class="language- hljs language-angelscript" data-highlighted="yes"><span class="hljs-keyword">enum</span> Color derives SqlRead, SqlWrite
-</code>
-          </pre>
+   <pre><code class="language- hljs language-angelscript" data-highlighted="yes"><span class="hljs-keyword">enum</span> Color derives SqlRead, SqlWrite
+</code></pre>
    <p>It uses stringified values of the enum cases: <code>red</code>, <code>green</code> and <code>blue</code>.</p>
   </main>
   <footer class="pico container">Squery Documentation</footer>

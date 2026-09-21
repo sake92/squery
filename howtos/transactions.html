@@ -50,7 +50,7 @@
    </div>
    <h1 id="how-to-transactions">How To Transactions<a href="#how-to-transactions" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
    <p>We use the <code>runTransaction</code> to run queries inside of a transaction:</p>
-   <pre>            <code class="language-scala hljs" data-highlighted="yes">ctx.runTransaction {
+   <pre><code class="language-scala hljs" data-highlighted="yes">ctx.runTransaction {
   <span class="hljs-string">"""
     INSERT INTO customers(name)
     VALUES (1, 'abc')
@@ -60,18 +60,16 @@
     VALUES (1, 'def')
   "</span><span class="hljs-string">""</span>.insert()
 }
-</code>
-          </pre>
+</code></pre>
    <p>If one of the queries fails, the transaction will be rolled back, nothing will happen.</p>
    <hr>
    <p>The <code>runTransaction</code> uses the <em>default JDBC driver</em> transaction isolation (depends on db).
     <br>
     If you want to explicitly set the transaction isolation you can use the <code>runTransactionWithIsolation</code> function:</p>
-   <pre>            <code class="language-scala hljs" data-highlighted="yes">ctx.runTransactionWithIsolation(<span class="hljs-type">TransactionIsolation</span>.<span class="hljs-type">Serializable</span>) {
+   <pre><code class="language-scala hljs" data-highlighted="yes">ctx.runTransactionWithIsolation(<span class="hljs-type">TransactionIsolation</span>.<span class="hljs-type">Serializable</span>) {
   <span class="hljs-comment">// queries here</span>
 }
-</code>
-          </pre>
+</code></pre>
   </main>
   <footer class="pico container">Squery Documentation</footer>
  </body>

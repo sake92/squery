@@ -55,7 +55,7 @@
    <p>First, we need to initialize a <code>SqueryContext</code> with a standard JDBC <code>DataSource</code>.
     <br>
     You will probably want to use a connection pool for performance (like HikariCP).</p>
-   <pre>            <code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> ba.sake.squery.{*, <span class="hljs-keyword">given</span>}
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> ba.sake.squery.{*, <span class="hljs-keyword">given</span>}
 <span class="hljs-comment">// import one of these if needed:</span>
 <span class="hljs-comment">// import ba.sake.squery.sqlite.{*, given}</span>
 <span class="hljs-comment">// import ba.sake.squery.postgres.{*, given}</span>
@@ -70,21 +70,18 @@ ds.setUsername(..)
 ds.setPassword(..)
 
 <span class="hljs-keyword">val</span> ctx = <span class="hljs-type">SqueryContext</span>(ds)
-</code>
-          </pre>
+</code></pre>
    <p>Generated SQLite <code>RETURNING</code> SQL requires SQLite 3.35 or newer; <code>STRICT</code> tables require SQLite 3.37 or newer.</p>
    <p>Now we can run queries inside the context:</p>
-   <pre>            <code class="language-scala hljs" data-highlighted="yes">ctx.run {
+   <pre><code class="language-scala hljs" data-highlighted="yes">ctx.run {
 <span class="hljs-comment">// queries go here!</span>
 }
-</code>
-          </pre>
+</code></pre>
    <p>or if you want to run them transactionally:</p>
-   <pre>            <code class="language-scala hljs" data-highlighted="yes">ctx.runTransaction {
+   <pre><code class="language-scala hljs" data-highlighted="yes">ctx.runTransaction {
 <span class="hljs-comment">// queries go here!</span>
 }
-</code>
-          </pre>
+</code></pre>
    <p><code>ctx.run*</code> functions provide an implicit JDBC connection under the cover,
     <br>
     thanks to scala3's context functions! &lt;3</p>
