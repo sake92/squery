@@ -68,6 +68,15 @@
   <span class="hljs-string">sql"INSERT INTO customers(name) VALUES('my_customer')"</span>.insertReturningGenKeys[<span class="hljs-type">Int</span>]()
 }
 </code></pre>
+   <p>Generated keys can also be selected by JDBC column name or index:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-string">sql"INSERT INTO customers(name) VALUES('my_customer')"</span>
+  .withGeneratedKeys(<span class="hljs-type">GeneratedKeys</span>.<span class="hljs-type">ColumnNames</span>(<span class="hljs-type">Seq</span>(<span class="hljs-string">"id"</span>)))
+  .insertReturningGenKeys[<span class="hljs-type">Int</span>]()
+
+<span class="hljs-string">sql"INSERT INTO customers(name) VALUES('my_customer')"</span>
+  .withGeneratedKeys(<span class="hljs-type">GeneratedKeys</span>.<span class="hljs-type">ColumnIndexes</span>(<span class="hljs-type">Seq</span>(<span class="hljs-number">1</span>)))
+  .insertReturningGenKeys[<span class="hljs-type">Int</span>]()
+</code></pre>
    <hr>
    <p>There are also variations that return a single result, depending if you want an <code>Option[T]</code> or <code>T</code> (throws if no row returned):</p>
    <pre><code class="language-scala hljs" data-highlighted="yes">  <span class="hljs-string">sql"SELECT ..."</span>.insertReturningGenKeyOpt[<span class="hljs-type">T</span>]() : <span class="hljs-type">Option</span>[<span class="hljs-type">T</span>] <span class="hljs-comment">// first result, if present</span>

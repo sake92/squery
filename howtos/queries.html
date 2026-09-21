@@ -43,6 +43,7 @@
          <ul>
           <li><a href="#how-to-read-one-column-values">How to Read One-Column Values?</a></li>
           <li><a href="#how-to-read-multi-column-values">How to Read Multi-Column Values?</a></li>
+          <li><a href="#how-to-configure-statement-execution">How to Configure Statement Execution?</a></li>
           <li><a href="#how-to-read-rows-as-named-tuples">How to Read Rows as Named Tuples?</a></li>
           <li><a href="#how-to-read-a-full-join">How to Read a Full Join?</a></li>
           <li><a href="#how-to-read-an-outer-join">How to Read an Outer Join?</a></li>
@@ -86,6 +87,22 @@
 }
 </code></pre>
    <p>Note that the <code>case class</code>' fields need to match the <code>SELECT</code> statement columns!</p>
+   <h2 id="how-to-configure-statement-execution">How to Configure Statement Execution?<a href="#how-to-configure-statement-execution" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>Statement options are immutable and can be chained on any query:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> scala.concurrent.duration.*
+
+<span class="hljs-string">sql"SELECT id, name FROM customers"</span>
+  .withFetchSize(<span class="hljs-number">512</span>)
+  .withTimeout(<span class="hljs-number">5.</span>seconds)
+  .withMaxRows(<span class="hljs-number">1000</span>)
+  .readRows[<span class="hljs-type">Customer</span>]()
+</code></pre>
+   <p>Scrollable or updatable result sets can be requested when the JDBC driver supports them:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-string">sql"SELECT id, name FROM customers"</span>
+  .withResultSet(<span class="hljs-type">ResultSetType</span>.<span class="hljs-type">ScrollInsensitive</span>, <span class="hljs-type">ResultSetConcurrency</span>.<span class="hljs-type">ReadOnly</span>)
+  .readRows[<span class="hljs-type">Customer</span>]()
+</code></pre>
+   <p>JDBC does not provide a statement-preparation overload that combines result-set settings with generated-key selection. When both fluent options are used, the last one replaces the earlier preparation option.</p>
    <hr>
    <p>There are also variations that return a single result, depending if you want an <code>Option[T]</code> or <code>T</code>:</p>
    <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-string">sql"SELECT ..."</span>.readRowOpt[<span class="hljs-type">T</span>]() : <span class="hljs-type">Option</span>[<span class="hljs-type">T</span>] <span class="hljs-comment">// first result, if present</span>
