@@ -63,6 +63,55 @@ class SquerySuite extends munit.FunSuite {
     assertEquals(q.arguments, Seq(p1, p2).map(DynamicArg.apply))
   }
 
+  test("Query.join") {
+    val p1 = "a_customer"
+    val p2 = "b_customer"
+    val separatorArg = 7
+    val separator = sql" OR rank = $separatorArg OR "
+
+    assertEquals(Query.join(Seq.empty, separator), sql"")
+    assertEquals(Query.join(Seq(sql"name = $p1"), separator), sql"name = $p1")
+
+    val query = Query.join(Seq(sql"name = $p1", sql"name = $p2"), separator)
+    assertEquals(query.sqlString, "name = ? OR rank = ? OR name = ?")
+    assertEquals(
+      query.arguments,
+      Seq(DynamicArg(p1), DynamicArg(separatorArg), DynamicArg(p2))
+    )
+  }
+
+  test("Query.in") {
+    assertEquals(Query.in(Seq.empty[Int]), sql"(NULL)")
+
+    val query = Query.in(Seq(1, 2, 3))
+    assertEquals(query.sqlString, "(?, ?, ?)")
+    assertEquals(query.arguments, Seq(1, 2, 3).map(DynamicArg.apply))
+  }
+
+  test("Query.values") {
+    val name1 = "a_customer"
+    val name2 = "b_customer"
+    val query = Query.values(Seq(sql"($name1)", sql"($name2)"))
+
+    assertEquals(query.sqlString, "(?), (?)")
+    assertEquals(query.arguments, Seq(name1, name2).map(DynamicArg.apply))
+
+    val error = intercept[IllegalArgumentException](Query.values(Seq.empty))
+    assertEquals(error.getMessage, "Query.values requires at least one row")
+  }
+
+  test("Query.when") {
+    var evaluated = false
+    val absent = Query.when(false) {
+      evaluated = true
+      sql"unused"
+    }
+
+    assertEquals(absent, sql"")
+    assert(!evaluated)
+    assertEquals(Query.when(true)(sql"active = true"), sql"active = true")
+  }
+
   test("DbAction") {
     val a1: DbAction[Int] = sql"""SELECT id FROM customers""".readValue[Int]()
   }

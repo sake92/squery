@@ -187,14 +187,50 @@ This does a few thing for us:
 ## How To Do Dynamic Queries?
 
 Of course, in the real world, you will need to compose queries dynamically at runtime.  
-You can use the `++` operator on queries:
+Use `Query.join` to combine any number of fragments with a separator:
 ```scala
 def customers(): Seq[Customer] = ctx.run {
-  val conds = List(sql"id = 123", sql"name LIKE 'Bob%'")
-  val condsQuery = conds.reduce(_ ++ _)
-  val query = sql"SELECT id, name FROM customers ${condsQuery}"
+  val filters = List(sql"id = 123", sql"name LIKE 'Bob%'")
+  val where = Query.when(filters.nonEmpty) {
+    sql"WHERE ${Query.join(filters, sql" AND ")}"
+  }
+  val query = sql"SELECT id, name FROM customers ${where}"
   query.readRows[Customer]()
 }
+```
+
+`Query.join` returns an empty fragment for an empty collection and preserves the
+separator exactly as supplied. Values interpolated into any fragment remain prepared
+statement parameters.
+
+Use `Query.when` for conditional fragments:
+```scala
+val orderBy = Query.when(sortByName)(sql"ORDER BY name")
+sql"SELECT id, name FROM customers ${orderBy}"
+```
+
+Use `Query.in` for a dynamic `IN` list:
+```scala
+val ids = Seq(1, 2, 3)
+sql"SELECT id, name FROM customers WHERE id IN ${Query.in(ids)}"
+```
+
+An empty collection produces `(NULL)`, so a positive `IN` predicate safely matches
+no rows. Do not use that empty-list behavior for `NOT IN`, where SQL `NULL` semantics
+are different.
+
+Use `Query.values` to join already-parenthesized rows for a multi-row insert:
+```scala
+val rows = customers.map(customer => sql"(${customer.name}, ${customer.street})")
+sql"INSERT INTO customers(name, street) VALUES ${Query.values(rows)}"
+```
+
+`Query.values` requires at least one row and reports an `IllegalArgumentException`
+before executing SQL when the collection is empty.
+
+You can still use `++` when directly appending two fragments:
+```scala
+sql"name = 'Alice'" ++ sql"AND active = true"
 ```
 
 ---
@@ -208,8 +244,6 @@ Seq(Option(sql"q1"), None, Option(sql"q2"))
 // same as this:
 sql"q1 AND q2"
 ```
-
-
 
 
 
