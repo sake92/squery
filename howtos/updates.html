@@ -45,6 +45,7 @@
           <li><a href="#how-to-insert-returning-generated-keys">How To Insert Returning Generated Keys?</a></li>
           <li><a href="#how-to-insert-returning-inserted-values">How To Insert returning inserted values?</a></li>
           <li><a href="#how-to-do-updates">How To Do Updates?</a></li>
+          <li><a href="#how-to-batch-updates">How To Batch Updates?</a></li>
          </ul></li>
        </ul>
       </div>
@@ -98,6 +99,26 @@
   "</span><span class="hljs-string">""</span>.update()
 }
 </code></pre>
+   <h2 id="how-to-batch-updates">How To Batch Updates?<a href="#how-to-batch-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>Use <code>batchUpdate()</code> when the same SQL statement needs to run with multiple sets of values:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> customers = <span class="hljs-type">Seq</span>(
+  <span class="hljs-type">Customer</span>(<span class="hljs-string">"Alice"</span>, <span class="hljs-string">"alice@example.com"</span>),
+  <span class="hljs-type">Customer</span>(<span class="hljs-string">"Bob"</span>, <span class="hljs-string">"bob@example.com"</span>)
+)
+
+<span class="hljs-keyword">val</span> updateCounts: <span class="hljs-type">Seq</span>[<span class="hljs-type">Int</span>] = ctx.runTransaction {
+  customers
+    .map { customer =&gt;
+      <span class="hljs-string">sql""</span><span class="hljs-string">"
+        INSERT INTO customers(name, email)
+        VALUES (${customer.name}, ${customer.email})
+      "</span><span class="hljs-string">""</span>
+    }
+    .batchUpdate()
+}
+</code></pre>
+   <p>Every query in the batch must have the same SQL shape and argument count. <code>batchUpdate()</code> returns the JDBC update count for each query in input order. A driver may return <code>java.sql.Statement.SUCCESS_NO_INFO</code> when it cannot provide an exact count.</p>
+   <p>Batching does not start a transaction automatically. Use <code>runTransaction</code> when the whole batch must succeed or fail together. The JDBC driver must implement prepared statement batching.</p>
    <hr>
    <p>But of course you can do other commands as well:</p>
    <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">createTable</span></span>: <span class="hljs-type">Unit</span> = ctx.run {
