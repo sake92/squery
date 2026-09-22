@@ -51,13 +51,12 @@ extension (query: Query) {
     * @return
     *   generated keys
     */
-  def insertReturningGenKeys[A](colNames: Seq[String] = Seq.empty)(using
+  def insertReturningGenKeys[A]()(using
       c: SqueryConnection,
       r: SqlRead[A]
   ): Seq[A] =
     val queryWithGeneratedKeys =
-      if colNames.nonEmpty then query.withGeneratedKeys(GeneratedKeys.ColumnNames(colNames))
-      else if query.statementOptions.generatedKeys.nonEmpty then query
+      if query.statementOptions.generatedKeys.nonEmpty then query
       else query.withGeneratedKeys()
     Using.resource(
       queryWithGeneratedKeys.newPreparedStatement(DbActionType.Update, c)
@@ -73,17 +72,17 @@ extension (query: Query) {
       elems.result()
     }
 
-  def insertReturningGenKeyOpt[A](colName: Option[String] = None)(using
+  def insertReturningGenKeyOpt[A]()(using
       c: SqueryConnection,
       r: SqlRead[A]
   ): Option[A] =
-    insertReturningGenKeys(colName.toSeq).headOption
+    insertReturningGenKeys().headOption
 
-  def insertReturningGenKey[A](colName: Option[String] = None)(using
+  def insertReturningGenKey[A]()(using
       c: SqueryConnection,
       r: SqlRead[A]
   ): A =
-    insertReturningGenKeyOpt(colName).getOrElse(
+    insertReturningGenKeyOpt().getOrElse(
       throw SqueryException("No value returned from query")
     )
 

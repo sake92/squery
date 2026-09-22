@@ -98,33 +98,39 @@ class OracleSuite extends munit.FunSuite {
         val customer1Id = sql"""
           INSERT INTO customers(name, street)
           VALUES ${customer1.insertTuple}
-        """.insertReturningGenKey[Int](Some("id"))
+        """.withGeneratedKeys(GeneratedKeys.ColumnNames(Seq("id")))
+          .insertReturningGenKey[Int]()
         val customer2Id = sql"""
           INSERT INTO customers(name, street)
           VALUES ${customer2.insertTuple}
-        """.insertReturningGenKey[Int](Some("id"))
+        """.withGeneratedKeys(GeneratedKeys.ColumnNames(Seq("id")))
+          .insertReturningGenKey[Int]()
         customer1 = customer1.copy(id = customer1Id)
         customer2 = customer2.copy(id = customer2Id)
 
         val phoneId1 = sql"""
           INSERT INTO phones(customer_id, numbr)
           VALUES ${phone1.insertTuple(customer1.id)}
-        """.insertReturningGenKey[Int](Some("id"))
+        """.withGeneratedKeys(GeneratedKeys.ColumnNames(Seq("id")))
+          .insertReturningGenKey[Int]()
         val phoneId2 = sql"""
           INSERT INTO phones(customer_id, numbr)
           VALUES ${phone2.insertTuple(customer1.id)}
-        """.insertReturningGenKey[Int](Some("id"))
+        """.withGeneratedKeys(GeneratedKeys.ColumnNames(Seq("id")))
+          .insertReturningGenKey[Int]()
         phone1 = phone1.copy(id = phoneId1)
         phone2 = phone2.copy(id = phoneId2)
 
         val addressId1 = sql"""
           INSERT INTO addresses(name)
           VALUES ${address1.insertTuple}
-        """.insertReturningGenKey[Int](Some("id"))
+        """.withGeneratedKeys(GeneratedKeys.ColumnNames(Seq("id")))
+          .insertReturningGenKey[Int]()
         val addressId2 = sql"""
           INSERT INTO addresses(name)
           VALUES ${address2.insertTuple}
-        """.insertReturningGenKey[Int](Some("id"))
+        """.withGeneratedKeys(GeneratedKeys.ColumnNames(Seq("id")))
+          .insertReturningGenKey[Int]()
         address1 = address1.copy(id = addressId1)
         address2 = address2.copy(id = addressId2)
 
@@ -231,7 +237,8 @@ class OracleSuite extends munit.FunSuite {
       val customerId = sql"""
         INSERT INTO customers(name)
         VALUES ('abc')
-      """.insertReturningGenKey[Int](Some("id"))
+      """.withGeneratedKeys(GeneratedKeys.ColumnNames(Seq("id")))
+        .insertReturningGenKey[Int]()
       assertEquals(
         customerId,
         customer2.id + 1

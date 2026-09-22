@@ -40,7 +40,7 @@ and result rows are decoded into Scala values, case classes, or named tuples.
 Add the core module and your JDBC driver. For Scala CLI:
 
 ```scala
-//> using dep "ba.sake::squery:0.12.0"
+//> using dep "ba.sake::squery:0.13.0"
 //> using dep "com.h2database:h2:2.3.232"
 ```
 
@@ -48,14 +48,14 @@ For Mill:
 
 ```scala
 def mvnDeps = super.mvnDeps() ++ Seq(
-  mvn"ba.sake::squery:0.12.0"
+  mvn"ba.sake::squery:0.13.0"
 )
 ```
 
 For sbt:
 
 ```scala
-libraryDependencies += "ba.sake" %% "squery" % "0.12.0"
+libraryDependencies += "ba.sake" %% "squery" % "0.13.0"
 ```
 
 See the [setup guide](https://sake92.github.io/squery/tutorials/setup.html) and
@@ -106,7 +106,7 @@ Launch the CLI with Coursier and include the JDBC driver as another dependency:
 
 ```shell
 cs launch com.h2database:h2:2.3.232 \
-  ba.sake:squery-cli_2.13:0.12.0 \
+  ba.sake:squery-cli_2.13:0.13.0 \
   -M ba.sake.squery.cli.SqueryMain -- \
   --jdbcUrl jdbc:h2:./database \
   --baseFolder src/main/scala \
