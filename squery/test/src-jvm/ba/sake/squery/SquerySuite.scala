@@ -118,6 +118,8 @@ class SquerySuite extends munit.FunSuite {
         Seq(ConnectionPrepareArgument.IntArray(Seq(1)))
       )
     )
+  }
+
   test("Query.join") {
     val p1 = "a_customer"
     val p2 = "b_customer"
@@ -232,10 +234,11 @@ class SquerySuite extends munit.FunSuite {
     else if returnType == java.lang.Character.TYPE then Char.box(0.toChar)
     else null
 
-  private enum ConnectionPrepareArgument:
+  private enum ConnectionPrepareArgument {
     case IntValue(value: Int)
     case StringArray(value: Seq[String])
     case IntArray(value: Seq[Int])
+  }
 
   private def recordingContext()
       : (SqueryContext, ListBuffer[Seq[ConnectionPrepareArgument]], ListBuffer[(String, Int)]) = {
