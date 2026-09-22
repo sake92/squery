@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results | {{ site.name }}{% endblock %}
+
+{% block content %}
+<h1>Search Results</h1>
+<div id="search-results-content" aria-live="polite"></div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import Fuse from 'https://cdn.jsdelivr.net/npm/fuse.js@7.1.0/dist/fuse.mjs';
+
+const resultsElement = document.getElementById('search-results-content');
+const query = new URLSearchParams(window.location.search).get('q')?.trim() ?? '';
+
+if (query.length === 0) {
+  resultsElement.textContent = 'Enter a search term.';
+} else {
+  const entries = await fetch('{{ site.base_url }}/search/entries.json').then(response => {
+    if (!response.ok) throw new Error(`Could not load search index: ${response.status}`);
+    return response.json();
+  });
+
+  const results = new Fuse(entries, {
+    keys: ['title', 'text'],
+    includeMatches: true
+  }).search(query);
+
+  if (results.length === 0) {
+    const message = document.createElement('p');
+    message.append('No results found for ');
+    const term = document.createElement('strong');
+    term.textContent = query;
+    message.append(term, '.');
+    resultsElement.append(message);
+  } else {
+    results.forEach(result => {
+      const page = result.item;
+      const item = document.createElement('div');
+      item.className = 'search-result-item';
+
+      const heading = document.createElement('h2');
+      const link = document.createElement('a');
+      link.href = page.url;
+      link.textContent = page.title;
+      heading.append(link);
+
+      const excerpt = document.createElement('p');
+      excerpt.textContent = page.text.substring(0, 200);
+      item.append(heading, excerpt);
+      resultsElement.append(item);
+    });
+  }
+}
+</script>
+{% endblock %}

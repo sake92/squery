@@ -41,6 +41,17 @@ def customers: List[Customer] = ctx.run {
 ```
 Note that the `case class`' fields need to match the `SELECT` statement columns!
 
+You can also read a multi-column row as a named tuple without declaring a case class:
+
+```scala
+def customers: Seq[(id: Int, name: String)] = ctx.run {
+  sql"SELECT id, name FROM customers"
+    .readRows[(id: Int, name: String)]()
+}
+```
+
+Named-tuple field names follow the same rule: they must match the selected column names.
+
 ## How to Configure Statement Execution?
 
 Statement options are immutable and can be chained on any query:
@@ -73,37 +84,6 @@ There are also variations that return a single result, depending if you want an 
 sql"SELECT ...".readRowOpt[T]() : Option[T] // first result, if present
 sql"SELECT ...".readRow[T]() : T            // first result, or exception
 ```
-
-
-## How to Read Rows as Named Tuples?
-
-On Scala 3.7 or newer, a named tuple can be used instead of declaring a `case class`:
-```scala
-def customers: Seq[(id: Int, name: String)] = ctx.run {
-  sql"SELECT id, name FROM customers"
-    .readRows[(id: Int, name: String)]()
-}
-
-val firstCustomerName = customers.head.name
-```
-
-Named tuples can also be nested for joins. The outer field name becomes the column prefix, just as it does with composed `case class`es:
-```scala
-type Customer = (id: Int, name: String)
-type Phone = (id: Int, number: String)
-type CustomerWithPhone = (c: Customer, p: Phone)
-
-def customersWithPhones: Seq[CustomerWithPhone] = ctx.run {
-  sql"""
-    SELECT c.id, c.name,
-           p.id, p.number
-    FROM customers c
-    JOIN phones p ON p.customer_id = c.id
-  """.readRows[CustomerWithPhone]()
-}
-```
-
-For an outer join, use an optional nested tuple such as `p: Option[Phone]`.
 
 
 ## How to Read a Full Join?
@@ -211,8 +191,12 @@ This does a few thing for us:
 
 ## How To Do Dynamic Queries?
 
-Of course, in the real world, you will need to compose queries dynamically at runtime.  
-Use `Query.join` to combine any number of fragments with a separator:
+Of course, in the real world, you will need to compose queries dynamically at runtime.
+
+### `Query.join`
+
+Combine any number of fragments with a separator:
+
 ```scala
 def customers(): Seq[Customer] = ctx.run {
   val filters = List(sql"id = 123", sql"name LIKE 'Bob%'")
@@ -228,23 +212,31 @@ def customers(): Seq[Customer] = ctx.run {
 separator exactly as supplied. Values interpolated into any fragment remain prepared
 statement parameters.
 
-Use `Query.when` for conditional fragments:
+### `Query.when`
+
+Include a fragment only when a condition is true:
+
 ```scala
 val orderBy = Query.when(sortByName)(sql"ORDER BY name")
 sql"SELECT id, name FROM customers ${orderBy}"
 ```
 
-Use `Query.in` for a dynamic `IN` list:
+### `Query.in`
+
+Create a dynamic `IN` list:
+
 ```scala
 val ids = Seq(1, 2, 3)
 sql"SELECT id, name FROM customers WHERE id IN ${Query.in(ids)}"
 ```
 
-An empty collection produces `(NULL)`, so a positive `IN` predicate safely matches
-no rows. Do not use that empty-list behavior for `NOT IN`, where SQL `NULL` semantics
-are different.
+An empty collection produces `(NULL)`, so an `IN` condition matches no rows. Do not
+use this empty-list behavior with `NOT IN`, because SQL handles `NULL` differently there.
 
-Use `Query.values` to join already-parenthesized rows for a multi-row insert:
+### `Query.values`
+
+Join already-parenthesized rows for a multi-row insert:
+
 ```scala
 val rows = customers.map(customer => sql"(${customer.name}, ${customer.street})")
 sql"INSERT INTO customers(name, street) VALUES ${Query.values(rows)}"
@@ -253,15 +245,19 @@ sql"INSERT INTO customers(name, street) VALUES ${Query.values(rows)}"
 `Query.values` requires at least one row and reports an `IllegalArgumentException`
 before executing SQL when the collection is empty.
 
-You can still use `++` when directly appending two fragments:
+### Append with `++`
+
+Directly append two fragments:
+
 ```scala
 sql"name = 'Alice'" ++ sql"AND active = true"
 ```
 
----
+### `concatenate`
 
-There are also some utils in the `ba.sake.squery.utils` package.  
-For example, if you want to optionally filter on some columns, you can use `concatenate` function:
+The `ba.sake.squery.utils` package also provides `concatenate` for combining optional
+fragments:
+
 ```scala
 Seq(Option(sql"q1"), None, Option(sql"q2"))
   .concatenate(sep = sql"AND", default = sql"true")
@@ -269,6 +265,3 @@ Seq(Option(sql"q1"), None, Option(sql"q2"))
 // same as this:
 sql"q1 AND q2"
 ```
-
-
-

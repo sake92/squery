@@ -9,17 +9,18 @@ description: Squery How To Transactions
 We use the `runTransaction` to run queries inside of a transaction:
 ```scala
 ctx.runTransaction {
-  """
+  sql"""
     INSERT INTO customers(name)
-    VALUES (1, 'abc')
+    VALUES ('abc')
   """.insert()
   sql"""
     INSERT INTO customers(name)
-    VALUES (1, 'def')
+    VALUES ('def')
   """.insert()
 }
 ```
-If one of the queries fails, the transaction will be rolled back, nothing will happen.
+If the block throws, Squery rolls the transaction back and rethrows the original error.
+If rollback also fails, that error is attached as a suppressed exception.
 
 ---
 The `runTransaction` uses the *default JDBC driver* transaction isolation  (depends on db).  

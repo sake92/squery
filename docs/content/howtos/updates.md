@@ -45,7 +45,7 @@ There are also variations that return a single result, depending if you want an 
   sql"SELECT ...".insertReturningGenKey[T]() : T            // first result, or exception
 ```
 
-## How To Insert returning inserted values?
+## How To Return Inserted Rows?
 
 This method inserts the rows and returns columns you want from the inserted rows.  
 This is **not supported by all databases**, unfortunately.
@@ -59,6 +59,9 @@ def insertCustomers: List[Customer] = ctx.run {
 }
 ```
 Here in one query you can both **insert + get** the row you inserted.  
+
+For exactly one returned row, use `insertReturningRow[Customer]()`. It throws a
+`SqueryException` if the database returns no row.
 
 
 
@@ -79,6 +82,25 @@ def updateCustomers: Int = ctx.run {
   """.update()
 }
 ```
+
+Databases with `RETURNING` support can return affected rows from updates and deletes:
+
+```scala
+val renamed: Seq[Customer] =
+  sql"""
+    UPDATE customers SET name = 'Alice' WHERE id = 1
+    RETURNING id, name
+  """.updateReturningRows[Customer]()
+
+val deleted: Customer =
+  sql"""
+    DELETE FROM customers WHERE id = 1
+    RETURNING id, name
+  """.deleteReturningRow[Customer]()
+```
+
+The singular `updateReturningRow` and `deleteReturningRow` variants throw when no row
+is returned. Support and syntax depend on the database.
 
 ## How To Batch Updates?
 
@@ -123,6 +145,8 @@ def createTable: Unit = ctx.run {
 }
 ```
 
+For statements that do not naturally return an update count, such as stored-procedure
+definitions, use `sql"...".execute()`.
 
 
 

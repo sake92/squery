@@ -26,6 +26,10 @@ ds.setPassword(..)
 val ctx = SqueryContext(ds)
 ```
 
+Use the database-specific import when you need its codecs. For example, SQLite stores
+`Boolean` as an integer and `UUID` and `Instant` as text, while PostgreSQL uses its
+native UUID representation.
+
 Generated SQLite `RETURNING` SQL requires SQLite 3.35 or newer; `STRICT` tables require
 SQLite 3.37 or newer.
 
@@ -46,8 +50,23 @@ ctx.runTransaction {
 }
 ```
 
-`ctx.run*` functions provide an implicit JDBC connection under the cover,  
-thanks to scala3's context functions! <3
+The `ctx.run*` methods provide a scoped `SqueryConnection` using Scala 3 context
+functions. Connections are acquired from the data source and closed after the block.
+Transactions commit on success and roll back when the block throws.
+
+## Logging and update linting
+
+On the JVM, Squery logs through SLF4J. Executed SQL is logged at `DEBUG`; bound values
+are not included. JDBC warnings and SQL parsing failures are logged at `WARN`.
+
+You can also warn when an `UPDATE` or `DELETE` has no `WHERE` clause:
+
+```scala
+val ctx = SqueryContext(ds, lintUpdates = true)
+```
+
+The linter is a safety warning, not a SQL validator: the statement still executes.
+Keep database permissions, transactions, and application-level safeguards in place.
 
 
 
