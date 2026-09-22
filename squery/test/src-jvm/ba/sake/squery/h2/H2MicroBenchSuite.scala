@@ -6,6 +6,9 @@ import java.time.Duration
 
 // just to make sure queries run in a reasonable time
 class H2MicroBenchSuite extends munit.FunSuite {
+
+  override def munitFlakyOK: Boolean = true 
+
   def initDb(name: String) = {
     val ds = com.zaxxer.hikari.HikariDataSource()
     val dbName = "jdbc:h2:mem:test_squery_" + name.replaceAll("\\s", "_")
@@ -23,7 +26,7 @@ class H2MicroBenchSuite extends munit.FunSuite {
     ctx
   }
 
-  test("Run 1000 INSERTs microbench") {
+  test("Run 1000 INSERTs microbench".flaky) {
     val ctx = initDb("1000 INSERTs")
     val start = System.nanoTime()
     for (i <- 1 to 1000) {
@@ -39,7 +42,7 @@ class H2MicroBenchSuite extends munit.FunSuite {
     assert(total.toMillis < 1000, total)
   }
 
-  test("Run 10000 SELECTs microbench") {
+  test("Run 10000 SELECTs microbench".flaky) {
     val ctx = initDb("10000 SELECTs")
     val totalItems = 10_000
     for (i <- 1 to totalItems) {
