@@ -44,6 +44,7 @@
           <li><a href="#mill">Mill</a></li>
           <li><a href="#sbt">sbt</a></li>
           <li><a href="#scala-cli">Scala CLI</a></li>
+          <li><a href="#optional-modules">Optional modules</a></li>
           <li><a href="#scastie">Scastie</a></li>
          </ul></li>
        </ul>
@@ -55,19 +56,36 @@
     <div></div>
    </div>
    <h1 id="setup">Setup<a href="#setup" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+   <p>Squery is published for Scala 3. Add the core module and the JDBC driver for your database; JDBC drivers are not bundled.</p>
    <h2 id="mill">Mill<a href="#mill" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">mvnDeps</span> </span>= <span class="hljs-keyword">super</span>.mvnDeps() ++ <span class="hljs-type">Seq</span>(
-  <span class="hljs-string">mvn"ba.sake::squery:0.11.0"</span>
+  <span class="hljs-string">mvn"ba.sake::squery:0.12.0"</span>
 )
 </code></pre>
    <h2 id="sbt">sbt<a href="#sbt" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <pre><code class="language-scala hljs" data-highlighted="yes">libraryDependencies ++= <span class="hljs-type">Seq</span>(
-  <span class="hljs-string">"ba.sake"</span> %% <span class="hljs-string">"squery"</span> % <span class="hljs-string">"0.11.0"</span>
+  <span class="hljs-string">"ba.sake"</span> %% <span class="hljs-string">"squery"</span> % <span class="hljs-string">"0.12.0"</span>
 )
 </code></pre>
    <h2 id="scala-cli">Scala CLI<a href="#scala-cli" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">ba.sake::squery:0.11.0</span>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">"ba.sake::squery:0.12.0"</span>
 </code></pre>
+   <h2 id="optional-modules">Optional modules<a href="#optional-modules" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>PostgreSQL applications using the Jawn AST can add JSON/JSONB codecs:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">// Mill</span>
+<span class="hljs-string">mvn"ba.sake::squery-postgres-jawn:0.12.0"</span>
+
+<span class="hljs-comment">// sbt</span>
+<span class="hljs-string">"ba.sake"</span> %% <span class="hljs-string">"squery-postgres-jawn"</span> % <span class="hljs-string">"0.12.0"</span>
+
+<span class="hljs-comment">// Scala CLI</span>
+<span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">"ba.sake::squery-postgres-jawn:0.12.0"</span>
+</code></pre>
+   <p>The code generator is a Scala 2.13 artifact because it is also used by the CLI. For a standalone Scala CLI generator script:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">scala</span> <span class="hljs-string">"2.13.15"</span>
+<span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">"ba.sake::squery-generator:0.12.0"</span>
+</code></pre>
+   <p>Scala Native is supported with a Scala Native-compatible JDBC driver. See the <a href="https://github.com/sake92/squery/tree/main/examples/cli/native.sc"><code>examples/cli/native.sc</code></a> example for a working SQLite setup.</p>
    <h2 id="scastie">Scastie<a href="#scastie" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>You can also use this <a href="https://scastie.scala-lang.org/39YRVAiHToGTPNE6RcWQ9Q">Scastie example</a> to try Squery online.</p>
   </main>

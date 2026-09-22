@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Squery - simple SQL queries in Scala">
+  <meta name="description" content="Plain SQL and type-safe JDBC access for Scala 3">
   <title> Squery | Squery Documentation </title>
   <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
@@ -39,7 +39,11 @@
       <summary>Table of Contents</summary>
       <div>
        <ul>
-        <li><a href="#squery">Squery</a></li>
+        <li><a href="#squery">Squery</a>
+         <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#supported-values">Supported values</a></li>
+         </ul></li>
        </ul>
       </div>
      </details>
@@ -49,16 +53,39 @@
     <div></div>
    </div>
    <h1 id="squery">Squery<a href="#squery" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
-   <p>Simple SQL queries in Scala 3.</p>
-   <p>No DSLs, no fuss, just plain SQL.</p>
-   <p>Scala Native is supported since 0.11.0 with a Scala Native-compatible JDBC driver.</p>
-   <p>Squery supports basic scala/java types out of the box:</p>
+   <p>Squery is a small Scala 3 library for type-safe JDBC access with plain SQL: no query DSL, no generated runtime layer, and no hidden connection management.</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> customerId = <span class="hljs-number">42</span>
+<span class="hljs-keyword">val</span> customers = ctx.run {
+  <span class="hljs-string">sql"SELECT id, name FROM customers WHERE id = <span class="hljs-subst">$customerId</span>"</span>
+    .readRows[<span class="hljs-type">Customer</span>]()
+}
+</code></pre>
+   <p>Interpolated values become prepared-statement parameters. Results are decoded into Scala scalar values, case classes, or named tuples.</p>
+   <h2 id="features">Features<a href="#features" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <ul>
-    <li><code>String</code>, <code>Int</code>, <code>Double</code> etc</li>
-    <li><code>Option[T]</code> for nullable columns</li>
-    <li><code>Vector[T]</code> for SQL arrays, up to 3 dimensions</li>
-    <li>semiauto derivation for singleton (java-esque) enums, just add <code>derives SqlRead, SqlWrite</code></li>
+    <li>Any JDBC driver, with database-specific codecs for PostgreSQL, MySQL, MariaDB, Oracle, H2, and SQLite</li>
+    <li>JVM and Scala Native support (with a Scala Native-compatible JDBC driver)</li>
+    <li>Case-class and named-tuple row decoding, including nested and optional joined rows</li>
+    <li>Safe dynamic SQL with <code>Query.join</code>, <code>Query.when</code>, <code>Query.in</code>, and <code>Query.values</code></li>
+    <li>Transactions and configurable transaction isolation</li>
+    <li>Generated keys, returning rows, JDBC batch updates, and generic statement execution</li>
+    <li>Per-query fetch size, timeout, row limit, result-set, and generated-key options</li>
+    <li>Database-to-Scala model and DAO generation</li>
    </ul>
+   <h2 id="supported-values">Supported values<a href="#supported-values" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>The core module reads and writes:</p>
+   <ul>
+    <li><code>String</code>, <code>Boolean</code>, <code>Byte</code>, <code>Short</code>, <code>Int</code>, <code>Long</code>, and <code>Double</code></li>
+    <li><code>Instant</code>, <code>OffsetDateTime</code>, <code>LocalDate</code>, and <code>LocalDateTime</code></li>
+    <li><code>Option[T]</code> for nullable columns</li>
+    <li><code>Array[T]</code> and <code>Vector[T]</code> for SQL arrays, up to three dimensions</li>
+    <li><code>Array[Byte]</code> and <code>Vector[Byte]</code> for binary data</li>
+    <li>singleton enums with <code>derives SqlRead, SqlWrite</code></li>
+    <li>case classes with <code>derives SqlReadRow</code> for multi-column rows</li>
+    <li>named tuples for multi-column rows</li>
+   </ul>
+   <p>Database-specific imports provide the appropriate <code>UUID</code> codec, while the optional <code>squery-postgres-jawn</code> module provides PostgreSQL JSON/JSONB support using Jawn.</p>
+   <p>Start with <a href="https://sake92.github.io/squery/tutorials/setup.html">Setup</a>, then continue to the <a href="https://sake92.github.io/squery/tutorials/quickstart.html">Quickstart</a>. The <a href="https://sake92.github.io/squery/howtos/">How-Tos</a> cover queries, updates, interpolation, transactions, and custom types.</p>
   </main>
   <footer class="pico container">Squery Documentation</footer>
  </body>

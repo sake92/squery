@@ -51,17 +51,17 @@
    <h1 id="how-to-transactions">How To Transactions<a href="#how-to-transactions" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
    <p>We use the <code>runTransaction</code> to run queries inside of a transaction:</p>
    <pre><code class="language-scala hljs" data-highlighted="yes">ctx.runTransaction {
-  <span class="hljs-string">"""
-    INSERT INTO customers(name)
-    VALUES (1, 'abc')
-  """</span>.insert()
   <span class="hljs-string">sql""</span><span class="hljs-string">"
     INSERT INTO customers(name)
-    VALUES (1, 'def')
+    VALUES ('abc')
+  "</span><span class="hljs-string">""</span>.insert()
+  <span class="hljs-string">sql""</span><span class="hljs-string">"
+    INSERT INTO customers(name)
+    VALUES ('def')
   "</span><span class="hljs-string">""</span>.insert()
 }
 </code></pre>
-   <p>If one of the queries fails, the transaction will be rolled back, nothing will happen.</p>
+   <p>If the block throws, Squery rolls the transaction back and rethrows the original error. If rollback also fails, that error is attached as a suppressed exception.</p>
    <hr>
    <p>The <code>runTransaction</code> uses the <em>default JDBC driver</em> transaction isolation (depends on db).
     <br>

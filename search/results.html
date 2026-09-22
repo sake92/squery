@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Search the Squery documentation">
+  <title>Search Results | Squery Documentation</title>
+  <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
+ </head>
+ <body>
+  <header class="pico container">
+   <nav>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/">Home</a></li>
+    </ul>
+    <ul>
+     <li>
+      <form action="https://sake92.github.io/squery/search/results.html" method="GET">
+       <input name="q" type="search" placeholder="Search">
+      </form>
+     </li>
+    </ul>
+    <ul>
+     <li><a href="https://sake92.github.io/squery/tutorials">Tutorials</a></li>
+     <li><a href="https://sake92.github.io/squery/howtos">How-Tos</a></li>
+    </ul>
+   </nav>
+  </header>
+  <main class="pico container">
+   <div class="grid">
+    <div></div>
+    <div></div>
+    <div></div>
+   </div>
+   <h1>Search Results</h1>
+   <div id="search-results-content" aria-live="polite"></div>
+  </main>
+  <footer class="pico container">Squery Documentation</footer>
+  <script type="module">
+import Fuse from 'https://cdn.jsdelivr.net/npm/fuse.js@7.1.0/dist/fuse.mjs';
+
+const resultsElement = document.getElementById('search-results-content');
+const query = new URLSearchParams(window.location.search).get('q')?.trim() ?? '';
+
+if (query.length === 0) {
+  resultsElement.textContent = 'Enter a search term.';
+} else {
+  const entries = await fetch('https://sake92.github.io/squery/search/entries.json').then(response => {
+    if (!response.ok) throw new Error(`Could not load search index: ${response.status}`);
+    return response.json();
+  });
+
+  const results = new Fuse(entries, {
+    keys: ['title', 'text'],
+    includeMatches: true
+  }).search(query);
+
+  if (results.length === 0) {
+    const message = document.createElement('p');
+    message.append('No results found for ');
+    const term = document.createElement('strong');
+    term.textContent = query;
+    message.append(term, '.');
+    resultsElement.append(message);
+  } else {
+    results.forEach(result => {
+      const page = result.item;
+      const item = document.createElement('div');
+      item.className = 'search-result-item';
+
+      const heading = document.createElement('h2');
+      const link = document.createElement('a');
+      link.href = page.url;
+      link.textContent = page.title;
+      heading.append(link);
+
+      const excerpt = document.createElement('p');
+      excerpt.textContent = page.text.substring(0, 200);
+      item.append(heading, excerpt);
+      resultsElement.append(item);
+    });
+  }
+}
+</script>
+ </body>
+</html>

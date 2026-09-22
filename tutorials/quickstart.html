@@ -41,6 +41,7 @@
        <ul>
         <li><a href="#quickstart">Quickstart</a>
          <ul>
+          <li><a href="#logging-and-update-linting">Logging and update linting</a></li>
           <li><a href="#examples">Examples</a></li>
          </ul></li>
        </ul>
@@ -71,6 +72,7 @@ ds.setPassword(..)
 
 <span class="hljs-keyword">val</span> ctx = <span class="hljs-type">SqueryContext</span>(ds)
 </code></pre>
+   <p>Use the database-specific import when you need its codecs. For example, SQLite stores <code>Boolean</code> as an integer and <code>UUID</code> and <code>Instant</code> as text, while PostgreSQL uses its native UUID representation.</p>
    <p>Generated SQLite <code>RETURNING</code> SQL requires SQLite 3.35 or newer; <code>STRICT</code> tables require SQLite 3.37 or newer.</p>
    <p>Now we can run queries inside the context:</p>
    <pre><code class="language-scala hljs" data-highlighted="yes">ctx.run {
@@ -82,9 +84,13 @@ ds.setPassword(..)
 <span class="hljs-comment">// queries go here!</span>
 }
 </code></pre>
-   <p><code>ctx.run*</code> functions provide an implicit JDBC connection under the cover,
-    <br>
-    thanks to scala3's context functions! &lt;3</p>
+   <p>The <code>ctx.run*</code> methods provide a scoped <code>SqueryConnection</code> using Scala 3 context functions. Connections are acquired from the data source and closed after the block. Transactions commit on success and roll back when the block throws.</p>
+   <h2 id="logging-and-update-linting">Logging and update linting<a href="#logging-and-update-linting" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>On the JVM, Squery logs through SLF4J. Executed SQL is logged at <code>DEBUG</code>; bound values are not included. JDBC warnings and SQL parsing failures are logged at <code>WARN</code>.</p>
+   <p>You can also warn when an <code>UPDATE</code> or <code>DELETE</code> has no <code>WHERE</code> clause:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> ctx = <span class="hljs-type">SqueryContext</span>(ds, lintUpdates = <span class="hljs-literal">true</span>)
+</code></pre>
+   <p>The linter is a safety warning, not a SQL validator: the statement still executes. Keep database permissions, transactions, and application-level safeguards in place.</p>
    <h2 id="examples">Examples<a href="#examples" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>You can find examples:</p>
    <ul>

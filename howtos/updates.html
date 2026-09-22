@@ -43,7 +43,7 @@
          <ul>
           <li><a href="#how-to-insert-data">How To Insert Data?</a></li>
           <li><a href="#how-to-insert-returning-generated-keys">How To Insert Returning Generated Keys?</a></li>
-          <li><a href="#how-to-insert-returning-inserted-values">How To Insert returning inserted values?</a></li>
+          <li><a href="#how-to-return-inserted-rows">How To Return Inserted Rows?</a></li>
           <li><a href="#how-to-do-updates">How To Do Updates?</a></li>
           <li><a href="#how-to-batch-updates">How To Batch Updates?</a></li>
          </ul></li>
@@ -82,7 +82,7 @@
    <pre><code class="language-scala hljs" data-highlighted="yes">  <span class="hljs-string">sql"SELECT ..."</span>.insertReturningGenKeyOpt[<span class="hljs-type">T</span>]() : <span class="hljs-type">Option</span>[<span class="hljs-type">T</span>] <span class="hljs-comment">// first result, if present</span>
   <span class="hljs-string">sql"SELECT ..."</span>.insertReturningGenKey[<span class="hljs-type">T</span>]() : <span class="hljs-type">T</span>            <span class="hljs-comment">// first result, or exception</span>
 </code></pre>
-   <h2 id="how-to-insert-returning-inserted-values">How To Insert returning inserted values?<a href="#how-to-insert-returning-inserted-values" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <h2 id="how-to-return-inserted-rows">How To Return Inserted Rows?<a href="#how-to-return-inserted-rows" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>This method inserts the rows and returns columns you want from the inserted rows.
     <br>
     This is <strong>not supported by all databases</strong>, unfortunately.</p>
@@ -95,6 +95,7 @@
 }
 </code></pre>
    <p>Here in one query you can both <strong>insert + get</strong> the row you inserted.</p>
+   <p>For exactly one returned row, use <code>insertReturningRow[Customer]()</code>. It throws a <code>SqueryException</code> if the database returns no row.</p>
    <h2 id="how-to-do-updates">How To Do Updates?<a href="#how-to-do-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>You can do arbitrary SQL commands here.
     <br>
@@ -108,6 +109,20 @@
   "</span><span class="hljs-string">""</span>.update()
 }
 </code></pre>
+   <p>Databases with <code>RETURNING</code> support can return affected rows from updates and deletes:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> renamed: <span class="hljs-type">Seq</span>[<span class="hljs-type">Customer</span>] =
+  <span class="hljs-string">sql""</span><span class="hljs-string">"
+    UPDATE customers SET name = 'Alice' WHERE id = 1
+    RETURNING id, name
+  "</span><span class="hljs-string">""</span>.updateReturningRows[<span class="hljs-type">Customer</span>]()
+
+<span class="hljs-keyword">val</span> deleted: <span class="hljs-type">Customer</span> =
+  <span class="hljs-string">sql""</span><span class="hljs-string">"
+    DELETE FROM customers WHERE id = 1
+    RETURNING id, name
+  "</span><span class="hljs-string">""</span>.deleteReturningRow[<span class="hljs-type">Customer</span>]()
+</code></pre>
+   <p>The singular <code>updateReturningRow</code> and <code>deleteReturningRow</code> variants throw when no row is returned. Support and syntax depend on the database.</p>
    <h2 id="how-to-batch-updates">How To Batch Updates?<a href="#how-to-batch-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>Use <code>batchUpdate()</code> when the same SQL statement needs to run with multiple sets of values:</p>
    <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> customers = <span class="hljs-type">Seq</span>(
@@ -139,6 +154,7 @@
   "</span><span class="hljs-string">""</span>.update()
 }
 </code></pre>
+   <p>For statements that do not naturally return an update count, such as stored-procedure definitions, use <code>sql"...".execute()</code>.</p>
   </main>
   <footer class="pico container">Squery Documentation</footer>
  </body>

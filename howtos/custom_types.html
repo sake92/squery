@@ -42,7 +42,7 @@
         <li><a href="#how-to-custom-types">How To Custom Types</a>
          <ul>
           <li><a href="#how-to-read-custom-type-column">How to Read Custom Type Column?</a></li>
-          <li><a href="#how-to-read-singleton-enum">How to Read Singleton enum?</a></li>
+          <li><a href="#how-to-read-and-write-a-singleton-enum">How to Read and Write a Singleton Enum?</a></li>
          </ul></li>
        </ul>
       </div>
@@ -53,8 +53,15 @@
     <div></div>
    </div>
    <h1 id="how-to-custom-types">How To Custom Types<a href="#how-to-custom-types" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+   <p>The core module supports strings, booleans, numeric primitives, Java time values, nullable values, binary data, and SQL arrays. Import the package for your database to use its <code>UUID</code> codec and any storage-specific overrides:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> ba.sake.squery.{*, <span class="hljs-keyword">given</span>}
+<span class="hljs-keyword">import</span> ba.sake.squery.postgres.{*, <span class="hljs-keyword">given</span>} <span class="hljs-comment">// or sqlite, mysql, mariadb, oracle, h2</span>
+</code></pre>
+   <p>For PostgreSQL JSON/JSONB with Jawn, add the <code>squery-postgres-jawn</code> module and import:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> ba.sake.squery.postgres.jawn.{*, <span class="hljs-keyword">given</span>}
+</code></pre>
    <h2 id="how-to-read-custom-type-column">How to Read Custom Type Column?<a href="#how-to-read-custom-type-column" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <p>You can read any column that has an instance of <code>SqlRead</code> typeclass. To support your custom type, make a <code>given SqlRead</code> with proper implementation:</p>
+   <p>You can read any column that has an instance of the <code>SqlRead</code> type class. To support your custom type, make a <code>given SqlRead</code> with proper implementation:</p>
    <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">given</span> <span class="hljs-type">SqlRead</span>[<span class="hljs-type">MyType</span>] <span class="hljs-keyword">with</span> {
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">readByName</span></span>(jRes: jsql.<span class="hljs-type">ResultSet</span>, colName: <span class="hljs-type">String</span>): <span class="hljs-type">Option</span>[<span class="hljs-type">MyType</span>] =
     <span class="hljs-type">Option</span>(jRes.getString(colName)).map(parseMyCustomType(...))
@@ -62,13 +69,19 @@
     <span class="hljs-type">Option</span>(jRes.getString(colIdx)).map(parseMyCustomType(...))
 }
 </code></pre>
-   <h2 id="how-to-read-singleton-enum">How to Read Singleton enum?<a href="#how-to-read-singleton-enum" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+   <p>Writing uses the matching <code>SqlWrite[T]</code> type class:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">given</span> <span class="hljs-type">SqlWrite</span>[<span class="hljs-type">MyType</span>] <span class="hljs-keyword">with</span> {
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">write</span></span>(ps: jsql.<span class="hljs-type">PreparedStatement</span>, idx: <span class="hljs-type">Int</span>, value: <span class="hljs-type">Option</span>[<span class="hljs-type">MyType</span>]): <span class="hljs-type">Unit</span> =
+    ps.setString(idx, value.map(renderMyCustomType).orNull)
+}
+</code></pre>
+   <h2 id="how-to-read-and-write-a-singleton-enum">How to Read and Write a Singleton Enum?<a href="#how-to-read-and-write-a-singleton-enum" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>Say you have a column with fixed set of values:</p>
    <pre><code class="language- hljs language-processing" data-highlighted="yes"><span class="hljs-keyword">enum</span> Color:
   <span class="hljs-keyword">case</span> <span class="hljs-built_in">red</span>, <span class="hljs-built_in">blue</span>, <span class="hljs-built_in">green</span>
 </code></pre>
-   <p>Squery can automatically derive instances of <code>SqlRead</code> and<code>SqlWrite</code>:</p>
-   <pre><code class="language- hljs language-angelscript" data-highlighted="yes"><span class="hljs-keyword">enum</span> Color derives SqlRead, SqlWrite
+   <p>Squery can automatically derive instances of <code>SqlRead</code> and <code>SqlWrite</code>:</p>
+   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">enum</span> <span class="hljs-type">Color</span> derives <span class="hljs-type">SqlRead</span>, <span class="hljs-type">SqlWrite</span>
 </code></pre>
    <p>It uses stringified values of the enum cases: <code>red</code>, <code>green</code> and <code>blue</code>.</p>
   </main>
