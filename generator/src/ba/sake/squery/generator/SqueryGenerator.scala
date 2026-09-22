@@ -422,7 +422,7 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
             args = colValues.toList
           )
           q"""def insert(row: ${rowClassType}): DbAction[${rowClassType}] =
-                ${sqlInterpolate}.insertReturningRow()
+                ${sqlInterpolate}.returningRow()
               """
         } else {
           val sqlInterpolate = Term.Interpolate(

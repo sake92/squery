@@ -20,9 +20,6 @@ case class Query(
   def ++(other: Query): Query =
     copy(sqlString = sqlString + " " + other.sqlString, arguments = arguments ++ other.arguments)
 
-  def withStatementOptions(options: StatementOptions): Query =
-    copy(statementOptions = options)
-
   def withFetchSize(fetchSize: Int): Query =
     copy(statementOptions = statementOptions.copy(fetchSize = Some(fetchSize)))
 

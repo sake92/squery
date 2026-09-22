@@ -209,7 +209,7 @@ class MariaDbSuite extends munit.FunSuite {
         sql"""
           SELECT id, name, street
           FROM customers
-        """.insertReturningRows[CustomerBad]()
+        """.returningRows[CustomerBad]()
       }
     }
   }
@@ -235,7 +235,7 @@ class MariaDbSuite extends munit.FunSuite {
         INSERT INTO customers(name)
         VALUES ('abc'), ('def'), ('ghi')
         RETURNING id, name, street
-      """.insertReturningRows[Customer]()
+      """.returningRows[Customer]()
       assertEquals(customers.map(_.name).toSet, Set("abc", "def", "ghi"))
     }
   }

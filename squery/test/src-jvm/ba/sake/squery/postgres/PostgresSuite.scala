@@ -220,7 +220,7 @@ class PostgresSuite extends munit.FunSuite {
         sql"""
           SELECT id, name, street
           FROM customers
-        """.insertReturningRows[CustomerBad]()
+        """.returningRows[CustomerBad]()
       }
     }
   }
@@ -246,7 +246,7 @@ class PostgresSuite extends munit.FunSuite {
         INSERT INTO customers(name)
         VALUES ('abc'), ('def'), ('ghi')
         RETURNING id, name, street
-      """.insertReturningRows[Customer]()
+      """.returningRows[Customer]()
       assertEquals(customers.map(_.name).toSet, Set("abc", "def", "ghi"))
     }
   }
@@ -275,14 +275,14 @@ class PostgresSuite extends munit.FunSuite {
         SET name = 'updated'
         WHERE id = ${customer2.id}
         RETURNING id, name, street
-      """.updateReturningRow[Customer]()
+      """.returningRow[Customer]()
       assertEquals(updated.name, "updated")
 
       val deleted = sql"""
         DELETE FROM customers
         WHERE id = ${updated.id}
         RETURNING id, name, street
-      """.deleteReturningRow[Customer]()
+      """.returningRow[Customer]()
       assertEquals(deleted, updated)
     }
   }

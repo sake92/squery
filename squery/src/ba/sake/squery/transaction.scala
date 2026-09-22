@@ -7,10 +7,10 @@ import java.sql.Connection
 enum TransactionIsolation(val jdbcLevel: Int):
   /** Dirty (not-yet-committed) reads allowed.
     */
-  case ReadUncommited extends TransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED)
+  case ReadUncommitted extends TransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED)
 
   /** Default in most dbs */
-  case ReadCommited extends TransactionIsolation(Connection.TRANSACTION_READ_COMMITTED)
+  case ReadCommitted extends TransactionIsolation(Connection.TRANSACTION_READ_COMMITTED)
 
   /** */
   case RepeatableRead extends TransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ)

@@ -206,7 +206,7 @@ class MySqlSuite extends munit.FunSuite {
         sql"""
           SELECT id, name, street
           FROM customers
-        """.insertReturningRows[CustomerBad]()
+        """.returningRows[CustomerBad]()
       }
     }
   }

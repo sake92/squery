@@ -17,7 +17,7 @@ val SqlWrite = ba.sake.squery.write.SqlWrite
 
 type DbAction[T] = SqueryConnection ?=> T
 
-enum DbActionType:
+private[squery] enum DbActionType:
   case Select, Update, General
 
 // ext methods coz overloadinggggggggg
@@ -86,7 +86,8 @@ extension (query: Query) {
       throw SqueryException("No value returned from query")
     )
 
-  def insertReturningRows[A]()(using
+  /** Executes a statement with a `RETURNING` clause and reads all returned rows. */
+  def returningRows[A]()(using
       c: SqueryConnection,
       r: SqlReadRow[A]
   ): Seq[A] =
@@ -104,26 +105,9 @@ extension (query: Query) {
       }
     }
 
-  def insertReturningRow[A]()(using c: SqueryConnection, r: SqlReadRow[A]): A =
-    insertReturningRows().headOption.getOrElse(
-      throw SqueryException("No value returned from query")
-    )
-
-  /** Updates rows and returns their values from a `RETURNING` clause. */
-  def updateReturningRows[A]()(using c: SqueryConnection, r: SqlReadRow[A]): Seq[A] =
-    insertReturningRows()
-
-  def updateReturningRow[A]()(using c: SqueryConnection, r: SqlReadRow[A]): A =
-    updateReturningRows().headOption.getOrElse(
-      throw SqueryException("No value returned from query")
-    )
-
-  /** Deletes rows and returns their values from a `RETURNING` clause. */
-  def deleteReturningRows[A]()(using c: SqueryConnection, r: SqlReadRow[A]): Seq[A] =
-    insertReturningRows()
-
-  def deleteReturningRow[A]()(using c: SqueryConnection, r: SqlReadRow[A]): A =
-    deleteReturningRows().headOption.getOrElse(
+  /** Executes a statement with a `RETURNING` clause and reads exactly one returned row. */
+  def returningRow[A]()(using c: SqueryConnection, r: SqlReadRow[A]): A =
+    returningRows().headOption.getOrElse(
       throw SqueryException("No value returned from query")
     )
 

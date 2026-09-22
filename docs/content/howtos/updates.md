@@ -55,12 +55,12 @@ def insertCustomers: List[Customer] = ctx.run {
     INSERT INTO customers(name)
     VALUES ('abc'), ('def'), ('ghi')
     RETURNING id, name
-  """.insertReturningRows[Customer]()
+  """.returningRows[Customer]()
 }
 ```
 Here in one query you can both **insert + get** the row you inserted.  
 
-For exactly one returned row, use `insertReturningRow[Customer]()`. It throws a
+For exactly one returned row, use `returningRow[Customer]()`. It throws a
 `SqueryException` if the database returns no row.
 
 
@@ -90,17 +90,17 @@ val renamed: Seq[Customer] =
   sql"""
     UPDATE customers SET name = 'Alice' WHERE id = 1
     RETURNING id, name
-  """.updateReturningRows[Customer]()
+  """.returningRows[Customer]()
 
 val deleted: Customer =
   sql"""
     DELETE FROM customers WHERE id = 1
     RETURNING id, name
-  """.deleteReturningRow[Customer]()
+  """.returningRow[Customer]()
 ```
 
-The singular `updateReturningRow` and `deleteReturningRow` variants throw when no row
-is returned. Support and syntax depend on the database.
+The singular `returningRow` variant throws when no row is returned. Support and syntax
+depend on the database.
 
 ## How To Batch Updates?
 
@@ -147,7 +147,6 @@ def createTable: Unit = ctx.run {
 
 For statements that do not naturally return an update count, such as stored-procedure
 definitions, use `sql"...".execute()`.
-
 
 
 
