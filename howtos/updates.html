@@ -91,11 +91,11 @@
     INSERT INTO customers(name)
     VALUES ('abc'), ('def'), ('ghi')
     RETURNING id, name
-  "</span><span class="hljs-string">""</span>.insertReturningRows[<span class="hljs-type">Customer</span>]()
+  "</span><span class="hljs-string">""</span>.returningRows[<span class="hljs-type">Customer</span>]()
 }
 </code></pre>
    <p>Here in one query you can both <strong>insert + get</strong> the row you inserted.</p>
-   <p>For exactly one returned row, use <code>insertReturningRow[Customer]()</code>. It throws a <code>SqueryException</code> if the database returns no row.</p>
+   <p>For exactly one returned row, use <code>returningRow[Customer]()</code>. It throws a <code>SqueryException</code> if the database returns no row.</p>
    <h2 id="how-to-do-updates">How To Do Updates?<a href="#how-to-do-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>You can do arbitrary SQL commands here.
     <br>
@@ -114,15 +114,15 @@
   <span class="hljs-string">sql""</span><span class="hljs-string">"
     UPDATE customers SET name = 'Alice' WHERE id = 1
     RETURNING id, name
-  "</span><span class="hljs-string">""</span>.updateReturningRows[<span class="hljs-type">Customer</span>]()
+  "</span><span class="hljs-string">""</span>.returningRows[<span class="hljs-type">Customer</span>]()
 
 <span class="hljs-keyword">val</span> deleted: <span class="hljs-type">Customer</span> =
   <span class="hljs-string">sql""</span><span class="hljs-string">"
     DELETE FROM customers WHERE id = 1
     RETURNING id, name
-  "</span><span class="hljs-string">""</span>.deleteReturningRow[<span class="hljs-type">Customer</span>]()
+  "</span><span class="hljs-string">""</span>.returningRow[<span class="hljs-type">Customer</span>]()
 </code></pre>
-   <p>The singular <code>updateReturningRow</code> and <code>deleteReturningRow</code> variants throw when no row is returned. Support and syntax depend on the database.</p>
+   <p>The singular <code>returningRow</code> variant throws when no row is returned. Support and syntax depend on the database.</p>
    <h2 id="how-to-batch-updates">How To Batch Updates?<a href="#how-to-batch-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
    <p>Use <code>batchUpdate()</code> when the same SQL statement needs to run with multiple sets of values:</p>
    <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> customers = <span class="hljs-type">Seq</span>(
