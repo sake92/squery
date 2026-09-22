@@ -175,7 +175,9 @@ extension (query: Query) {
 
 extension (queries: IterableOnce[Query]) {
 
-  /** Executes queries with the same SQL shape as a JDBC prepared statement batch. */
+  /** Executes queries with the same SQL shape as a JDBC prepared statement batch, falling back to sequential
+    * prepared-statement updates when the driver does not implement batching.
+    */
   def batchUpdate()(using c: SqueryConnection): Seq[Int] =
     val batch = queries.iterator.toSeq
     batch.headOption match
@@ -191,11 +193,18 @@ extension (queries: IterableOnce[Query]) {
         }
 
         Using.resource(first.newPreparedStatement(DbActionType.Update, c)) { stmt =>
-          stmt.addBatch()
-          batch.tail.foreach { query =>
-            query.bindArguments(stmt)
+          try
             stmt.addBatch()
-          }
-          stmt.executeBatch().toSeq
+            batch.tail.foreach { query =>
+              query.bindArguments(stmt)
+              stmt.addBatch()
+            }
+            stmt.executeBatch().toSeq
+          catch
+            case _: NotImplementedError =>
+              batch.map { query =>
+                query.bindArguments(stmt)
+                stmt.executeUpdate()
+              }
         }
 }
