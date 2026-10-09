@@ -1,0 +1,15 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Squery",
+  "description": "A Scala 3 library for type-safe JDBC access using plain SQL.",
+  "folders": ["docs", "examples"],
+  "rules": [
+    "Use a JDBC DataSource to create a SqueryContext; JDBC drivers are separate dependencies and are not bundled.",
+    "Interpolate runtime values with sql strings so they become prepared-statement parameters. Only interpolate trusted compile-time literal strings or Query fragments as SQL; never use untrusted input as SQL syntax.",
+    "Import the database-specific ba.sake.squery.<database> givens when you need that database's codecs.",
+    "For derived SqlReadRow case classes and named tuples, match field names to selected column names; nested join fields use column prefixes, and use Option for nullable outer-join rows.",
+    "Use ctx.run for scoped connection access and ctx.runTransaction when statements must commit or roll back together.",
+    "Query.in with an empty collection generates (NULL), which is suitable for IN but should not be used with NOT IN. Query.values requires at least one row.",
+    "The code-generation CLI does not bundle JDBC drivers. SQLite code generation uses the main schema; generated RETURNING requires SQLite 3.35+, and STRICT tables require SQLite 3.37+."
+  ]
+}
