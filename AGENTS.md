@@ -23,4 +23,5 @@
 - Keep database integration tests under `squery/test/src/ba/sake/squery/<database>/`.
 - Keep generator implementation and tests under `generator/src/` and `generator/test/src/`.
 - Keep CLI argument parsing under `cli/src/ba/sake/squery/cli/`.
+- Keep `context7.json` usage rules factual and aligned with the user-facing documentation.
 - Do not commit specs, plans, or other agent planning artifacts, including `docs/superpowers/specs/` and `docs/superpowers/plans/`.
