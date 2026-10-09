@@ -5,39 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <meta name="description" content="Plain SQL and type-safe JDBC access for Scala 3">
-  <title> Squery | Squery Documentation </title>
+  <title>Squery | Squery Documentation</title>
   <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
  </head>
  <body>
   <header class="pico container">
-   <nav>
-    <ul>
-     <li><a href="https://sake92.github.io/squery/">Home</a></li>
-    </ul>
-    <ul>
-     <li>
-      <form action="https://sake92.github.io/squery/search/results.html" method="GET">
-       <input name="q" type="search" placeholder="Search">
-      </form>
-     </li>
-    </ul>
-    <ul>
-     <li><a href="https://sake92.github.io/squery/tutorials">Tutorials</a></li>
-     <li><a href="https://sake92.github.io/squery/howtos">How-Tos</a></li>
-    </ul>
+   <nav aria-label="Main navigation">
+    <a href="https://sake92.github.io/squery/">Squery Documentation</a>
+    <div>
+     <a href="https://sake92.github.io/squery/tutorials">Tutorials</a> <a href="https://sake92.github.io/squery/howtos">How-Tos</a>
+    </div>
+    <form action="https://sake92.github.io/squery/search/results.html" method="get" role="search">
+     <input name="q" type="search" placeholder="Search" aria-label="Search this site">
+    </form>
    </nav>
   </header>
+  <script>
+for (const link of document.querySelectorAll('body > header > nav > div > a')) {
+    const path = new URL(link.href).pathname.replace(/\/$/, '');
+    const current = window.location.pathname;
+    if (current === path || current.startsWith(path + '/')) link.setAttribute('aria-current', 'page');
+}
+</script>
   <main class="pico container">
-   <div class="grid">
-    <div>
-     <details>
-      <summary>Table of Contents</summary>
-      <div>
+   <div>
+    <div class="content">
+     <h1 id="squery">Squery<a href="#squery" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+     <p>Squery is a small Scala 3 library for type-safe JDBC access with plain SQL: no query DSL, no generated runtime layer, and no hidden connection management.</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> customerId = <span class="hljs-number">42</span>
+<span class="hljs-keyword">val</span> customers = ctx.run {
+  <span class="hljs-string">sql"SELECT id, name FROM customers WHERE id = <span class="hljs-subst">$customerId</span>"</span>
+    .readRows[<span class="hljs-type">Customer</span>]()
+}
+</code></pre>
+     <p>Interpolated values become prepared-statement parameters. Results are decoded into Scala scalar values, case classes, or named tuples.</p>
+     <h2 id="features">Features<a href="#features" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <ul>
+      <li>Any JDBC driver, with database-specific codecs for PostgreSQL, MySQL, MariaDB, Oracle, H2, and SQLite</li>
+      <li>JVM and Scala Native support (with a Scala Native-compatible JDBC driver)</li>
+      <li>Case-class and named-tuple row decoding, including nested and optional joined rows</li>
+      <li>Safe dynamic SQL with <code>Query.join</code>, <code>Query.when</code>, <code>Query.in</code>, and <code>Query.values</code></li>
+      <li>Transactions and configurable transaction isolation</li>
+      <li>Generated keys, returning rows, JDBC batch updates, and generic statement execution</li>
+      <li>Per-query fetch size, timeout, row limit, result-set, and generated-key options</li>
+      <li>Database-to-Scala model and DAO generation</li>
+     </ul>
+     <h2 id="supported-values">Supported values<a href="#supported-values" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>The core module reads and writes:</p>
+     <ul>
+      <li><code>String</code>, <code>Boolean</code>, <code>Byte</code>, <code>Short</code>, <code>Int</code>, <code>Long</code>, and <code>Double</code></li>
+      <li><code>Instant</code>, <code>OffsetDateTime</code>, <code>LocalDate</code>, and <code>LocalDateTime</code></li>
+      <li><code>Option[T]</code> for nullable columns</li>
+      <li><code>Array[T]</code> and <code>Vector[T]</code> for SQL arrays, up to three dimensions</li>
+      <li><code>Array[Byte]</code> and <code>Vector[Byte]</code> for binary data</li>
+      <li>singleton enums with <code>derives SqlRead, SqlWrite</code></li>
+      <li>case classes with <code>derives SqlReadRow</code> for multi-column rows</li>
+      <li>named tuples for multi-column rows</li>
+     </ul>
+     <p>Database-specific imports provide the appropriate <code>UUID</code> codec, while the optional <code>squery-postgres-jawn</code> module provides PostgreSQL JSON/JSONB support using Jawn.</p>
+     <p>Start with <a href="https://sake92.github.io/squery/tutorials/setup.html">Setup</a>, then continue to the <a href="https://sake92.github.io/squery/tutorials/quickstart.html">Quickstart</a>. The <a href="https://sake92.github.io/squery/howtos/">How-Tos</a> cover queries, updates, interpolation, transactions, and custom types.</p>
+    </div>
+    <aside aria-label="On this page">
+     <details open>
+      <summary>On this page</summary>
+      <nav aria-label="Table of contents">
        <ul>
         <li><a href="#squery">Squery</a>
          <ul>
@@ -45,48 +84,17 @@
           <li><a href="#supported-values">Supported values</a></li>
          </ul></li>
        </ul>
-      </div>
+      </nav>
      </details>
-     <hr>
-    </div>
-    <div></div>
-    <div></div>
+    </aside>
    </div>
-   <h1 id="squery">Squery<a href="#squery" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
-   <p>Squery is a small Scala 3 library for type-safe JDBC access with plain SQL: no query DSL, no generated runtime layer, and no hidden connection management.</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> customerId = <span class="hljs-number">42</span>
-<span class="hljs-keyword">val</span> customers = ctx.run {
-  <span class="hljs-string">sql"SELECT id, name FROM customers WHERE id = <span class="hljs-subst">$customerId</span>"</span>
-    .readRows[<span class="hljs-type">Customer</span>]()
-}
-</code></pre>
-   <p>Interpolated values become prepared-statement parameters. Results are decoded into Scala scalar values, case classes, or named tuples.</p>
-   <h2 id="features">Features<a href="#features" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <ul>
-    <li>Any JDBC driver, with database-specific codecs for PostgreSQL, MySQL, MariaDB, Oracle, H2, and SQLite</li>
-    <li>JVM and Scala Native support (with a Scala Native-compatible JDBC driver)</li>
-    <li>Case-class and named-tuple row decoding, including nested and optional joined rows</li>
-    <li>Safe dynamic SQL with <code>Query.join</code>, <code>Query.when</code>, <code>Query.in</code>, and <code>Query.values</code></li>
-    <li>Transactions and configurable transaction isolation</li>
-    <li>Generated keys, returning rows, JDBC batch updates, and generic statement execution</li>
-    <li>Per-query fetch size, timeout, row limit, result-set, and generated-key options</li>
-    <li>Database-to-Scala model and DAO generation</li>
-   </ul>
-   <h2 id="supported-values">Supported values<a href="#supported-values" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <p>The core module reads and writes:</p>
-   <ul>
-    <li><code>String</code>, <code>Boolean</code>, <code>Byte</code>, <code>Short</code>, <code>Int</code>, <code>Long</code>, and <code>Double</code></li>
-    <li><code>Instant</code>, <code>OffsetDateTime</code>, <code>LocalDate</code>, and <code>LocalDateTime</code></li>
-    <li><code>Option[T]</code> for nullable columns</li>
-    <li><code>Array[T]</code> and <code>Vector[T]</code> for SQL arrays, up to three dimensions</li>
-    <li><code>Array[Byte]</code> and <code>Vector[Byte]</code> for binary data</li>
-    <li>singleton enums with <code>derives SqlRead, SqlWrite</code></li>
-    <li>case classes with <code>derives SqlReadRow</code> for multi-column rows</li>
-    <li>named tuples for multi-column rows</li>
-   </ul>
-   <p>Database-specific imports provide the appropriate <code>UUID</code> codec, while the optional <code>squery-postgres-jawn</code> module provides PostgreSQL JSON/JSONB support using Jawn.</p>
-   <p>Start with <a href="https://sake92.github.io/squery/tutorials/setup.html">Setup</a>, then continue to the <a href="https://sake92.github.io/squery/tutorials/quickstart.html">Quickstart</a>. The <a href="https://sake92.github.io/squery/howtos/">How-Tos</a> cover queries, updates, interpolation, transactions, and custom types.</p>
   </main>
   <footer class="pico container">Squery Documentation</footer>
+  <script>
+if (window.matchMedia('(max-width: 850px)').matches) {
+    document.querySelectorAll('body > main > div > aside > details').forEach(details => { details.open = false; });
+}
+</script>
+  <script src="https://sake92.github.io/squery/scripts/code-copy.js"></script>
  </body>
 </html>

@@ -5,71 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <meta name="description" content="Squery How To Interpolation">
-  <title> How To Updates | Squery Documentation </title>
+  <title>How To Updates | Squery Documentation</title>
   <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
  </head>
  <body>
   <header class="pico container">
-   <nav>
-    <ul>
-     <li><a href="https://sake92.github.io/squery/">Home</a></li>
-    </ul>
-    <ul>
-     <li>
-      <form action="https://sake92.github.io/squery/search/results.html" method="GET">
-       <input name="q" type="search" placeholder="Search">
-      </form>
-     </li>
-    </ul>
-    <ul>
-     <li><a href="https://sake92.github.io/squery/tutorials">Tutorials</a></li>
-     <li><a href="https://sake92.github.io/squery/howtos">How-Tos</a></li>
-    </ul>
+   <nav aria-label="Main navigation">
+    <a href="https://sake92.github.io/squery/">Squery Documentation</a>
+    <div>
+     <a href="https://sake92.github.io/squery/tutorials">Tutorials</a> <a href="https://sake92.github.io/squery/howtos">How-Tos</a>
+    </div>
+    <form action="https://sake92.github.io/squery/search/results.html" method="get" role="search">
+     <input name="q" type="search" placeholder="Search" aria-label="Search this site">
+    </form>
    </nav>
   </header>
+  <script>
+for (const link of document.querySelectorAll('body > header > nav > div > a')) {
+    const path = new URL(link.href).pathname.replace(/\/$/, '');
+    const current = window.location.pathname;
+    if (current === path || current.startsWith(path + '/')) link.setAttribute('aria-current', 'page');
+}
+</script>
   <main class="pico container">
-   <div class="grid">
-    <div>
-     <details>
-      <summary>Table of Contents</summary>
-      <div>
-       <ul>
-        <li><a href="#how-to-updates">How To Updates</a>
-         <ul>
-          <li><a href="#how-to-insert-data">How To Insert Data?</a></li>
-          <li><a href="#how-to-insert-returning-generated-keys">How To Insert Returning Generated Keys?</a></li>
-          <li><a href="#how-to-return-inserted-rows">How To Return Inserted Rows?</a></li>
-          <li><a href="#how-to-do-updates">How To Do Updates?</a></li>
-          <li><a href="#how-to-batch-updates">How To Batch Updates?</a></li>
-         </ul></li>
-       </ul>
-      </div>
-     </details>
-     <hr>
-    </div>
-    <div></div>
-    <div></div>
-   </div>
-   <h1 id="how-to-updates">How To Updates<a href="#how-to-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
-   <h2 id="how-to-insert-data">How To Insert Data?<a href="#how-to-insert-data" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <p>The simplest method inserts the rows and returns the number of inserted rows.</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">insertCustomer</span></span>: <span class="hljs-type">Int</span> = ctx.run {
+   <div>
+    <div class="content">
+     <h1 id="how-to-updates">How To Updates<a href="#how-to-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+     <h2 id="how-to-insert-data">How To Insert Data?<a href="#how-to-insert-data" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>The simplest method inserts the rows and returns the number of inserted rows.</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">insertCustomer</span></span>: <span class="hljs-type">Int</span> = ctx.run {
   <span class="hljs-string">sql"INSERT INTO customers(name) VALUES('my_customer')"</span>.insert()
 }
 </code></pre>
-   <h2 id="how-to-insert-returning-generated-keys">How To Insert Returning Generated Keys?<a href="#how-to-insert-returning-generated-keys" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <p>This method inserts the rows and returns autogenerated keys (<code>AUTOINCREMENT</code>, <code>SERIAL</code> etc).</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">insertCustomer</span></span>: <span class="hljs-type">Seq</span>[<span class="hljs-type">Int</span>] = ctx.run {
+     <h2 id="how-to-insert-returning-generated-keys">How To Insert Returning Generated Keys?<a href="#how-to-insert-returning-generated-keys" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>This method inserts the rows and returns autogenerated keys (<code>AUTOINCREMENT</code>, <code>SERIAL</code> etc).</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">insertCustomer</span></span>: <span class="hljs-type">Seq</span>[<span class="hljs-type">Int</span>] = ctx.run {
   <span class="hljs-string">sql"INSERT INTO customers(name) VALUES('my_customer')"</span>.insertReturningGenKeys[<span class="hljs-type">Int</span>]()
 }
 </code></pre>
-   <p>Generated keys can also be selected by JDBC column name or index:</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-string">sql"INSERT INTO customers(name) VALUES('my_customer')"</span>
+     <p>Generated keys can also be selected by JDBC column name or index:</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-string">sql"INSERT INTO customers(name) VALUES('my_customer')"</span>
   .withGeneratedKeys(<span class="hljs-type">GeneratedKeys</span>.<span class="hljs-type">ColumnNames</span>(<span class="hljs-type">Seq</span>(<span class="hljs-string">"id"</span>)))
   .insertReturningGenKeys[<span class="hljs-type">Int</span>]()
 
@@ -77,16 +60,16 @@
   .withGeneratedKeys(<span class="hljs-type">GeneratedKeys</span>.<span class="hljs-type">ColumnIndexes</span>(<span class="hljs-type">Seq</span>(<span class="hljs-number">1</span>)))
   .insertReturningGenKeys[<span class="hljs-type">Int</span>]()
 </code></pre>
-   <hr>
-   <p>There are also variations that return a single result, depending if you want an <code>Option[T]</code> or <code>T</code> (throws if no row returned):</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes">  <span class="hljs-string">sql"SELECT ..."</span>.insertReturningGenKeyOpt[<span class="hljs-type">T</span>]() : <span class="hljs-type">Option</span>[<span class="hljs-type">T</span>] <span class="hljs-comment">// first result, if present</span>
+     <hr>
+     <p>There are also variations that return a single result, depending if you want an <code>Option[T]</code> or <code>T</code> (throws if no row returned):</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes">  <span class="hljs-string">sql"SELECT ..."</span>.insertReturningGenKeyOpt[<span class="hljs-type">T</span>]() : <span class="hljs-type">Option</span>[<span class="hljs-type">T</span>] <span class="hljs-comment">// first result, if present</span>
   <span class="hljs-string">sql"SELECT ..."</span>.insertReturningGenKey[<span class="hljs-type">T</span>]() : <span class="hljs-type">T</span>            <span class="hljs-comment">// first result, or exception</span>
 </code></pre>
-   <h2 id="how-to-return-inserted-rows">How To Return Inserted Rows?<a href="#how-to-return-inserted-rows" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <p>This method inserts the rows and returns columns you want from the inserted rows.
-    <br>
-    This is <strong>not supported by all databases</strong>, unfortunately.</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">insertCustomers</span></span>: <span class="hljs-type">List</span>[<span class="hljs-type">Customer</span>] = ctx.run {
+     <h2 id="how-to-return-inserted-rows">How To Return Inserted Rows?<a href="#how-to-return-inserted-rows" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>This method inserts the rows and returns columns you want from the inserted rows.
+      <br>
+      This is <strong>not supported by all databases</strong>, unfortunately.</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">insertCustomers</span></span>: <span class="hljs-type">List</span>[<span class="hljs-type">Customer</span>] = ctx.run {
   <span class="hljs-string">sql""</span><span class="hljs-string">"
     INSERT INTO customers(name)
     VALUES ('abc'), ('def'), ('ghi')
@@ -94,13 +77,13 @@
   "</span><span class="hljs-string">""</span>.returningRows[<span class="hljs-type">Customer</span>]()
 }
 </code></pre>
-   <p>Here in one query you can both <strong>insert + get</strong> the row you inserted.</p>
-   <p>For exactly one returned row, use <code>returningRow[Customer]()</code>. It throws a <code>SqueryException</code> if the database returns no row.</p>
-   <h2 id="how-to-do-updates">How To Do Updates?<a href="#how-to-do-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <p>You can do arbitrary SQL commands here.
-    <br>
-    The most common one is <code>UPDATE</code>-ing some rows:</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">// returns number of affected rows</span>
+     <p>Here in one query you can both <strong>insert + get</strong> the row you inserted.</p>
+     <p>For exactly one returned row, use <code>returningRow[Customer]()</code>. It throws a <code>SqueryException</code> if the database returns no row.</p>
+     <h2 id="how-to-do-updates">How To Do Updates?<a href="#how-to-do-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>You can do arbitrary SQL commands here.
+      <br>
+      The most common one is <code>UPDATE</code>-ing some rows:</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">// returns number of affected rows</span>
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">updateCustomers</span></span>: <span class="hljs-type">Int</span> = ctx.run {
   <span class="hljs-string">sql""</span><span class="hljs-string">"
     UPDATE customers
@@ -109,8 +92,8 @@
   "</span><span class="hljs-string">""</span>.update()
 }
 </code></pre>
-   <p>Databases with <code>RETURNING</code> support can return affected rows from updates and deletes:</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> renamed: <span class="hljs-type">Seq</span>[<span class="hljs-type">Customer</span>] =
+     <p>Databases with <code>RETURNING</code> support can return affected rows from updates and deletes:</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> renamed: <span class="hljs-type">Seq</span>[<span class="hljs-type">Customer</span>] =
   <span class="hljs-string">sql""</span><span class="hljs-string">"
     UPDATE customers SET name = 'Alice' WHERE id = 1
     RETURNING id, name
@@ -122,10 +105,10 @@
     RETURNING id, name
   "</span><span class="hljs-string">""</span>.returningRow[<span class="hljs-type">Customer</span>]()
 </code></pre>
-   <p>The singular <code>returningRow</code> variant throws when no row is returned. Support and syntax depend on the database.</p>
-   <h2 id="how-to-batch-updates">How To Batch Updates?<a href="#how-to-batch-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <p>Use <code>batchUpdate()</code> when the same SQL statement needs to run with multiple sets of values:</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> customers = <span class="hljs-type">Seq</span>(
+     <p>The singular <code>returningRow</code> variant throws when no row is returned. Support and syntax depend on the database.</p>
+     <h2 id="how-to-batch-updates">How To Batch Updates?<a href="#how-to-batch-updates" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>Use <code>batchUpdate()</code> when the same SQL statement needs to run with multiple sets of values:</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-keyword">val</span> customers = <span class="hljs-type">Seq</span>(
   <span class="hljs-type">Customer</span>(<span class="hljs-string">"Alice"</span>, <span class="hljs-string">"alice@example.com"</span>),
   <span class="hljs-type">Customer</span>(<span class="hljs-string">"Bob"</span>, <span class="hljs-string">"bob@example.com"</span>)
 )
@@ -141,11 +124,11 @@
     .batchUpdate()
 }
 </code></pre>
-   <p>Every query in the batch must have the same SQL shape and argument count. <code>batchUpdate()</code> returns the JDBC update count for each query in input order. A driver may return <code>java.sql.Statement.SUCCESS_NO_INFO</code> when it cannot provide an exact count.</p>
-   <p>Batching does not start a transaction automatically. Use <code>runTransaction</code> when the whole batch must succeed or fail together. The JDBC driver must implement prepared statement batching.</p>
-   <hr>
-   <p>But of course you can do other commands as well:</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">createTable</span></span>: <span class="hljs-type">Unit</span> = ctx.run {
+     <p>Every query in the batch must have the same SQL shape and argument count. <code>batchUpdate()</code> returns the JDBC update count for each query in input order. A driver may return <code>java.sql.Statement.SUCCESS_NO_INFO</code> when it cannot provide an exact count.</p>
+     <p>Batching does not start a transaction automatically. Use <code>runTransaction</code> when the whole batch must succeed or fail together. The JDBC driver must implement prepared statement batching.</p>
+     <hr>
+     <p>But of course you can do other commands as well:</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">createTable</span></span>: <span class="hljs-type">Unit</span> = ctx.run {
   <span class="hljs-string">sql""</span><span class="hljs-string">"
     CREATE TABLE customers(
     id SERIAL PRIMARY KEY,
@@ -154,8 +137,33 @@
   "</span><span class="hljs-string">""</span>.update()
 }
 </code></pre>
-   <p>For statements that do not naturally return an update count, such as stored-procedure definitions, use <code>sql"...".execute()</code>.</p>
+     <p>For statements that do not naturally return an update count, such as stored-procedure definitions, use <code>sql"...".execute()</code>.</p>
+    </div>
+    <aside aria-label="On this page">
+     <details open>
+      <summary>On this page</summary>
+      <nav aria-label="Table of contents">
+       <ul>
+        <li><a href="#how-to-updates">How To Updates</a>
+         <ul>
+          <li><a href="#how-to-insert-data">How To Insert Data?</a></li>
+          <li><a href="#how-to-insert-returning-generated-keys">How To Insert Returning Generated Keys?</a></li>
+          <li><a href="#how-to-return-inserted-rows">How To Return Inserted Rows?</a></li>
+          <li><a href="#how-to-do-updates">How To Do Updates?</a></li>
+          <li><a href="#how-to-batch-updates">How To Batch Updates?</a></li>
+         </ul></li>
+       </ul>
+      </nav>
+     </details>
+    </aside>
+   </div>
   </main>
   <footer class="pico container">Squery Documentation</footer>
+  <script>
+if (window.matchMedia('(max-width: 850px)').matches) {
+    document.querySelectorAll('body > main > div > aside > details').forEach(details => { details.open = false; });
+}
+</script>
+  <script src="https://sake92.github.io/squery/scripts/code-copy.js"></script>
  </body>
 </html>

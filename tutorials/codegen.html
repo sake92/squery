@@ -5,88 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <meta name="description" content="Squery Generating Code Tutorial">
-  <title> Generating Code | Squery Documentation </title>
+  <title>Generating Code | Squery Documentation</title>
   <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
  </head>
  <body>
   <header class="pico container">
-   <nav>
-    <ul>
-     <li><a href="https://sake92.github.io/squery/">Home</a></li>
-    </ul>
-    <ul>
-     <li>
-      <form action="https://sake92.github.io/squery/search/results.html" method="GET">
-       <input name="q" type="search" placeholder="Search">
-      </form>
-     </li>
-    </ul>
-    <ul>
-     <li><a href="https://sake92.github.io/squery/tutorials">Tutorials</a></li>
-     <li><a href="https://sake92.github.io/squery/howtos">How-Tos</a></li>
-    </ul>
+   <nav aria-label="Main navigation">
+    <a href="https://sake92.github.io/squery/">Squery Documentation</a>
+    <div>
+     <a href="https://sake92.github.io/squery/tutorials">Tutorials</a> <a href="https://sake92.github.io/squery/howtos">How-Tos</a>
+    </div>
+    <form action="https://sake92.github.io/squery/search/results.html" method="get" role="search">
+     <input name="q" type="search" placeholder="Search" aria-label="Search this site">
+    </form>
    </nav>
   </header>
+  <script>
+for (const link of document.querySelectorAll('body > header > nav > div > a')) {
+    const path = new URL(link.href).pathname.replace(/\/$/, '');
+    const current = window.location.pathname;
+    if (current === path || current.startsWith(path + '/')) link.setAttribute('aria-current', 'page');
+}
+</script>
   <main class="pico container">
-   <div class="grid">
-    <div>
-     <details>
-      <summary>Table of Contents</summary>
-      <div>
-       <ul>
-        <li><a href="#generating-code">Generating Code</a>
-         <ul>
-          <li><a href="#cli">CLI</a></li>
-          <li><a href="#mill-plugin">Mill plugin</a></li>
-          <li><a href="#generator-library">Generator library</a></li>
-         </ul></li>
-       </ul>
-      </div>
-     </details>
-     <hr>
-    </div>
-    <div></div>
-    <div></div>
-   </div>
-   <h1 id="generating-code">Generating Code<a href="#generating-code" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
-   <p>Squery has a code generator that can generate code for various databases:
-    <br>
-    Postgres, MySQL, MariaDB, Oracle, H2, SQLite, etc.</p>
-   <p>It generates models for table rows and DAOs with various utility methods:</p>
-   <ul>
-    <li><code>countAll</code>, <code>countWhere</code></li>
-    <li><code>findAll</code>, <code>findWhere</code>, <code>findWhereOpt</code>, <code>findAllWhere</code>, <code>findById</code>, <code>findByIdOpt</code>, <code>findByIds</code></li>
-    <li><code>insert</code>, <code>updateById</code></li>
-    <li><code>deleteWhere</code>, <code>deleteById</code>, <code>deleteIds</code></li>
-   </ul>
-   <p>Squery codegen is a bit special since it is using <a href="https://github.com/sake92/regenesca">Regenesca library</a>.
-    <br>
-    When you add a new column for example, it will <strong>refactor</strong> the <code>*Row</code> and <code>*Dao</code> code in place!
-    <br>
-    This means <strong>you can add your own methods/vals to the generated code</strong>, without fear that the codegen will remove it.</p>
-   <h2 id="cli">CLI<a href="#cli" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <p>The simplest way to generate sources is to launch <code>squery-cli</code> with Coursier. Add your JDBC driver as another dependency because the CLI does not bundle database drivers. For SQLite:</p>
-   <pre><code class="language-shell hljs" data-highlighted="yes">cs launch org.xerial:sqlite-jdbc:3.46.1.0 \
+   <div>
+    <div class="content">
+     <h1 id="generating-code">Generating Code<a href="#generating-code" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+     <p>Squery has a code generator that can generate code for various databases:
+      <br>
+      Postgres, MySQL, MariaDB, Oracle, H2, SQLite, etc.</p>
+     <p>It generates models for table rows and DAOs with various utility methods:</p>
+     <ul>
+      <li><code>countAll</code>, <code>countWhere</code></li>
+      <li><code>findAll</code>, <code>findWhere</code>, <code>findWhereOpt</code>, <code>findAllWhere</code>, <code>findById</code>, <code>findByIdOpt</code>, <code>findByIds</code></li>
+      <li><code>insert</code>, <code>updateById</code></li>
+      <li><code>deleteWhere</code>, <code>deleteById</code>, <code>deleteIds</code></li>
+     </ul>
+     <p>Squery codegen is a bit special since it is using <a href="https://github.com/sake92/regenesca">Regenesca library</a>.
+      <br>
+      When you add a new column for example, it will <strong>refactor</strong> the <code>*Row</code> and <code>*Dao</code> code in place!
+      <br>
+      This means <strong>you can add your own methods/vals to the generated code</strong>, without fear that the codegen will remove it.</p>
+     <h2 id="cli">CLI<a href="#cli" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>The simplest way to generate sources is to launch <code>squery-cli</code> with Coursier. Add your JDBC driver as another dependency because the CLI does not bundle database drivers. For SQLite:</p>
+     <pre><code class="language-shell hljs" data-highlighted="yes">cs launch org.xerial:sqlite-jdbc:3.46.1.0 \
   ba.sake:squery-cli_2.13:0.13.0 \
   -M ba.sake.squery.cli.SqueryMain -- \
   --jdbcUrl jdbc:sqlite:database.db \
   --baseFolder src/main/scala \
   --schemaMappings main:com.example
 </code></pre>
-   <p>The CLI accepts ordered, repeatable type mapping rules for every supported database in the format <code>column-name-regex|declared-type-regex|Scala-type</code>. The first matching rule overrides the built-in mapping. Both regexes must match the complete column name and the JDBC driver's declared type, so use <code>.*</code> when a partial match is intended. Fully qualify a type when it needs no additional import:</p>
-   <pre><code class="language-shell hljs" data-highlighted="yes">--typeMappingRule '.*_id|UUID|java.util.UUID'
+     <p>The CLI accepts ordered, repeatable type mapping rules for every supported database in the format <code>column-name-regex|declared-type-regex|Scala-type</code>. The first matching rule overrides the built-in mapping. Both regexes must match the complete column name and the JDBC driver's declared type, so use <code>.*</code> when a partial match is intended. Fully qualify a type when it needs no additional import:</p>
+     <pre><code class="language-shell hljs" data-highlighted="yes">--typeMappingRule '.*_id|UUID|java.util.UUID'
 </code></pre>
-   <p>Use repeatable <code>--includeTables</code> and <code>--excludeTables</code> regexes to select generated tables. They match fully qualified <code>schema.table</code> names; exclusions take precedence.</p>
-   <h2 id="mill-plugin">Mill plugin<a href="#mill-plugin" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <p>For Mill builds, use the dedicated <a href="https://github.com/sake92/mill-squery">mill-squery plugin</a>. It integrates generation into the build so generated models and DAOs are available as managed sources.</p>
-   <h2 id="generator-library">Generator library<a href="#generator-library" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-   <p>For full programmatic control, use <code>squery-generator</code> directly. The following Scala CLI script connects to a data source and writes generated source to a file:</p>
-   <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">scala</span> <span class="hljs-string">"2.13.15"</span>
+     <p>Use repeatable <code>--includeTables</code> and <code>--excludeTables</code> regexes to select generated tables. They match fully qualified <code>schema.table</code> names; exclusions take precedence.</p>
+     <h2 id="mill-plugin">Mill plugin<a href="#mill-plugin" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>For Mill builds, use the dedicated <a href="https://github.com/sake92/mill-squery">mill-squery plugin</a>. It integrates generation into the build so generated models and DAOs are available as managed sources.</p>
+     <h2 id="generator-library">Generator library<a href="#generator-library" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>For full programmatic control, use <code>squery-generator</code> directly. The following Scala CLI script connects to a data source and writes generated source to a file:</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">scala</span> <span class="hljs-string">"2.13.15"</span>
 <span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">"ba.sake::squery-generator:0.13.0"</span>
 <span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">"your.jdbc:driver:version"</span>
 
@@ -102,9 +87,32 @@
   println(<span class="hljs-string">"Generated source written to Generated.scala"</span>)
 }
 </code></pre>
-   <p>Run it with <code>scala-cli run generate.scala</code>, then include <code>Generated.scala</code> in your project. The generator is published for Scala 2.13; its generated source targets Scala 3 and uses the <code>squery</code> dependency from your application.</p>
-   <p>For SQLite, generate the <code>main</code> schema with <code>generateString(Seq("main"))</code>. The safe storage mappings are <code>INTEGER</code> → <code>Long</code>, <code>REAL</code> → <code>Double</code>, <code>TEXT</code> → <code>String</code>, and <code>BLOB</code> → <code>Array[Byte]</code>; ambiguous declarations such as <code>NUMERIC</code> remain unknown. The default conventions map integer <code>is_*</code>/<code>has_*</code>/<code>can_*</code> columns to <code>Boolean</code>, text <code>*_at</code> columns to <code>Instant</code>, and text <code>*_date</code> columns to <code>LocalDate</code>. Ordered <code>TypeMappingRule</code>s take precedence over built-in mappings and match both column name and declared type. Generated <code>RETURNING</code> SQL requires SQLite 3.35 or newer. If using <code>STRICT</code> tables, use SQLite 3.37 or newer; the SQLite JDBC driver version alone does not set the engine version.</p>
+     <p>Run it with <code>scala-cli run generate.scala</code>, then include <code>Generated.scala</code> in your project. The generator is published for Scala 2.13; its generated source targets Scala 3 and uses the <code>squery</code> dependency from your application.</p>
+     <p>For SQLite, generate the <code>main</code> schema with <code>generateString(Seq("main"))</code>. The safe storage mappings are <code>INTEGER</code> → <code>Long</code>, <code>REAL</code> → <code>Double</code>, <code>TEXT</code> → <code>String</code>, and <code>BLOB</code> → <code>Array[Byte]</code>; ambiguous declarations such as <code>NUMERIC</code> remain unknown. The default conventions map integer <code>is_*</code>/<code>has_*</code>/<code>can_*</code> columns to <code>Boolean</code>, text <code>*_at</code> columns to <code>Instant</code>, and text <code>*_date</code> columns to <code>LocalDate</code>. Ordered <code>TypeMappingRule</code>s take precedence over built-in mappings and match both column name and declared type. Generated <code>RETURNING</code> SQL requires SQLite 3.35 or newer. If using <code>STRICT</code> tables, use SQLite 3.37 or newer; the SQLite JDBC driver version alone does not set the engine version.</p>
+    </div>
+    <aside aria-label="On this page">
+     <details open>
+      <summary>On this page</summary>
+      <nav aria-label="Table of contents">
+       <ul>
+        <li><a href="#generating-code">Generating Code</a>
+         <ul>
+          <li><a href="#cli">CLI</a></li>
+          <li><a href="#mill-plugin">Mill plugin</a></li>
+          <li><a href="#generator-library">Generator library</a></li>
+         </ul></li>
+       </ul>
+      </nav>
+     </details>
+    </aside>
+   </div>
   </main>
   <footer class="pico container">Squery Documentation</footer>
+  <script>
+if (window.matchMedia('(max-width: 850px)').matches) {
+    document.querySelectorAll('body > main > div > aside > details').forEach(details => { details.open = false; });
+}
+</script>
+  <script src="https://sake92.github.io/squery/scripts/code-copy.js"></script>
  </body>
 </html>
