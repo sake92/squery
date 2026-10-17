@@ -1,8 +1,14 @@
 amends "https://sake92.github.io/deder/config/v0.20.0/DederProject.pkl"
 
+local const publishRepo = if (read?("env:DEDER_PUBLISH_SNAPSHOT") == "true")
+  new SonatypeSnapshotRepo { id = "sonatype" }
+else
+  new SonatypeCentralRepo { id = "sonatype" }
+
 local const baseScala3: ScalaModule = new {
   scalaVersion = "3.9.0"
   publish = true
+  publishTo = publishRepo
   scalacOptions {
     "-Wunused:all"
     "-deprecation"
@@ -14,6 +20,7 @@ local const baseScala3: ScalaModule = new {
 local const baseScala213: ScalaModule = new {
   scalaVersion = "2.13.15"
   publish = true
+  publishTo = publishRepo
 }
 
 local const squeryPomTemplate: PomSettings = new {
