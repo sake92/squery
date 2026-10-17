@@ -10,8 +10,6 @@ import com.typesafe.scalalogging.Logger
 import scala.meta._
 import scala.meta.dialects.Scala34
 import ba.sake.regenesca._
-import ba.sake.squery.generator.ColumnType.Predefined
-import ba.sake.squery.generator.ColumnType.Unknown
 import ba.sake.squery.generator.ColumnType.ThirdParty
 
 class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = SqueryGeneratorConfig.Default) {
@@ -28,6 +26,8 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
     if (missingSchemaNames.nonEmpty)
       throw new RuntimeException(s"Schemas do not exist in database: ${missingSchemaNames.mkString(", ")}")
 
+    val keyTypes = resolveKeyTypes(dbDef, schemaNames, Map.empty)
+
     schemaNames
       .map { schemaName =>
         dbDef.schemas.find(_.name == schemaName) match {
@@ -40,7 +40,7 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
               .flatten
               .distinct
             val (modelFiles, daoFiles) =
-              generateSchema(schemaDef, dbType = dbDef.tpe, basePackage = "", fileGen = false)
+              generateSchema(schemaDef, dbType = dbDef.tpe, basePackage = "", fileGen = false, keyTypes)
             // models first because of Ammonite eval order!
             val allFiles = modelFiles ++ daoFiles
             val allSources =
@@ -61,13 +61,22 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
     if (missingSchemaNames.nonEmpty)
       throw new RuntimeException(s"Schemas do not exist in database: ${missingSchemaNames.mkString(", ")}")
 
+    val keyTypes =
+      resolveKeyTypes(dbDef, schemaConfigs.map(_.name), schemaConfigs.map(s => s.name -> s.basePackage).toMap)
+
     schemaConfigs.foreach { schemaConfig =>
       dbDef.schemas.find(_.name == schemaConfig.name) match {
         case Some(schemaDef) =>
           logger.info(s"Started generating schema '${schemaConfig.name}' into '${schemaConfig.baseFolder}'")
           val packagePath = schemaConfig.basePackage.replaceAll("\\.", "/")
           val (modelFiles, daoFiles) =
-            generateSchema(schemaDef, dbType = dbDef.tpe, basePackage = schemaConfig.basePackage, fileGen = true)
+            generateSchema(
+              schemaDef,
+              dbType = dbDef.tpe,
+              basePackage = schemaConfig.basePackage,
+              fileGen = true,
+              keyTypes
+            )
           val modelFilesAdapted = modelFiles.map { gsf =>
             gsf.copy(file = schemaConfig.baseFolder.resolve(packagePath).resolve("models").resolve(gsf.file.toString))
           }
@@ -88,7 +97,8 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
       schemaDef: SchemaDef,
       dbType: DbType,
       basePackage: String,
-      fileGen: Boolean
+      fileGen: Boolean,
+      keyTypes: Option[KeyTypes]
   ): (Seq[GeneratedFileSource], Seq[GeneratedFileSource]) = {
     val enumDefs = schemaDef.tables
       .flatMap {
@@ -136,14 +146,16 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
       val columnNamesScala = columnNames.map(_.safeColNameIdentifier)
       val allColsLit = Lit.String(columnNames.mkString(", "))
 
+      def columnScalaType(column: ColumnDef): Type =
+        keyTypes.flatMap(_.columnType(tableDef, column)).getOrElse(mappedColumnType(column))
+
       // TODO def allColValues in a case class, easy inserts
       val caseClassDefn = locally {
         val columnParams = tableDef.columnDefs.map { columnDef =>
-          val columnTpe = columnDef.scalaType match {
-            case Predefined(tpe) => tpe
-            case other           => Type.Name(other.safeTypeName)
-          }
-          val tpe = if (columnDef.metadata.isNullable) t"Option[${columnTpe}]" else columnTpe
+          val columnTpe = columnScalaType(columnDef)
+          val nullable =
+            columnDef.metadata.isNullable && !(config.ironNewtypes && tableDef.pkColumns.contains(columnDef))
+          val tpe = if (nullable) t"Option[${columnTpe}]" else columnTpe
           // in case class we preserve RAW COLUMN NAMES !
           param"${Term.Name(columnDef.metadata.name)}: ${tpe}"
         }
@@ -159,11 +171,12 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
             }
             q"${objectRef}.PK(..${Term.ArgClause(pkColExprs.toList)})"
           }
+        val pkMethods = Option.when(tableDef.hasPk)(q"def pk: ${pkType} = ${pkValue}").toList
         q"""
         case class ${caseClassType}(
           ..${Term.ParamClause(columnParams.toList)}
         ) derives SqlReadRow {
-          def pk: ${pkType} = ${pkValue}
+          ..${pkMethods}
         }
         """
       }
@@ -176,15 +189,17 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
           val columnNameLit = Lit.String(columnDef.metadata.name)
           q"""inline val ${columnNameIdentifier} = ${columnNameLit}"""
         }
-        val pkTypeDef = // TODO handle no PK
-          if (tableDef.pkColumns.length == 1) {
-            val pkCol = tableDef.pkColumns.head
-            q"type PK = ${Type.Name(pkCol.scalaType.safeTypeName)}"
+        val keyDeclarations = keyTypes.toList.flatMap(_.declarations(tableDef))
+        val pkTypeDefs =
+          if (!tableDef.hasPk) List.empty
+          else if (tableDef.pkColumns.length == 1) {
+            if (keyTypes.nonEmpty) keyDeclarations
+            else List(q"type PK = ${columnScalaType(tableDef.pkColumns.head)}")
           } else {
             val pkCols = tableDef.pkColumns.map { pkCol =>
-              param"${Term.Name(pkCol.metadata.name)}: ${Type.Name(pkCol.scalaType.safeTypeName)}"
+              param"${Term.Name(pkCol.metadata.name)}: ${columnScalaType(pkCol)}"
             }
-            q"case class PK(..${Term.ParamClause(pkCols.toList)})"
+            keyDeclarations :+ q"case class PK(..${Term.ParamClause(pkCols.toList)})"
           }
         val objectStmts = List(q"inline val tableName = ${tableNameLit}") ++
           columnNameConsts ++
@@ -203,7 +218,7 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
         q"""
         object ${Term.Name(caseClassName)} {
           ..${objectStmts}
-          ${pkTypeDef}
+          ..${pkTypeDefs}
         }
         """
       }
@@ -535,11 +550,11 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
       """
 
       val thirdPartyImports = schemaDef.tables
-              .flatMap(_.columnDefs.map(_.scalaType).collect { case ThirdParty(_, thirdPartyImports) =>
-                thirdPartyImports
-              })
-              .flatten
-              .distinct
+        .flatMap(_.columnDefs.map(_.scalaType).collect { case ThirdParty(_, thirdPartyImports) =>
+          thirdPartyImports
+        })
+        .flatten
+        .distinct
 
       val source =
         if (fileGen)
@@ -586,9 +601,13 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
       val importer = importStr.parse[Importer].get
       q"import ..${List(importer)}"
     }
-    baseImports ++ thirdPartyImports
+    baseImports ++ ironImports ++ thirdPartyImports
   }
-  private def generateDaoImports(dbType: DbType, basePackage: String, thirdPartyImportsStrs: Seq[String]): List[Import] = {
+  private def generateDaoImports(
+      dbType: DbType,
+      basePackage: String,
+      thirdPartyImportsStrs: Seq[String]
+  ): List[Import] = {
     val dbSpecificImporter = s"ba.sake.squery.${dbType.squeryPackage}.{*, given}".parse[Importer].get
     val baseImports = List(
       q"import java.time.*",
@@ -604,7 +623,34 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
     }
     val modelsImporter = s"${basePackage}.models.*".parse[Importer].get
     val modelsImport = q"import ..${List(modelsImporter)}"
-    baseImports ++ thirdPartyImports ++ List(modelsImport)
+    baseImports ++ ironImports ++ thirdPartyImports ++ List(modelsImport)
+  }
+
+  private def ironImports: List[Import] =
+    if (config.ironNewtypes) List(q"import ba.sake.squery.iron.given") else List.empty
+
+  private def resolveKeyTypes(db: DbDef, selected: Seq[String], packages: Map[String, String]): Option[KeyTypes] =
+    Option.when(config.ironNewtypes) {
+      val schemas = db.schemas.filter(s => selected.contains(s.name))
+      if (packages.isEmpty) {
+        val names = schemas.flatMap(_.tables).map(t => t.name.safeTypeName + config.rowTypeSuffix)
+        require(
+          names.distinct.size == names.size,
+          "Iron generation has duplicate row names across schemas. Use generateFiles with distinct packages."
+        )
+      }
+      new KeyTypes(
+        schemas,
+        packages,
+        t => t.name.safeTypeName + config.rowTypeSuffix,
+        c => c.metadata.name.safeTypeName + "Key",
+        mappedColumnType
+      )
+    }
+
+  private def mappedColumnType(column: ColumnDef): Type = column.scalaType match {
+    case scalar: ColumnType.ScalarType => scalar.tpe
+    case other                         => Type.Name(other.safeTypeName)
   }
 
   private def transformName(str: String, nameMapper: NameMapper, capitalizeFirstLetter: Boolean): String =
@@ -642,9 +688,9 @@ object NameMapper {
   case object Noop extends NameMapper
   case object CamelCase extends NameMapper
   def apply(name: String): NameMapper = name.toLowerCase() match {
-    case "noop"       => Noop
-    case "camelcase"  => CamelCase
-    case other        => throw new IllegalArgumentException(s"Unknown NameMapper: $other")
+    case "noop"      => Noop
+    case "camelcase" => CamelCase
+    case other       => throw new IllegalArgumentException(s"Unknown NameMapper: $other")
   }
 }
 
@@ -655,7 +701,8 @@ case class SqueryGeneratorConfig(
     rowTypeSuffix: String,
     daoTypeSuffix: String,
     typeMappingRules: Seq[TypeMappingRule] = Seq.empty,
-    tableFilter: TableFilter = TableFilter.All
+    tableFilter: TableFilter = TableFilter.All,
+    ironNewtypes: Boolean = false
 )
 
 object SqueryGeneratorConfig {

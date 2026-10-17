@@ -1,7 +1,7 @@
 package ba.sake.squery.cli
 
 import ba.sake.squery.generator._
-import mainargs.{ParserForMethods, arg, main}
+import mainargs.{Flag, ParserForMethods, arg, main}
 
 import java.nio.file.Paths
 import java.sql.DriverManager
@@ -35,12 +35,17 @@ object SqueryMain {
         name = "includeTables",
         doc = "Table name regex to include. Matches 'schema.table'. Repeatable; defaults to all tables."
       )
-      includeTables: Seq[String] = Seq(".*"),
+      includeTables: Seq[String] = Seq.empty,
       @arg(
         name = "excludeTables",
         doc = "Table name regex to exclude. Matches 'schema.table'. Repeatable and takes precedence over includes."
       )
-      excludeTables: Seq[String] = Seq.empty
+      excludeTables: Seq[String] = Seq.empty,
+      @arg(
+        name = "ironNewtypes",
+        doc = "Generate distinct Iron types for primary and foreign keys. Requires squery-iron."
+      )
+      ironNewtypes: Flag = Flag()
   ) = {
 
     val config = SqueryGeneratorConfig(
@@ -49,7 +54,8 @@ object SqueryMain {
       rowTypeSuffix = rowTypeSuffix,
       daoTypeSuffix = daoTypeSuffix,
       typeMappingRules = typeMappingRule.map(parseTypeMappingRule),
-      tableFilter = TableFilter(includeTables, excludeTables)
+      tableFilter = TableFilter(if (includeTables.isEmpty) Seq(".*") else includeTables, excludeTables),
+      ironNewtypes = ironNewtypes.value
     )
 
     Using.resource(DriverManager.getConnection(jdbcUrl)) { connection =>
