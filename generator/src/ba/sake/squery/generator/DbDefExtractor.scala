@@ -19,7 +19,7 @@ object DbDefExtractor {
     dbName match {
       case "postgresql" => new PostgresDefExtractor(connection, typeMappingRules, tableFilter)
       case "sqlite"     => new SqliteDefExtractor(connection, typeMappingRules, tableFilter)
-      case _              => new JdbcDefExtractor(connection, typeMappingRules, tableFilter)
+      case _            => new JdbcDefExtractor(connection, typeMappingRules, tableFilter)
     }
   }
 }
@@ -59,7 +59,7 @@ abstract class DbDefExtractor(
     tableFilter: TableFilter = TableFilter.All
 ) {
 
-  def extract(): DbDef =  { 
+  def extract(): DbDef = {
     val databaseMetaData = connection.getMetaData
     val dbName = databaseMetaData.getDatabaseProductName.toLowerCase
     val schemaNames = schemaNamesFrom(databaseMetaData)
@@ -102,7 +102,8 @@ abstract class DbDefExtractor(
     val allColumnsMetadatas = extractColumnMetadatas(databaseMetaData, schemaName)
     val configuredColumnTypes = allColumnsMetadatas.flatMap { metadata =>
       typeMappingRules.collectFirst {
-        case rule if rule.matches(metadata) => (metadata.table, metadata.name) -> ColumnType.ThirdParty(rule.scalaType, rule.requiredImports)
+        case rule if rule.matches(metadata) =>
+          (metadata.table, metadata.name) -> ColumnType.ThirdParty(rule.scalaType, rule.requiredImports)
       }
     }.toMap
     val inferredColumnTypes = getColumnTypes(
@@ -121,24 +122,45 @@ abstract class DbDefExtractor(
         val tableSchema = Option(tablesRS.getString("TABLE_SCHEM")).getOrElse(schemaName)
         val tableName = tablesRS.getString("TABLE_NAME")
         if (includeTable(schemaName, tableSchema, tableName)) {
-          val tableColumnDefs = allColumnDefs.filter(c => c.metadata.table == tableName && includeColumn(schemaName, c.metadata.schema))
-        val pkColumns = Using.resource(databaseMetaData.getPrimaryKeys(null, schemaName, tableName)) { pksRS =>
-          val pkColumnRes = ArrayBuffer.empty[(Short, ColumnDef)]
-          while (pksRS.next()) {
-            val pkColName = pksRS.getString("COLUMN_NAME")
-            val pkColumn = tableColumnDefs
-              .find(_.metadata.name == pkColName)
-              .getOrElse(throw new RuntimeException(s"PK column not found: ${pkColName}"))
-            pkColumnRes += ((pksRS.getShort("KEY_SEQ"), pkColumn))
+          val tableColumnDefs =
+            allColumnDefs.filter(c => c.metadata.table == tableName && includeColumn(schemaName, c.metadata.schema))
+          val pkColumns = Using.resource(databaseMetaData.getPrimaryKeys(null, schemaName, tableName)) { pksRS =>
+            val pkColumnRes = ArrayBuffer.empty[(Short, ColumnDef)]
+            while (pksRS.next()) {
+              val pkColName = pksRS.getString("COLUMN_NAME")
+              val pkColumn = tableColumnDefs
+                .find(_.metadata.name == pkColName)
+                .getOrElse(throw new RuntimeException(s"PK column not found: ${pkColName}"))
+              pkColumnRes += ((pksRS.getShort("KEY_SEQ"), pkColumn))
+            }
+            pkColumnRes.sortBy(_._1).map(_._2).toSeq
           }
-          pkColumnRes.sortBy(_._1).map(_._2).toSeq
-        }
-          tableDefsRes += TableDef(schemaName, tableName, tableColumnDefs, pkColumns)
+          val foreignKeys = extractForeignKeys(databaseMetaData, schemaName, tableName)
+          tableDefsRes += TableDef(schemaName, tableName, tableColumnDefs, pkColumns, foreignKeys)
         }
       }
       tableDefsRes.toSeq
     }
   }
+
+  protected def extractForeignKeys(
+      databaseMetaData: DatabaseMetaData,
+      schemaName: String,
+      tableName: String
+  ): Seq[ForeignKeyColumn] =
+    Using.resource(databaseMetaData.getImportedKeys(null, schemaName, tableName)) { rs =>
+      val columns = ArrayBuffer.empty[ForeignKeyColumn]
+      while (rs.next()) {
+        columns += ForeignKeyColumn(
+          rs.getString("FKCOLUMN_NAME"),
+          Option(rs.getString("PKTABLE_SCHEM")).getOrElse(schemaName),
+          rs.getString("PKTABLE_NAME"),
+          Option(rs.getString("PKCOLUMN_NAME")),
+          rs.getShort("KEY_SEQ").toInt
+        )
+      }
+      columns.toSeq
+    }
 
   private def extractColumnMetadatas(
       databaseMetaData: DatabaseMetaData,
@@ -156,17 +178,18 @@ abstract class DbDefExtractor(
         val isAutoInc = resultSet.getString("IS_AUTOINCREMENT") == "YES"
         val isGenerated = resultSet.getString("IS_GENERATEDCOLUMN") == "YES"
         val defaultValue = Option(resultSet.getString("COLUMN_DEF"))
-        if (includeColumn(schemaName, tableSchema)) res += ColumnMetadata(
-          tableSchema,
-          tableName,
-          columnName,
-          typeName,
-          jdbcType,
-          isNullable,
-          isAutoInc,
-          isGenerated,
-          defaultValue
-        )
+        if (includeColumn(schemaName, tableSchema))
+          res += ColumnMetadata(
+            tableSchema,
+            tableName,
+            columnName,
+            typeName,
+            jdbcType,
+            isNullable,
+            isAutoInc,
+            isGenerated,
+            defaultValue
+          )
       }
     }
     res.toSeq
@@ -203,13 +226,27 @@ case class SchemaDef(
     tables: Seq[TableDef]
 )
 
-case class TableDef(schema: String, name: String, columnDefs: Seq[ColumnDef], pkColumns: Seq[ColumnDef]) {
+case class TableDef(
+    schema: String,
+    name: String,
+    columnDefs: Seq[ColumnDef],
+    pkColumns: Seq[ColumnDef],
+    foreignKeys: Seq[ForeignKeyColumn] = Seq.empty
+) {
   def hasPk: Boolean = pkColumns.nonEmpty
   def hasCompositePk: Boolean = pkColumns.length > 1
   def nonPkColDefs: Seq[ColumnDef] = columnDefs.filterNot(pkColumns.contains)
   def insertableColumnDefs: Seq[ColumnDef] =
     columnDefs.filterNot(column => column.metadata.isAutoInc || column.metadata.isGenerated)
 }
+
+case class ForeignKeyColumn(
+    column: String,
+    referencedSchema: String,
+    referencedTable: String,
+    referencedColumn: Option[String],
+    keySequence: Int
+)
 
 case class ColumnDef(
     metadata: ColumnMetadata,

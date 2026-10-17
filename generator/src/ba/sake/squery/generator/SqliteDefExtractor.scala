@@ -2,6 +2,7 @@ package ba.sake.squery.generator
 
 import java.sql.{Array => _, _}
 import scala.meta._
+import scala.util.Using
 
 class SqliteDefExtractor(
     connection: Connection,
@@ -12,6 +13,29 @@ class SqliteDefExtractor(
   override protected def includeTable(schemaName: String, tableSchema: String, tableName: String): Boolean =
     tableSchema == "main" && super.includeTable(schemaName, tableSchema, tableName)
   override protected def includeColumn(schemaName: String, columnSchema: String): Boolean = columnSchema == "main"
+
+  // JDBC metadata loses component order for implicit composite REFERENCES parent.
+  override protected def extractForeignKeys(
+      databaseMetaData: DatabaseMetaData,
+      schemaName: String,
+      tableName: String
+  ): Seq[ForeignKeyColumn] =
+    Using.resource(connection.createStatement()) { stmt =>
+      val escapedTable = tableName.replace("'", "''")
+      Using.resource(stmt.executeQuery(s"PRAGMA main.foreign_key_list('$escapedTable')")) { rs =>
+        val columns = scala.collection.mutable.ArrayBuffer.empty[ForeignKeyColumn]
+        while (rs.next()) {
+          columns += ForeignKeyColumn(
+            rs.getString("from"),
+            "main",
+            rs.getString("table"),
+            Option(rs.getString("to")).filter(_.nonEmpty),
+            rs.getInt("seq") + 1
+          )
+        }
+        columns.toSeq
+      }
+    }
 
   override protected def getColumnTypes(
       schemaName: String,

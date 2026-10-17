@@ -1,10 +1,10 @@
 amends "https://sake92.github.io/deder/config/v0.20.0/DederProject.pkl"
 
 local const baseScala3: ScalaModule = new {
-  scalaVersion = "3.7.4"
+  scalaVersion = "3.9.0"
   publish = true
   scalacOptions {
-    "-Ywarn-unused"
+    "-Wunused:all"
     "-deprecation"
     "-feature"
     "-language:implicitConversions"
@@ -135,22 +135,48 @@ local const generatorModules = new CreateScalaModules {
 }.get
 local const generator = generatorModules.main
 
-local const cli: ScalaModule = (baseScala213) {
-  id = "cli"
+local const squeryIronModules = new CreateScalaModules {
+  root = "squery/iron"
+  template = (baseScala3) {
+    id = "squery-iron"
+    moduleDeps { squeryModules.jvm }
+    deps { "io.github.iltotore::iron:3.4.0" }
+    pomSettings = (squeryPomTemplate) {
+      artifactId = "squery-iron"
+      name = "squery-iron"
+      description = "Squery codecs for Iron newtypes"
+    }
+  }
+  testTemplate = (template.asTest()) {
+    moduleDeps { generator }
+    deps {
+      "org.scalameta::munit:1.0.0"
+      "org.scala-lang::scala3-compiler:3.9.0"
+      "com.h2database:h2:2.3.232"
+      "org.xerial:sqlite-jdbc:3.46.1.0"
+    }
+  }
+}.get
+
+local const cliModules = new CreateScalaModules {
   root = "cli"
-  moduleDeps {
-    generator
+  template = (baseScala213) {
+    moduleDeps { generator }
+    deps { "com.lihaoyi::mainargs:0.7.6" }
+    mainClass = "ba.sake.squery.cli.SqueryMain"
+    pomSettings = (squeryPomTemplate) {
+      artifactId = "squery-cli"
+      name = "squery-cli"
+      description = "Squery generator CLI"
+    }
   }
-  deps {
-    "com.lihaoyi::mainargs:0.7.6"
+  testTemplate = (template.asTest()) {
+    deps {
+      "org.scalameta::munit:1.0.0"
+      "org.xerial:sqlite-jdbc:3.46.1.0"
+    }
   }
-  mainClass = "ba.sake.squery.cli.SqueryMain"
-  pomSettings = (squeryPomTemplate) {
-    artifactId = "squery-cli"
-    name = "squery-cli"
-    description = "Squery generator CLI"
-  }
-}
+}.get
 
 modules {
   squeryModules.jvm
@@ -158,6 +184,7 @@ modules {
   squeryModules.native
   squeryModules.native_test
   squeryPostgresJawn
+  ...squeryIronModules.all
   ...generatorModules.all
-  cli
+  ...cliModules.all
 }
