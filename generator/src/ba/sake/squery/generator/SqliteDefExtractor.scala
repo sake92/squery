@@ -46,7 +46,8 @@ class SqliteDefExtractor(
   private def resolveType(metadata: ColumnMetadata): ColumnType = {
     val declaredType = metadata.declaredType.trim.toUpperCase
     val name = metadata.name.toLowerCase
-    if (isIntegerAffinity(declaredType) && name.matches("(?:is|has|can)_.+")) ColumnType.Predefined(t"Boolean")
+    if (declaredType == "BOOLEAN" || declaredType == "BOOL") ColumnType.Predefined(t"Boolean")
+    else if (isIntegerAffinity(declaredType) && name.matches("(?:is|has|can)_.+")) ColumnType.Predefined(t"Boolean")
     else if (isIntegerAffinity(declaredType)) ColumnType.Predefined(t"Long")
     else if (declaredType == "REAL") ColumnType.Predefined(t"Double")
     else if (declaredType == "TEXT") {

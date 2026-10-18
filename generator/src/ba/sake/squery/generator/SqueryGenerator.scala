@@ -154,7 +154,7 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
         val columnParams = tableDef.columnDefs.map { columnDef =>
           val columnTpe = columnScalaType(columnDef)
           val nullable =
-            columnDef.metadata.isNullable && !(config.ironNewtypes && tableDef.pkColumns.contains(columnDef))
+            columnDef.metadata.isNullable && !(keyTypes.nonEmpty && tableDef.pkColumns.contains(columnDef))
           val tpe = if (nullable) t"Option[${columnTpe}]" else columnTpe
           // in case class we preserve RAW COLUMN NAMES !
           param"${Term.Name(columnDef.metadata.name)}: ${tpe}"
@@ -627,10 +627,16 @@ class SqueryGenerator(connection: Connection, config: SqueryGeneratorConfig = Sq
   }
 
   private def ironImports: List[Import] =
-    if (config.ironNewtypes) List(q"import ba.sake.squery.iron.given") else List.empty
+    if (config.newtypes == Newtypes.Iron)
+      List(
+        q"import io.github.iltotore.iron.RefinedType",
+        q"import io.github.iltotore.iron.constraint.any.Pure",
+        q"import ba.sake.squery.iron.given"
+      )
+    else List.empty
 
   private def resolveKeyTypes(db: DbDef, selected: Seq[String], packages: Map[String, String]): Option[KeyTypes] =
-    Option.when(config.ironNewtypes) {
+    Option.when(config.newtypes == Newtypes.Iron) {
       val schemas = db.schemas.filter(s => selected.contains(s.name))
       if (packages.isEmpty) {
         val names = schemas.flatMap(_.tables).map(t => t.name.safeTypeName + config.rowTypeSuffix)
@@ -694,6 +700,12 @@ object NameMapper {
   }
 }
 
+sealed abstract class Newtypes
+object Newtypes {
+  case object None extends Newtypes
+  case object Iron extends Newtypes
+}
+
 // case-class-row column name mapping is forbidden!
 case class SqueryGeneratorConfig(
     colNameIdentifierMapper: NameMapper,
@@ -702,7 +714,7 @@ case class SqueryGeneratorConfig(
     daoTypeSuffix: String,
     typeMappingRules: Seq[TypeMappingRule] = Seq.empty,
     tableFilter: TableFilter = TableFilter.All,
-    ironNewtypes: Boolean = false
+    newtypes: Newtypes = Newtypes.None
 )
 
 object SqueryGeneratorConfig {

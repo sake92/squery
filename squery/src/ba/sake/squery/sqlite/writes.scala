@@ -1,7 +1,7 @@
 package ba.sake.squery.sqlite
 
 import java.{sql => jsql}
-import java.time.Instant
+import java.time.{Instant, LocalDate, LocalDateTime}
 import java.util.UUID
 import ba.sake.squery.write.*
 
@@ -19,6 +19,18 @@ given SqlWrite[Boolean] with
 
 given SqlWrite[Instant] with
   def write(ps: jsql.PreparedStatement, idx: Int, valueOpt: Option[Instant]): Unit =
+    valueOpt match
+      case Some(value) => ps.setString(idx, value.toString)
+      case None        => ps.setNull(idx, jsql.Types.VARCHAR)
+
+given SqlWrite[LocalDate] with
+  def write(ps: jsql.PreparedStatement, idx: Int, valueOpt: Option[LocalDate]): Unit =
+    valueOpt match
+      case Some(value) => ps.setString(idx, value.toString)
+      case None        => ps.setNull(idx, jsql.Types.VARCHAR)
+
+given SqlWrite[LocalDateTime] with
+  def write(ps: jsql.PreparedStatement, idx: Int, valueOpt: Option[LocalDateTime]): Unit =
     valueOpt match
       case Some(value) => ps.setString(idx, value.toString)
       case None        => ps.setNull(idx, jsql.Types.VARCHAR)

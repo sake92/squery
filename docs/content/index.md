@@ -52,3 +52,9 @@ Database-specific imports provide the appropriate `UUID` codec, while the option
 Start with [Setup](/tutorials/setup.html), then continue to the
 [Quickstart](/tutorials/quickstart.html). The [How-Tos](/howtos/) cover queries,
 updates, interpolation, transactions, and custom types.
+
+## Reference
+
+- [Codegen CLI](reference/codegen-cli.html)
+- [Codegen build plugins](reference/codegen-plugins.html)
+- [SQLite mappings](reference/sqlite.html)

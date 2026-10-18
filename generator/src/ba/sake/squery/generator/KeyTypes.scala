@@ -22,7 +22,7 @@ private[generator] final class KeyTypes(
           throw new IllegalArgumentException(
             s"Cannot generate Iron key for ${table.schema}.${table.name}.${fk.column}: " +
               s"referenced table ${fk.referencedSchema}.${fk.referencedTable} is not selected. " +
-              "Include the referenced table and schema, or disable ironNewtypes."
+              "Include the referenced table and schema, or set newtypes to none."
           )
         )
         // SQLite permits REFERENCES parent without naming its primary-key columns.
@@ -48,7 +48,7 @@ private[generator] final class KeyTypes(
       val base = baseType(col)
       List(
         q"type $name = ${Type.Select(termName, Type.Name("T"))}",
-        q"object $termName extends io.github.iltotore.iron.RefinedType[$base, io.github.iltotore.iron.constraint.any.Pure] {}"
+        q"object $termName extends RefinedType[$base, Pure] {}"
       )
     } else {
       val targetType = typeRef(owner, table.schema)
