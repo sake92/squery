@@ -21,6 +21,10 @@ class IronKeysSuite extends FunSuite {
       assert(typed.contains("id: OrdersRow.PK"), typed)
       assert(typed.contains("def findById(id: UsersRow.PK)"), typed)
       assert(typed.contains("import ba.sake.squery.iron.given"), typed)
+      assert(typed.contains("import io.github.iltotore.iron.RefinedType"), typed)
+      assert(typed.contains("import io.github.iltotore.iron.constraint.any.Pure"), typed)
+      assert(typed.contains("object PK extends RefinedType[Long, Pure]"), typed)
+      assert(!legacy.contains("io.github.iltotore.iron"), legacy)
     }
   }
 
@@ -83,7 +87,7 @@ class IronKeysSuite extends FunSuite {
   }
 
   private def generate(conn: Connection): String =
-    new SqueryGenerator(conn, SqueryGeneratorConfig.Default.copy(ironNewtypes = true)).generateString(Seq("main"))
+    new SqueryGenerator(conn, SqueryGeneratorConfig.Default.copy(newtypes = Newtypes.Iron)).generateString(Seq("main"))
 
   private def withSchema(statements: Seq[String])(body: Connection => Unit): Unit =
     Using.resource(DriverManager.getConnection("jdbc:sqlite::memory:")) { conn =>

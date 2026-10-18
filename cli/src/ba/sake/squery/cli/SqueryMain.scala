@@ -1,7 +1,7 @@
 package ba.sake.squery.cli
 
 import ba.sake.squery.generator._
-import mainargs.{Flag, ParserForMethods, arg, main}
+import mainargs.{ParserForMethods, TokensReader, arg, main}
 
 import java.nio.file.Paths
 import java.sql.DriverManager
@@ -9,6 +9,15 @@ import scala.meta._
 import scala.util.Using
 
 object SqueryMain {
+
+  implicit object NewtypesReader extends TokensReader.Simple[Newtypes] {
+    def shortName = "none|iron"
+    def read(strs: Seq[String]): Either[String, Newtypes] = strs.head match {
+      case "none" => Right(Newtypes.None)
+      case "iron" => Right(Newtypes.Iron)
+      case other  => Left(s"Unknown newtypes mode '$other'. Expected 'none' or 'iron'.")
+    }
+  }
 
   @main
   def run(
@@ -42,10 +51,10 @@ object SqueryMain {
       )
       excludeTables: Seq[String] = Seq.empty,
       @arg(
-        name = "ironNewtypes",
-        doc = "Generate distinct Iron types for primary and foreign keys. Requires squery-iron."
+        name = "newtypes",
+        doc = "Key newtypes: none (default) or iron. Iron requires squery-iron."
       )
-      ironNewtypes: Flag = Flag()
+      newtypes: Newtypes = Newtypes.None
   ) = {
 
     val config = SqueryGeneratorConfig(
@@ -55,7 +64,7 @@ object SqueryMain {
       daoTypeSuffix = daoTypeSuffix,
       typeMappingRules = typeMappingRule.map(parseTypeMappingRule),
       tableFilter = TableFilter(if (includeTables.isEmpty) Seq(".*") else includeTables, excludeTables),
-      ironNewtypes = ironNewtypes.value
+      newtypes = newtypes
     )
 
     Using.resource(DriverManager.getConnection(jdbcUrl)) { connection =>

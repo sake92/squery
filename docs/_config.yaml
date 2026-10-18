@@ -9,3 +9,6 @@ categories:
     label: How-Tos
     description: Squery How-Tos
 
+  reference:
+    label: Reference
+    description: Squery Reference

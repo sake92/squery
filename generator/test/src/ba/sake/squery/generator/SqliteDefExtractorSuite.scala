@@ -18,6 +18,8 @@ class SqliteDefExtractorSuite extends FunSuite {
         payload BLOB,
         amount NUMERIC,
         is_active INTEGER,
+        enabled BOOLEAN,
+        disabled bool,
         created_at TEXT,
         birth_date TEXT,
         custom_id TEXT,
@@ -49,6 +51,8 @@ class SqliteDefExtractorSuite extends FunSuite {
       assertEquals(types("payload"), "Array[Byte]")
       assertEquals(types("amount"), "NUMERIC")
       assertEquals(types("is_active"), "Boolean")
+      assertEquals(types("enabled"), "Boolean")
+      assertEquals(types("disabled"), "Boolean")
       assertEquals(types("created_at"), "Instant")
       assertEquals(types("birth_date"), "LocalDate")
       assertEquals(types("has_flag"), "Boolean")

@@ -1,7 +1,7 @@
 package ba.sake.squery.sqlite
 
 import ba.sake.squery.{*, given}
-import java.time.Instant
+import java.time.{Instant, LocalDate, LocalDateTime}
 import java.util.UUID
 import org.sqlite.SQLiteDataSource
 
@@ -58,6 +58,42 @@ class SqliteSuite extends munit.FunSuite:
             .readRow[SqliteRow](),
           expected
         )
+      }
+    }
+  }
+
+  test("SQLite dates and local date-times use ISO text and preserve nulls") {
+    import ba.sake.squery.sqlite.{*, given}
+
+    withContext { ctx =>
+      ctx.run {
+        val date = LocalDate.parse("2024-02-29")
+        val dateTime = LocalDateTime.parse("2024-02-29T12:34:56.123456789")
+        sql"CREATE TABLE dates(birth_date TEXT, local_time TEXT)".update()
+        sql"INSERT INTO dates VALUES ($date, $dateTime)".update()
+        assertEquals(sql"SELECT birth_date FROM dates".readValue[String](), "2024-02-29")
+        assertEquals(sql"SELECT local_time FROM dates".readValue[String](), dateTime.toString)
+        assertEquals(sql"SELECT birth_date FROM dates".readValue[LocalDate](), date)
+        assertEquals(sql"SELECT local_time FROM dates".readValue[LocalDateTime](), dateTime)
+        assertEquals(sql"SELECT '2024-02-29'".readValue[LocalDate](), date)
+        assertEquals(sql"SELECT date('2024-02-29')".readValue[LocalDate](), date)
+        sql"INSERT INTO dates VALUES (${Option.empty[LocalDate]}, ${Option.empty[LocalDateTime]})".update()
+        assertEquals(sql"SELECT birth_date FROM dates WHERE birth_date IS NULL".readValue[Option[LocalDate]](), None)
+        assertEquals(sql"SELECT local_time FROM dates WHERE local_time IS NULL".readValue[Option[LocalDateTime]](), None)
+        val dateRead = summon[SqlRead[LocalDate]]
+        val dateTimeRead = summon[SqlRead[LocalDateTime]]
+        val statement = summon[SqueryConnection].underlying.createStatement()
+        try {
+          val rs = statement.executeQuery("SELECT birth_date, local_time FROM dates")
+          try {
+            assert(rs.next())
+            assertEquals(dateRead.readByName(rs, "birth_date"), Some(date))
+            assertEquals(dateTimeRead.readByName(rs, "local_time"), Some(dateTime))
+            assert(rs.next())
+            assertEquals(dateRead.readByName(rs, "birth_date"), None)
+            assertEquals(dateTimeRead.readByName(rs, "local_time"), None)
+          } finally rs.close()
+        } finally statement.close()
       }
     }
   }

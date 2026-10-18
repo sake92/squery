@@ -5,11 +5,13 @@ import java.sql.DriverManager
 import scala.jdk.CollectionConverters._
 import scala.util.Using
 import mainargs.ParserForMethods
+import ba.sake.squery.cli.SqueryMain.NewtypesReader
 import munit.FunSuite
 
 class SqueryMainSuite extends FunSuite {
-  for (typed <- Seq(false, true)) {
-    test(s"CLI generates sources with omitted table filters (ironNewtypes=$typed)") {
+  for (mode <- Seq(None, Some("none"), Some("iron"))) {
+    val typed = mode.contains("iron")
+    test(s"CLI generates sources with omitted table filters (newtypes=$mode)") {
       withDatabase { (directory, jdbcUrl) =>
         val output = directory.resolve("generated")
         val args = Seq(
@@ -19,12 +21,13 @@ class SqueryMainSuite extends FunSuite {
           output.toString,
           "--schema-mappings",
           "main:example.db"
-        ) ++ (if (typed) Seq("--ironNewtypes") else Seq.empty)
+        ) ++ mode.toSeq.flatMap(value => Seq("--newtypes", value))
         val result = ParserForMethods(SqueryMain).runEither(args)
         assert(result.isRight, result.toString)
         val row = Files.readString(output.resolve("example/db/models/OrdersRow.scala"))
         assertEquals(row.contains("user_id: UsersRow.PK"), typed)
         assertEquals(row.contains("squery.iron.given"), typed)
+        assertEquals(row.contains("object PK extends RefinedType[Long, Pure]"), typed)
       }
     }
   }
@@ -33,7 +36,7 @@ class SqueryMainSuite extends FunSuite {
     withDatabase { (directory, jdbcUrl) =>
       val output = directory.resolve("generated")
       val base = Seq("--jdbc-url", jdbcUrl, "--base-folder", output.toString, "--schema-mappings", "main:example.db")
-      val bad = ParserForMethods(SqueryMain).runEither(base ++ Seq("--ironNewtypes", "--unknown-option"))
+      val bad = ParserForMethods(SqueryMain).runEither(base ++ Seq("--newtypes", "iron", "--unknown-option"))
       assert(bad.isLeft)
       assert(!Files.exists(output))
       val result = ParserForMethods(SqueryMain).runEither(
@@ -42,6 +45,20 @@ class SqueryMainSuite extends FunSuite {
       assert(result.isRight, result.toString)
       assert(Files.exists(output.resolve("example/db/models/UsersRow.scala")))
       assert(!Files.exists(output.resolve("example/db/models/OrdersRow.scala")))
+    }
+  }
+
+  test("CLI rejects invalid or missing newtype modes before writing output") {
+    withDatabase { (directory, jdbcUrl) =>
+      val output = directory.resolve("generated")
+      val base = Seq("--jdbc-url", jdbcUrl, "--base-folder", output.toString, "--schema-mappings", "main:example.db")
+      for (options <- Seq(Seq("--newtypes", "opaque"), Seq("--newtypes"))) {
+        val result = ParserForMethods(SqueryMain).runEither(base ++ options)
+        assert(result.isLeft, result.toString)
+        if (options.contains("opaque"))
+          assert(result.toString.contains("Expected 'none' or 'iron'"), result.toString)
+        assert(!Files.exists(output))
+      }
     }
   }
 

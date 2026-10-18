@@ -6,7 +6,7 @@ import java.nio.file.{Files, Path}
 import java.sql.{Connection, DriverManager}
 import scala.jdk.CollectionConverters.*
 import scala.util.Using
-import ba.sake.squery.generator.{SchemaConfig, SqueryGenerator, SqueryGeneratorConfig, TableFilter, TypeMappingRule}
+import ba.sake.squery.generator.{Newtypes, SchemaConfig, SqueryGenerator, SqueryGeneratorConfig, TableFilter, TypeMappingRule}
 
 /** Compiles the actual generated files, then executes their DAOs against JDBC. */
 class GeneratedKeysSuite extends munit.FunSuite:
@@ -40,7 +40,7 @@ class GeneratedKeysSuite extends munit.FunSuite:
               "def description: String = name\n  def pk:"
             )
         )
-        val generator = new SqueryGenerator(conn, SqueryGeneratorConfig.Default.copy(ironNewtypes = true))
+        val generator = new SqueryGenerator(conn, SqueryGeneratorConfig.Default.copy(newtypes = Newtypes.Iron))
         generator.generateFiles(Seq(schema))
         generator.generateFiles(Seq(schema))
         val probe = """
@@ -103,7 +103,7 @@ class GeneratedKeysSuite extends munit.FunSuite:
       )
       withDirectory { directory =>
         val config = SqueryGeneratorConfig.Default.copy(
-          ironNewtypes = true,
+          newtypes = Newtypes.Iron,
           typeMappingRules = Seq(TypeMappingRule(".*", "UUID", scala.meta.Type.Name("UUID"), Seq("java.util.UUID")))
         )
         val generator = new SqueryGenerator(conn, config)
@@ -154,7 +154,7 @@ class GeneratedKeysSuite extends munit.FunSuite:
       )
       withDirectory { directory =>
         val config = SqueryGeneratorConfig.Default.copy(
-          ironNewtypes = true,
+          newtypes = Newtypes.Iron,
           tableFilter = TableFilter(excludePatterns = Seq("main.users"))
         )
         val error = intercept[IllegalArgumentException] {
