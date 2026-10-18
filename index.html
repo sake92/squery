@@ -21,7 +21,7 @@
    <nav aria-label="Main navigation">
     <a href="https://sake92.github.io/squery/">Squery Documentation</a>
     <div>
-     <a href="https://sake92.github.io/squery/tutorials">Tutorials</a> <a href="https://sake92.github.io/squery/howtos">How-Tos</a>
+     <a href="https://sake92.github.io/squery/tutorials">Tutorials</a> <a href="https://sake92.github.io/squery/howtos">How-Tos</a> <a href="https://sake92.github.io/squery/reference">Reference</a>
     </div>
     <form action="https://sake92.github.io/squery/search/results.html" method="get" role="search">
      <input name="q" type="search" placeholder="Search" aria-label="Search this site">
@@ -72,6 +72,12 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
      </ul>
      <p>Database-specific imports provide the appropriate <code>UUID</code> codec, while the optional <code>squery-postgres-jawn</code> module provides PostgreSQL JSON/JSONB support using Jawn.</p>
      <p>Start with <a href="https://sake92.github.io/squery/tutorials/setup.html">Setup</a>, then continue to the <a href="https://sake92.github.io/squery/tutorials/quickstart.html">Quickstart</a>. The <a href="https://sake92.github.io/squery/howtos/">How-Tos</a> cover queries, updates, interpolation, transactions, and custom types.</p>
+     <h2 id="reference">Reference<a href="#reference" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <ul>
+      <li><a href="reference/codegen-cli.html">Codegen CLI</a></li>
+      <li><a href="reference/codegen-plugins.html">Codegen build plugins</a></li>
+      <li><a href="reference/sqlite.html">SQLite mappings</a></li>
+     </ul>
     </div>
     <aside aria-label="On this page">
      <details open>
@@ -82,6 +88,7 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
          <ul>
           <li><a href="#features">Features</a></li>
           <li><a href="#supported-values">Supported values</a></li>
+          <li><a href="#reference">Reference</a></li>
          </ul></li>
        </ul>
       </nav>

@@ -21,7 +21,7 @@
    <nav aria-label="Main navigation">
     <a href="https://sake92.github.io/squery/">Squery Documentation</a>
     <div>
-     <a href="https://sake92.github.io/squery/tutorials">Tutorials</a> <a href="https://sake92.github.io/squery/howtos">How-Tos</a>
+     <a href="https://sake92.github.io/squery/tutorials">Tutorials</a> <a href="https://sake92.github.io/squery/howtos">How-Tos</a> <a href="https://sake92.github.io/squery/reference">Reference</a>
     </div>
     <form action="https://sake92.github.io/squery/search/results.html" method="get" role="search">
      <input name="q" type="search" placeholder="Search" aria-label="Search this site">
@@ -55,20 +55,52 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
       <br>
       This means <strong>you can add your own methods/vals to the generated code</strong>, without fear that the codegen will remove it.</p>
      <h2 id="cli">CLI<a href="#cli" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-     <p>The simplest way to generate sources is to launch <code>squery-cli</code> with Coursier. Add your JDBC driver as another dependency because the CLI does not bundle database drivers. For SQLite:</p>
+     <p>The simplest way to generate sources is to launch <code>squery-cli</code> with Coursier. Add your JDBC driver as another dependency because the CLI does not bundle database drivers. For SQLite, create a database with the SQLite CLI:</p>
+     <pre><code class="language-shell hljs" data-highlighted="yes">sqlite3 database.db &lt;&lt;'SQL'
+CREATE TABLE users (
+  id INTEGER NOT NULL PRIMARY KEY,
+  enabled BOOLEAN NOT NULL DEFAULT 1,
+  birth_date TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+CREATE TABLE orders (
+  id INTEGER NOT NULL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  placed_at TEXT
+);
+SQL
+</code></pre>
+     <p>Add the application dependencies (Scala CLI syntax shown):</p>
+     <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">scala</span> <span class="hljs-string">"3.9.0"</span>
+<span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">"ba.sake::squery:0.13.0"</span>
+<span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">"ba.sake::squery-iron:0.13.0"</span>
+<span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">"org.xerial:sqlite-jdbc:3.46.1.0"</span>
+</code></pre>
+     <p>Generate models and DAOs, including Iron key newtypes:</p>
      <pre><code class="language-shell hljs" data-highlighted="yes">cs launch org.xerial:sqlite-jdbc:3.46.1.0 \
   ba.sake:squery-cli_2.13:0.13.0 \
   -M ba.sake.squery.cli.SqueryMain -- \
-  --jdbcUrl jdbc:sqlite:database.db \
-  --baseFolder src/main/scala \
-  --schemaMappings main:com.example
+  --jdbc-url jdbc:sqlite:database.db \
+  --base-folder src/main/scala \
+  --schema-mappings main:com.example.db \
+  --newtypes iron \
+  --excludeTables 'main\.flyway_schema_history' \
+  --excludeTables 'main\.sqlite_.*'
 </code></pre>
+     <p>Run this from the directory containing <code>database.db</code>; a relative SQLite JDBC URL can create an empty database if the path is wrong. The exclusions keep Flyway's history and any SQLite internal tables out of generated sources. Add exclusions for other migration or application-internal tables as needed.</p>
+     <p><code>--newtypes iron</code> generates per-row <code>PK</code> types and reuses the referenced PK type for foreign keys. Keep <code>squery-iron</code> at the same version as <code>squery</code>; the current Iron dependency requires Scala 3.9.0 or newer. To generate primitive keys, omit <code>--newtypes iron</code> (or use <code>--newtypes none</code>) and omit <code>squery-iron</code>.</p>
+     <p>Import <code>ba.sake.squery.sqlite.{*, given}</code> wherever application queries bind or read SQLite values; generated DAOs already include this import. Use <code>Boolean</code> values for <code>enabled</code>, <code>java.time.LocalDate</code> for <code>birth_date</code>, and <code>java.time.Instant</code> for <code>created_at</code> and <code>placed_at</code>.</p>
+     <p>For a <code>STRICT</code> table, replace <code>enabled BOOLEAN</code> with <code>is_enabled INTEGER</code>: the generator recognizes the integer name convention and SQLite stores Boolean values as <code>0</code>/<code>1</code>. For an integer Boolean without that convention, pass an explicit mapping:</p>
+     <pre><code class="language-shell hljs" data-highlighted="yes">--typeMappingRule 'enabled|(?i:INTEGER)|Boolean'
+</code></pre>
+     <p>For older generators that leave declared <code>BOOLEAN</code> unknown, the equivalent explicit rule is <code>--typeMappingRule '.*|(?i:BOOLEAN|BOOL)|Boolean'</code>.</p>
+     <p>Store <code>birth_date</code> as ISO date text (<code>2024-02-29</code>) and timestamps as ISO instants (<code>2024-02-29T12:34:56.123Z</code>). SQLite's <code>CURRENT_TIMESTAMP</code> produces <code>YYYY-MM-DD HH:MM:SS</code>, which the <code>Instant</code> codec cannot parse. Use the <code>strftime</code> default above or bind an <code>Instant</code> from Scala. See the <a href="../reference/sqlite.html">SQLite mapping reference</a> for other storage choices and the <a href="../reference/codegen-cli.html">CLI reference</a> for all options.</p>
      <p>The CLI accepts ordered, repeatable type mapping rules for every supported database in the format <code>column-name-regex|declared-type-regex|Scala-type</code>. The first matching rule overrides the built-in mapping. Both regexes must match the complete column name and the JDBC driver's declared type, so use <code>.*</code> when a partial match is intended. Fully qualify a type when it needs no additional import:</p>
      <pre><code class="language-shell hljs" data-highlighted="yes">--typeMappingRule '.*_id|UUID|java.util.UUID'
 </code></pre>
      <p>Use repeatable <code>--includeTables</code> and <code>--excludeTables</code> regexes to select generated tables. They match fully qualified <code>schema.table</code> names; exclusions take precedence.</p>
-     <h2 id="mill-plugin">Mill plugin<a href="#mill-plugin" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-     <p>For Mill builds, use the dedicated <a href="https://github.com/sake92/mill-squery">mill-squery plugin</a>. It integrates generation into the build so generated models and DAOs are available as managed sources.</p>
+     <h2 id="build-plugins">Build plugins<a href="#build-plugins" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>Build integration is available through <a href="https://github.com/sake92/mill-squery">mill-squery</a>, <a href="https://github.com/sake92/sbt-squery">sbt-squery</a>, and <a href="https://github.com/sake92/deder-plugins/tree/main/deder-squery">deder-squery</a>. See the <a href="../reference/codegen-plugins.html">plugin configuration reference</a> for setting names, generation commands, and output locations.</p>
      <h2 id="generator-library">Generator library<a href="#generator-library" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
      <p>For full programmatic control, use <code>squery-generator</code> directly. The following Scala CLI script connects to a data source and writes generated source to a file:</p>
      <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">scala</span> <span class="hljs-string">"2.13.15"</span>
@@ -88,7 +120,7 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
 }
 </code></pre>
      <p>Run it with <code>scala-cli run generate.scala</code>, then include <code>Generated.scala</code> in your project. The generator is published for Scala 2.13; its generated source targets Scala 3 and uses the <code>squery</code> dependency from your application.</p>
-     <p>For SQLite, generate the <code>main</code> schema with <code>generateString(Seq("main"))</code>. The safe storage mappings are <code>INTEGER</code> → <code>Long</code>, <code>REAL</code> → <code>Double</code>, <code>TEXT</code> → <code>String</code>, and <code>BLOB</code> → <code>Array[Byte]</code>; ambiguous declarations such as <code>NUMERIC</code> remain unknown. The default conventions map integer <code>is_*</code>/<code>has_*</code>/<code>can_*</code> columns to <code>Boolean</code>, text <code>*_at</code> columns to <code>Instant</code>, and text <code>*_date</code> columns to <code>LocalDate</code>. Ordered <code>TypeMappingRule</code>s take precedence over built-in mappings and match both column name and declared type. Generated <code>RETURNING</code> SQL requires SQLite 3.35 or newer. If using <code>STRICT</code> tables, use SQLite 3.37 or newer; the SQLite JDBC driver version alone does not set the engine version.</p>
+     <p>For SQLite, generate the <code>main</code> schema with <code>generateString(Seq("main"))</code>. To enable typed keys programmatically, pass <code>SqueryGeneratorConfig.Default.copy(newtypes = Newtypes.Iron)</code> to <code>new SqueryGenerator(connection, config)</code> and add <code>squery-iron</code> to the consuming application. Ordered <code>TypeMappingRule</code>s override the built-in mappings.</p>
     </div>
     <aside aria-label="On this page">
      <details open>
@@ -98,7 +130,7 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
         <li><a href="#generating-code">Generating Code</a>
          <ul>
           <li><a href="#cli">CLI</a></li>
-          <li><a href="#mill-plugin">Mill plugin</a></li>
+          <li><a href="#build-plugins">Build plugins</a></li>
           <li><a href="#generator-library">Generator library</a></li>
          </ul></li>
        </ul>

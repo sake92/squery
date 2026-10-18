@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Squery code generator command-line options">
+  <title>Codegen CLI | Squery Documentation</title>
+  <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
+ </head>
+ <body>
+  <header class="pico container">
+   <nav aria-label="Main navigation">
+    <a href="https://sake92.github.io/squery/">Squery Documentation</a>
+    <div>
+     <a href="https://sake92.github.io/squery/tutorials">Tutorials</a> <a href="https://sake92.github.io/squery/howtos">How-Tos</a> <a href="https://sake92.github.io/squery/reference">Reference</a>
+    </div>
+    <form action="https://sake92.github.io/squery/search/results.html" method="get" role="search">
+     <input name="q" type="search" placeholder="Search" aria-label="Search this site">
+    </form>
+   </nav>
+  </header>
+  <script>
+for (const link of document.querySelectorAll('body > header > nav > div > a')) {
+    const path = new URL(link.href).pathname.replace(/\/$/, '');
+    const current = window.location.pathname;
+    if (current === path || current.startsWith(path + '/')) link.setAttribute('aria-current', 'page');
+}
+</script>
+  <main class="pico container">
+   <div>
+    <div class="content">
+     <h1 id="codegen-cli">Codegen CLI<a href="#codegen-cli" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+     <p>The <code>squery-cli_2.13</code> artifact runs <code>ba.sake.squery.cli.SqueryMain</code>. JDBC drivers must be supplied on the launch classpath. The generated code targets Scala 3.</p>
+     <pre><code class="language-shell hljs" data-highlighted="yes">cs launch org.xerial:sqlite-jdbc:3.46.1.0 \
+  ba.sake:squery-cli_2.13:0.13.0 \
+  -M ba.sake.squery.cli.SqueryMain -- --help
+</code></pre>
+     <h2 id="options">Options<a href="#options" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>Names below match the current CLI's <code>--help</code>, including the mixed spelling of explicitly named options. Camel-case aliases such as <code>--jdbcUrl</code> are not the help-listed options. <code>--ironNewtypes</code> is not supported; use <code>--newtypes iron</code>.</p>
+     <table>
+      <thead>
+       <tr>
+        <th>Option</th>
+        <th>Default</th>
+        <th>Value</th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr>
+        <td><code>--jdbc-url</code></td>
+        <td>Required</td>
+        <td>JDBC connection URL</td>
+       </tr>
+       <tr>
+        <td><code>--schema-mappings</code></td>
+        <td>Empty</td>
+        <td>Repeatable <code>schema:package</code> mapping; supply one mapping per occurrence</td>
+       </tr>
+       <tr>
+        <td><code>--base-folder</code></td>
+        <td><code>src/main/scala</code></td>
+        <td>Output source root</td>
+       </tr>
+       <tr>
+        <td><code>--col-name-identifier-mapper</code></td>
+        <td><code>camelcase</code></td>
+        <td><code>camelcase</code> or <code>noop</code></td>
+       </tr>
+       <tr>
+        <td><code>--type-name-mapper</code></td>
+        <td><code>camelcase</code></td>
+        <td><code>camelcase</code> or <code>noop</code></td>
+       </tr>
+       <tr>
+        <td><code>--row-type-suffix</code></td>
+        <td><code>Row</code></td>
+        <td>Row class suffix</td>
+       </tr>
+       <tr>
+        <td><code>--dao-type-suffix</code></td>
+        <td><code>Dao</code></td>
+        <td>DAO class suffix</td>
+       </tr>
+       <tr>
+        <td><code>--typeMappingRule</code></td>
+        <td>Empty</td>
+        <td>Repeatable <code>column-name-regex|declared-type-regex|Scala-type</code> rule</td>
+       </tr>
+       <tr>
+        <td><code>--includeTables</code></td>
+        <td>All tables</td>
+        <td>Repeatable regex matching <code>schema.table</code></td>
+       </tr>
+       <tr>
+        <td><code>--excludeTables</code></td>
+        <td>Empty</td>
+        <td>Repeatable regex matching <code>schema.table</code>; exclusions win</td>
+       </tr>
+       <tr>
+        <td><code>--newtypes</code></td>
+        <td><code>none</code></td>
+        <td><code>none</code> or <code>iron</code>; <code>iron</code> requires the application dependency <code>squery-iron</code></td>
+       </tr>
+       <tr>
+        <td><code>--help</code></td>
+        <td>—</td>
+        <td>Display usage</td>
+       </tr>
+      </tbody>
+     </table>
+     <p>An empty schema mapping list generates no schemas. SQLite's schema name is <code>main</code>. Output packages contain <code>models</code> and <code>daos</code> directories.</p>
+     <h2 id="matching-rules">Matching rules<a href="#matching-rules" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>Type mapping rules match the complete column name and the JDBC driver's complete declared type. Matching is case-sensitive unless the regex enables an option such as <code>(?i:...)</code>. The first matching rule wins, before built-in mappings. Use fully qualified Scala type names for types outside the generated imports:</p>
+     <pre><code class="language-shell hljs" data-highlighted="yes">--typeMappingRule '.*_id|(?i:TEXT)|java.util.UUID'
+</code></pre>
+     <p>Table filters also match complete names. A table must match an include pattern and no exclude pattern. Omitting includes selects all tables. For example:</p>
+     <pre><code class="language-shell hljs" data-highlighted="yes">--includeTables 'main\..*' \
+--excludeTables 'main\.flyway_schema_history' \
+--excludeTables 'main\.sqlite_.*'
+</code></pre>
+     <p>With Iron keys, referenced tables must be included so their PK types can be resolved. Excluding a referenced table causes generation to fail before writing files. Use <code>--newtypes none</code> when primitive keys are required instead.</p>
+     <p>See <a href="../tutorials/codegen.html">Generating Code</a> for a complete SQLite example.</p>
+    </div>
+    <aside aria-label="On this page">
+     <details open>
+      <summary>On this page</summary>
+      <nav aria-label="Table of contents">
+       <ul>
+        <li><a href="#codegen-cli">Codegen CLI</a>
+         <ul>
+          <li><a href="#options">Options</a></li>
+          <li><a href="#matching-rules">Matching rules</a></li>
+         </ul></li>
+       </ul>
+      </nav>
+     </details>
+    </aside>
+   </div>
+  </main>
+  <footer class="pico container">Squery Documentation</footer>
+  <script>
+if (window.matchMedia('(max-width: 850px)').matches) {
+    document.querySelectorAll('body > main > div > aside > details').forEach(details => { details.open = false; });
+}
+</script>
+  <script src="https://sake92.github.io/squery/scripts/code-copy.js"></script>
+ </body>
+</html>

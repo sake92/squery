@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="SQLite generator mappings and JDBC storage codecs">
+  <title>SQLite mappings | Squery Documentation</title>
+  <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
+ </head>
+ <body>
+  <header class="pico container">
+   <nav aria-label="Main navigation">
+    <a href="https://sake92.github.io/squery/">Squery Documentation</a>
+    <div>
+     <a href="https://sake92.github.io/squery/tutorials">Tutorials</a> <a href="https://sake92.github.io/squery/howtos">How-Tos</a> <a href="https://sake92.github.io/squery/reference">Reference</a>
+    </div>
+    <form action="https://sake92.github.io/squery/search/results.html" method="get" role="search">
+     <input name="q" type="search" placeholder="Search" aria-label="Search this site">
+    </form>
+   </nav>
+  </header>
+  <script>
+for (const link of document.querySelectorAll('body > header > nav > div > a')) {
+    const path = new URL(link.href).pathname.replace(/\/$/, '');
+    const current = window.location.pathname;
+    if (current === path || current.startsWith(path + '/')) link.setAttribute('aria-current', 'page');
+}
+</script>
+  <main class="pico container">
+   <div>
+    <div class="content">
+     <h1 id="sqlite-mappings">SQLite mappings<a href="#sqlite-mappings" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+     <h2 id="generator-mappings">Generator mappings<a href="#generator-mappings" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>The SQLite extractor generates the <code>main</code> schema. Explicit type mapping rules take precedence over these built-in mappings. Declared types are normalized to uppercase for built-in matching.</p>
+     <table>
+      <thead>
+       <tr>
+        <th>Declared type</th>
+        <th>Column name</th>
+        <th>Scala type</th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr>
+        <td><code>BOOLEAN</code> or <code>BOOL</code></td>
+        <td>Any</td>
+        <td><code>Boolean</code></td>
+       </tr>
+       <tr>
+        <td>Type containing <code>INT</code></td>
+        <td>Starts with <code>is_</code>, <code>has_</code>, or <code>can_</code></td>
+        <td><code>Boolean</code></td>
+       </tr>
+       <tr>
+        <td>Type containing <code>INT</code></td>
+        <td>Other</td>
+        <td><code>Long</code></td>
+       </tr>
+       <tr>
+        <td><code>REAL</code></td>
+        <td>Any</td>
+        <td><code>Double</code></td>
+       </tr>
+       <tr>
+        <td><code>TEXT</code></td>
+        <td>Ends with <code>_at</code></td>
+        <td><code>Instant</code></td>
+       </tr>
+       <tr>
+        <td><code>TEXT</code></td>
+        <td>Ends with <code>_date</code></td>
+        <td><code>LocalDate</code></td>
+       </tr>
+       <tr>
+        <td><code>TEXT</code></td>
+        <td>Other</td>
+        <td><code>String</code></td>
+       </tr>
+       <tr>
+        <td><code>BLOB</code></td>
+        <td>Any</td>
+        <td><code>Array[Byte]</code></td>
+       </tr>
+       <tr>
+        <td>Other, including <code>NUMERIC</code>, <code>DATE</code>, <code>DATETIME</code>, <code>TIMESTAMP</code></td>
+        <td>Any</td>
+        <td>Unknown; needs a mapping rule</td>
+       </tr>
+      </tbody>
+     </table>
+     <p>Column-name conventions are case-insensitive. Unknown types are emitted as <code>&lt;UNKNOWN&gt;</code> placeholders requiring an explicit mapping or a source edit. SQLite's <code>STRICT</code> tables do not allow <code>BOOLEAN</code> or <code>BOOL</code> declarations; use <code>INTEGER</code> with a Boolean name convention or a mapping rule instead.</p>
+     <h2 id="storage-codecs">Storage codecs<a href="#storage-codecs" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>The following codecs are selected by <code>import ba.sake.squery.sqlite.{*, given}</code>. The same representations apply to nullable <code>Option</code> values; <code>None</code> is SQL <code>NULL</code>.</p>
+     <table>
+      <thead>
+       <tr>
+        <th>Scala type</th>
+        <th>SQLite storage</th>
+        <th>Example</th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr>
+        <td><code>Boolean</code></td>
+        <td><code>INTEGER</code>: writes <code>1</code>/<code>0</code>; reads any nonzero integer as true</td>
+        <td><code>1</code></td>
+       </tr>
+       <tr>
+        <td><code>UUID</code></td>
+        <td><code>TEXT</code> parsed by <code>UUID.fromString</code></td>
+        <td><code>123e4567-e89b-12d3-a456-426614174000</code></td>
+       </tr>
+       <tr>
+        <td><code>Instant</code></td>
+        <td><code>TEXT</code> written with <code>toString</code>, read with <code>Instant.parse</code></td>
+        <td><code>2024-02-29T12:34:56.123Z</code></td>
+       </tr>
+       <tr>
+        <td><code>LocalDate</code></td>
+        <td><code>TEXT</code> written with <code>toString</code>, read with <code>LocalDate.parse</code></td>
+        <td><code>2024-02-29</code></td>
+       </tr>
+       <tr>
+        <td><code>LocalDateTime</code></td>
+        <td><code>TEXT</code> written with <code>toString</code>, read with <code>LocalDateTime.parse</code></td>
+        <td><code>2024-02-29T12:34:56.123</code></td>
+       </tr>
+      </tbody>
+     </table>
+     <p>These temporal codecs use ISO text. They do not decode Unix epoch integers, Julian day numbers, or arbitrary JDBC timestamp strings. <code>LocalDateTime</code> is not inferred by a name convention; an explicit rule can select it:</p>
+     <pre><code class="language-shell hljs" data-highlighted="yes">--typeMappingRule 'appointment_time|(?i:TEXT)|java.time.LocalDateTime'
+</code></pre>
+     <p>Importing SQLite temporal codecs changes <code>LocalDate</code> and <code>LocalDateTime</code> writes from the generic JDBC representation to ISO text. Existing numeric date storage needs conversion or application-specific codecs before using these imports.</p>
+     <p>SQLite's <code>CURRENT_TIMESTAMP</code> returns UTC text formatted as <code>YYYY-MM-DD HH:MM:SS</code>. It lacks the <code>T</code> and zone required by <code>Instant.parse</code>. An ISO instant default is:</p>
+     <pre><code class="language-sql hljs" data-highlighted="yes">created_at TEXT <span class="hljs-keyword">NOT NULL</span> <span class="hljs-keyword">DEFAULT</span> (strftime(<span class="hljs-string">'%Y-%m-%dT%H:%M:%fZ'</span>, <span class="hljs-string">'now'</span>))
+</code></pre>
+     <p>SQLite's <code>date(...)</code> returns <code>YYYY-MM-DD</code>, compatible with <code>LocalDate</code>. SQLite's <code>datetime(...)</code> returns a space-separated timestamp, incompatible with the ISO <code>LocalDateTime</code> reader. Bind a <code>LocalDateTime</code> or use an ISO-producing SQL expression for that storage contract.</p>
+     <p>SQLite documents its <a href="https://www.sqlite.org/datatype3.html#boolean_datatype">Boolean storage</a>, <a href="https://www.sqlite.org/lang_datefunc.html">date/time functions</a>, and <a href="https://www.sqlite.org/stricttables.html">STRICT table types</a>. Generated <code>RETURNING</code> SQL requires SQLite 3.35 or newer; <code>STRICT</code> tables require 3.37 or newer. These requirements apply to the engine bundled with the driver.</p>
+    </div>
+    <aside aria-label="On this page">
+     <details open>
+      <summary>On this page</summary>
+      <nav aria-label="Table of contents">
+       <ul>
+        <li><a href="#sqlite-mappings">SQLite mappings</a>
+         <ul>
+          <li><a href="#generator-mappings">Generator mappings</a></li>
+          <li><a href="#storage-codecs">Storage codecs</a></li>
+         </ul></li>
+       </ul>
+      </nav>
+     </details>
+    </aside>
+   </div>
+  </main>
+  <footer class="pico container">Squery Documentation</footer>
+  <script>
+if (window.matchMedia('(max-width: 850px)').matches) {
+    document.querySelectorAll('body > main > div > aside > details').forEach(details => { details.open = false; });
+}
+</script>
+  <script src="https://sake92.github.io/squery/scripts/code-copy.js"></script>
+ </body>
+</html>

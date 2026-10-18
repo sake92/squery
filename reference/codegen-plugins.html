@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Mill, sbt, and Deder source generation configuration">
+  <title>Codegen build plugins | Squery Documentation</title>
+  <link rel="shortcut icon" href="https://sake92.github.io/squery/images/favicon.png" type="image/png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://sake92.github.io/squery/styles/default.css">
+ </head>
+ <body>
+  <header class="pico container">
+   <nav aria-label="Main navigation">
+    <a href="https://sake92.github.io/squery/">Squery Documentation</a>
+    <div>
+     <a href="https://sake92.github.io/squery/tutorials">Tutorials</a> <a href="https://sake92.github.io/squery/howtos">How-Tos</a> <a href="https://sake92.github.io/squery/reference">Reference</a>
+    </div>
+    <form action="https://sake92.github.io/squery/search/results.html" method="get" role="search">
+     <input name="q" type="search" placeholder="Search" aria-label="Search this site">
+    </form>
+   </nav>
+  </header>
+  <script>
+for (const link of document.querySelectorAll('body > header > nav > div > a')) {
+    const path = new URL(link.href).pathname.replace(/\/$/, '');
+    const current = window.location.pathname;
+    if (current === path || current.startsWith(path + '/')) link.setAttribute('aria-current', 'page');
+}
+</script>
+  <main class="pico container">
+   <div>
+    <div class="content">
+     <h1 id="codegen-build-plugins">Codegen build plugins<a href="#codegen-build-plugins" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h1>
+     <p>The build plugins launch <code>squery-cli_2.13</code> with the configured JDBC driver. Application dependencies on <code>squery</code>, the runtime JDBC driver, and optionally <code>squery-iron</code> are separate from the generator's classpath.</p>
+     <p>Installation and build-file examples are maintained in the plugin repositories:</p>
+     <ul>
+      <li><a href="https://github.com/sake92/mill-squery">mill-squery</a>: <code>SqueryGeneratorModule</code></li>
+      <li><a href="https://github.com/sake92/sbt-squery">sbt-squery</a>: sbt 2 <code>SqueryPlugin</code></li>
+      <li><a href="https://github.com/sake92/deder-plugins/tree/main/deder-squery">deder-squery</a>: <code>SqueryPlugin.pkl</code></li>
+     </ul>
+     <h2 id="configuration-names">Configuration names<a href="#configuration-names" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>Mill uses method overrides (<code>def squeryJdbcUrl = ...</code>); sbt uses settings (<code>squeryJdbcUrl := ...</code>). Deder uses fields inside <code>config.defaults</code> or per-module <code>config.modules["module-id"]</code> overrides.</p>
+     <table>
+      <thead>
+       <tr>
+        <th>Purpose</th>
+        <th>Mill / sbt</th>
+        <th>Deder</th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr>
+        <td>JDBC URL</td>
+        <td><code>squeryJdbcUrl</code></td>
+        <td><code>jdbcUrl</code></td>
+       </tr>
+       <tr>
+        <td>Generator driver dependencies</td>
+        <td><code>squeryJdbcDeps</code></td>
+        <td><code>jdbcDeps</code></td>
+       </tr>
+       <tr>
+        <td>Schema-to-package mappings</td>
+        <td><code>squerySchemaMappings</code></td>
+        <td><code>schemaMappings</code></td>
+       </tr>
+       <tr>
+        <td>Column identifier mapper</td>
+        <td><code>squeryColNameIdentifierMapper</code></td>
+        <td><code>colNameIdentifierMapper</code></td>
+       </tr>
+       <tr>
+        <td>Type name mapper</td>
+        <td><code>squeryTypeNameMapper</code></td>
+        <td><code>typeNameMapper</code></td>
+       </tr>
+       <tr>
+        <td>Row suffix</td>
+        <td><code>squeryRowTypeSuffix</code></td>
+        <td><code>rowTypeSuffix</code></td>
+       </tr>
+       <tr>
+        <td>DAO suffix</td>
+        <td><code>squeryDaoTypeSuffix</code></td>
+        <td><code>daoTypeSuffix</code></td>
+       </tr>
+       <tr>
+        <td>Ordered type mapping rules</td>
+        <td><code>squeryTypeMappingRules</code></td>
+        <td><code>typeMappingRules</code></td>
+       </tr>
+       <tr>
+        <td>Include table regexes</td>
+        <td><code>squeryIncludeTables</code></td>
+        <td><code>includeTables</code></td>
+       </tr>
+       <tr>
+        <td>Exclude table regexes</td>
+        <td><code>squeryExcludeTables</code></td>
+        <td><code>excludeTables</code></td>
+       </tr>
+       <tr>
+        <td>Generator version</td>
+        <td><code>squeryVersion</code></td>
+        <td><code>squeryVersion</code></td>
+       </tr>
+       <tr>
+        <td>Output source root</td>
+        <td><code>squeryTargetDir</code></td>
+        <td>Deder source generator output</td>
+       </tr>
+      </tbody>
+     </table>
+     <p>Type rules and table regexes have the same semantics as the <a href="codegen-cli.html">CLI options</a>. Scala string literals need doubled backslashes: <code>Seq("main\\.flyway_schema_history", "main\\.sqlite_.*")</code>. Deder uses Pkl listings for dependency/rule/filter collections and a mapping for <code>schemaMappings</code>, for example <code>schemaMappings { ["main"] = "example.db" }</code>.</p>
+     <p>The plugin interfaces listed here do not currently expose <code>newtypes</code>. Use the CLI's <code>--newtypes iron</code> or the generator library's <code>Newtypes.Iron</code> for Iron keys until the plugin used by your build supports that setting. The consuming application then needs the matching <code>squery-iron</code> dependency.</p>
+     <h2 id="generation-commands-and-output">Generation commands and output<a href="#generation-commands-and-output" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <table>
+      <thead>
+       <tr>
+        <th>Build tool</th>
+        <th>Command</th>
+        <th>Output / integration</th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr>
+        <td>Mill</td>
+        <td><code>./mill myapp.squeryGenerate</code></td>
+        <td>Writes to <code>squeryTargetDir</code>, default <code>moduleDir / "src"</code>; explicit generation command</td>
+       </tr>
+       <tr>
+        <td>sbt</td>
+        <td><code>sbt squeryGenerate</code></td>
+        <td>Writes to <code>squeryTargetDir</code>, default <code>Compile / scalaSource</code> (<code>src/main/scala</code>); explicit generation task</td>
+       </tr>
+       <tr>
+        <td>Deder</td>
+        <td><code>deder exec -t squeryGenerate -m &lt;module-id&gt;</code></td>
+        <td>Writes to source generator output; also runs before compilation</td>
+       </tr>
+      </tbody>
+     </table>
+     <p>The generator refactors existing row and DAO files in place while preserving custom members. Mill and sbt default to ordinary source directories.</p>
+     <h2 id="version-defaults">Version defaults<a href="#version-defaults" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <p>The inspected plugin implementations default to Squery CLI <code>0.10.0</code> (Mill) and <code>0.12.0</code> (sbt and Deder). These defaults are independent of your application's Squery version. <code>squeryVersion</code> selects the generator version, so features added in newer CLI releases require a corresponding version override. Consult the linked plugin repositories for the settings available in the release you use. The inspected adapters also pass older camel-case arguments such as <code>--jdbcUrl</code>; compatibility with the current CLI requires updating those to the spellings in its <code>--help</code> (for example, <code>--jdbc-url</code>) as well as adding any new configuration.</p>
+    </div>
+    <aside aria-label="On this page">
+     <details open>
+      <summary>On this page</summary>
+      <nav aria-label="Table of contents">
+       <ul>
+        <li><a href="#codegen-build-plugins">Codegen build plugins</a>
+         <ul>
+          <li><a href="#configuration-names">Configuration names</a></li>
+          <li><a href="#generation-commands-and-output">Generation commands and output</a></li>
+          <li><a href="#version-defaults">Version defaults</a></li>
+         </ul></li>
+       </ul>
+      </nav>
+     </details>
+    </aside>
+   </div>
+  </main>
+  <footer class="pico container">Squery Documentation</footer>
+  <script>
+if (window.matchMedia('(max-width: 850px)').matches) {
+    document.querySelectorAll('body > main > div > aside > details').forEach(details => { details.open = false; });
+}
+</script>
+  <script src="https://sake92.github.io/squery/scripts/code-copy.js"></script>
+ </body>
+</html>
