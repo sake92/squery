@@ -108,6 +108,11 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
         <td><code>excludeTables</code></td>
        </tr>
        <tr>
+        <td>Key newtypes</td>
+        <td><code>squeryNewtypes</code></td>
+        <td><code>newtypes</code></td>
+       </tr>
+       <tr>
         <td>Generator version</td>
         <td><code>squeryVersion</code></td>
         <td><code>squeryVersion</code></td>
@@ -120,7 +125,7 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
       </tbody>
      </table>
      <p>Type rules and table regexes have the same semantics as the <a href="codegen-cli.html">CLI options</a>. Scala string literals need doubled backslashes: <code>Seq("main\\.flyway_schema_history", "main\\.sqlite_.*")</code>. Deder uses Pkl listings for dependency/rule/filter collections and a mapping for <code>schemaMappings</code>, for example <code>schemaMappings { ["main"] = "example.db" }</code>.</p>
-     <p>The plugin interfaces listed here do not currently expose <code>newtypes</code>. Use the CLI's <code>--newtypes iron</code> or the generator library's <code>Newtypes.Iron</code> for Iron keys until the plugin used by your build supports that setting. The consuming application then needs the matching <code>squery-iron</code> dependency.</p>
+     <p>The current plugin implementations expose key generation through <code>squeryNewtypes</code> (Mill and sbt) or <code>newtypes</code> (Deder). Set it to <code>"iron"</code> for Iron key newtypes; the consuming application then needs Scala 3.9.0 or newer and the matching <code>squery-iron</code> dependency. Check the plugin release you use for this setting.</p>
      <h2 id="generation-commands-and-output">Generation commands and output<a href="#generation-commands-and-output" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
      <table>
       <thead>
@@ -150,7 +155,7 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
      </table>
      <p>The generator refactors existing row and DAO files in place while preserving custom members. Mill and sbt default to ordinary source directories.</p>
      <h2 id="version-defaults">Version defaults<a href="#version-defaults" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
-     <p>The inspected plugin implementations default to Squery CLI <code>0.10.0</code> (Mill) and <code>0.12.0</code> (sbt and Deder). These defaults are independent of your application's Squery version. <code>squeryVersion</code> selects the generator version, so features added in newer CLI releases require a corresponding version override. Consult the linked plugin repositories for the settings available in the release you use. The inspected adapters also pass older camel-case arguments such as <code>--jdbcUrl</code>; compatibility with the current CLI requires updating those to the spellings in its <code>--help</code> (for example, <code>--jdbc-url</code>) as well as adding any new configuration.</p>
+     <p>Plugin releases are versioned independently of Squery and may default to an older Squery CLI. Set <code>squeryVersion = "0.13.0"</code> when using current generator features. <code>squeryVersion</code> controls only the generator version, not the application's <code>squery</code> dependency. Consult the linked plugin repositories for the settings and defaults in the release you use.</p>
     </div>
     <aside aria-label="On this page">
      <details open>

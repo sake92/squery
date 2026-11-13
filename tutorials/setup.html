@@ -50,6 +50,15 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
   <span class="hljs-string">"ba.sake"</span> %% <span class="hljs-string">"squery"</span> % <span class="hljs-string">"0.13.0"</span>
 )
 </code></pre>
+     <h2 id="deder">Deder<a href="#deder" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
+     <pre><code class="language-pkl hljs" data-highlighted="yes"><span class="hljs-property">modules</span> {
+  <span class="hljs-keyword">new</span> <span class="hljs-property">ScalaModule</span> {
+    <span class="hljs-property">deps</span> {
+      <span class="hljs-string">"ba.sake::squery:0.13.0"</span>
+    }
+  }
+}
+</code></pre>
      <h2 id="scala-cli">Scala CLI<a href="#scala-cli" class="flatmark-anchor" aria-label="Anchor"> 🔗</a></h2>
      <pre><code class="language-scala hljs" data-highlighted="yes"><span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">"ba.sake::squery:0.13.0"</span>
 </code></pre>
@@ -60,6 +69,9 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
 
 <span class="hljs-comment">// sbt</span>
 <span class="hljs-string">"ba.sake"</span> %% <span class="hljs-string">"squery-postgres-jawn"</span> % <span class="hljs-string">"0.13.0"</span>
+
+<span class="hljs-comment">// Deder</span>
+<span class="hljs-string">"ba.sake::squery-postgres-jawn:0.13.0"</span>
 
 <span class="hljs-comment">// Scala CLI</span>
 <span class="hljs-comment">//&gt;</span> <span class="hljs-keyword">using</span> <span class="hljs-type">dep</span> <span class="hljs-string">"ba.sake::squery-postgres-jawn:0.13.0"</span>
@@ -81,6 +93,7 @@ for (const link of document.querySelectorAll('body > header > nav > div > a')) {
          <ul>
           <li><a href="#mill">Mill</a></li>
           <li><a href="#sbt">sbt</a></li>
+          <li><a href="#deder">Deder</a></li>
           <li><a href="#scala-cli">Scala CLI</a></li>
           <li><a href="#optional-modules">Optional modules</a></li>
           <li><a href="#scastie">Scastie</a></li>
