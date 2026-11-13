@@ -26,6 +26,18 @@ libraryDependencies ++= Seq(
 )
 ```
 
+## Deder
+
+```pkl
+modules {
+  new ScalaModule {
+    deps {
+      "{{site.data.project.artifact.org}}::{{site.data.project.artifact.name}}:{{site.data.project.artifact.version}}"
+    }
+  }
+}
+```
+
 ## Scala CLI
 
 ```scala
@@ -42,6 +54,9 @@ mvn"{{site.data.project.artifact.org}}::squery-postgres-jawn:{{site.data.project
 
 // sbt
 "{{site.data.project.artifact.org}}" %% "squery-postgres-jawn" % "{{site.data.project.artifact.version}}"
+
+// Deder
+"{{site.data.project.artifact.org}}::squery-postgres-jawn:{{site.data.project.artifact.version}}"
 
 // Scala CLI
 //> using dep "{{site.data.project.artifact.org}}::squery-postgres-jawn:{{site.data.project.artifact.version}}"

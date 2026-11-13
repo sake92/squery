@@ -58,6 +58,18 @@ For sbt:
 libraryDependencies += "ba.sake" %% "squery" % "0.13.0"
 ```
 
+For Deder:
+
+```pkl
+modules {
+  new ScalaModule {
+    deps {
+      "ba.sake::squery:0.13.0"
+    }
+  }
+}
+```
+
 See the [setup guide](https://sake92.github.io/squery/tutorials/setup.html) and
 [quickstart](https://sake92.github.io/squery/tutorials/quickstart.html) for a complete example.
 
@@ -128,5 +140,18 @@ The CLI does not bundle JDBC drivers. SQLite code generation uses the `main` sch
 generated `RETURNING` SQL needs SQLite 3.35+, and `STRICT` tables need SQLite 3.37+.
 
 See the [code-generation guide](https://sake92.github.io/squery/tutorials/codegen.html)
-for the library API, SQLite mappings, and all generator options. A Mill plugin is
-available at [sake92/mill-squery](https://github.com/sake92/mill-squery).
+for the library API, SQLite mappings, and all generator options.
+
+### Build plugins
+
+The generator can also run as part of the build:
+
+| Build tool | Plugin | Generate sources |
+|---|---|---|
+| Mill | [mill-squery](https://github.com/sake92/mill-squery): `SqueryGeneratorModule` | `./mill myapp.squeryGenerate` |
+| sbt 2 | [sbt-squery](https://github.com/sake92/sbt-squery): `SqueryPlugin` | `sbt squeryGenerate` |
+| Deder | [deder-squery](https://github.com/sake92/deder-plugins/tree/main/deder-squery): `SqueryPlugin.pkl` | `deder exec -t squeryGenerate -m <module-id>` |
+
+See the [plugin configuration reference](https://sake92.github.io/squery/reference/codegen-plugins.html)
+for settings and output locations. Installation examples are maintained in each
+plugin repository.

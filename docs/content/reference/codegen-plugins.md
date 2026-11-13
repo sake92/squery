@@ -33,6 +33,7 @@ Mill uses method overrides (`def squeryJdbcUrl = ...`); sbt uses settings
 | Ordered type mapping rules | `squeryTypeMappingRules` | `typeMappingRules` |
 | Include table regexes | `squeryIncludeTables` | `includeTables` |
 | Exclude table regexes | `squeryExcludeTables` | `excludeTables` |
+| Key newtypes | `squeryNewtypes` | `newtypes` |
 | Generator version | `squeryVersion` | `squeryVersion` |
 | Output source root | `squeryTargetDir` | Deder source generator output |
 
@@ -42,10 +43,10 @@ Type rules and table regexes have the same semantics as the
 Deder uses Pkl listings for dependency/rule/filter collections and a mapping for
 `schemaMappings`, for example `schemaMappings { ["main"] = "example.db" }`.
 
-The plugin interfaces listed here do not currently expose `newtypes`.
-Use the CLI's `--newtypes iron` or the generator library's `Newtypes.Iron` for
-Iron keys until the plugin used by your build supports that setting. The
-consuming application then needs the matching `squery-iron` dependency.
+The current plugin implementations expose key generation through `squeryNewtypes`
+(Mill and sbt) or `newtypes` (Deder). Set it to `"iron"` for Iron key newtypes;
+the consuming application then needs Scala 3.9.0 or newer and the matching
+`squery-iron` dependency. Check the plugin release you use for this setting.
 
 ## Generation commands and output
 
@@ -60,11 +61,8 @@ custom members. Mill and sbt default to ordinary source directories.
 
 ## Version defaults
 
-The inspected plugin implementations default to Squery CLI `0.10.0` (Mill) and
-`0.12.0` (sbt and Deder). These defaults are independent of your application's
-Squery version. `squeryVersion` selects the generator version, so features added
-in newer CLI releases require a corresponding version override. Consult the
-linked plugin repositories for the settings available in the release you use.
-The inspected adapters also pass older camel-case arguments such as `--jdbcUrl`;
-compatibility with the current CLI requires updating those to the spellings in
-its `--help` (for example, `--jdbc-url`) as well as adding any new configuration.
+Plugin releases are versioned independently of Squery and may default to an
+older Squery CLI. Set `squeryVersion = "0.13.0"` when using current generator
+features. `squeryVersion` controls only the generator version, not the
+application's `squery` dependency. Consult the linked plugin repositories for
+the settings and defaults in the release you use.
