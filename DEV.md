@@ -23,6 +23,10 @@ git tag -a $VERSION -m "Release $VERSION"
 git push --atomic origin main $VERSION
 ```
 
+When releasing Squery, update the version in the README, documentation examples,
+and `docs/_data/project.yaml`. Keep the Markdown examples ready to copy so Context7
+can index them directly.
+
 # TODOs
 
 - matrix of supported features (or require an implicit.. e.g. Supports[ReturningGeneratedColumns])

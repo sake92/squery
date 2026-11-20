@@ -6,8 +6,8 @@ on:
       - main
     paths:
       - context7.json
-      - docs/**
-      - examples/**
+      - '**/README*'
+      - docs/content/**
       - .github/workflows/context7-refresh.yml
   workflow_dispatch:
 

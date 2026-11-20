@@ -3,7 +3,7 @@ title: How To Custom Types
 description: Squery How To Custom Types
 ---
 
-# {{ page.title }}
+# How To Custom Types
 
 The core module supports strings, booleans, numeric primitives, Java time values,
 nullable values, binary data, and SQL arrays. Import the package for your database to

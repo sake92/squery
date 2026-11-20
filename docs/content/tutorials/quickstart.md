@@ -3,7 +3,7 @@ title: Quickstart
 description: Squery Quickstart Tutorial
 ---
 
-# {{ page.title }}
+# Quickstart
 
 First, we need to initialize a `SqueryContext` with a standard JDBC `DataSource`.  
 You will probably want to use a connection pool for performance (like HikariCP).
@@ -78,6 +78,6 @@ Keep database permissions, transactions, and application-level safeguards in pla
 ## Examples
 
 You can find examples:
-- in the [examples]({{site.data.project.gh.sourcesUrl}}/examples) folder
+- in the [examples](https://github.com/sake92/squery/tree/main/examples) folder
 - in the [sharaf-petclinic demo](https://github.com/sake92/sharaf-petclinic/tree/main/app/src/ba/sake/sharaf/petclinic/db/daos)
-- in the [squery tests]({{site.data.project.gh.sourcesUrl}}/squery/test)
+- in the [squery tests](https://github.com/sake92/squery/tree/main/squery/test)

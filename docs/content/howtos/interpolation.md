@@ -3,7 +3,7 @@ title: How To Interpolation
 description: Squery How To Interpolation
 ---
 
-# {{ page.title }}
+# How To Interpolation
 
 
 

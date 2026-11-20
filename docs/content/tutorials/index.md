@@ -5,23 +5,8 @@ pagination:
   enabled: false
 ---
 
-# {{ page.title }}
+# Tutorials
 
-{%
-
-set tutorials = [
-  { label: "Setup", url: "/tutorials/setup.html" },
-  { label: "Quickstart", url: "/tutorials/quickstart.html" },
-  { label: "Generating Code", url: "/tutorials/codegen.html" }
-]
-
-%}
-
-{% for tut in tutorials %}- [{{ tut.label }}]({{ tut.url}})
-{% endfor %}
-
-
-
-
-
-
+- [Setup](/tutorials/setup.html)
+- [Quickstart](/tutorials/quickstart.html)
+- [Generating Code](/tutorials/codegen.html)

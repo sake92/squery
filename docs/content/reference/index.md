@@ -5,7 +5,7 @@ pagination:
   enabled: false
 ---
 
-# {{ page.title }}
+# Reference
 
 - [Codegen CLI](codegen-cli.html)
 - [Codegen build plugins](codegen-plugins.html)

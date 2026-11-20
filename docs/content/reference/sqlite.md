@@ -3,7 +3,7 @@ title: SQLite mappings
 description: SQLite generator mappings and JDBC storage codecs
 ---
 
-# {{ page.title }}
+# SQLite mappings
 
 ## Generator mappings
 

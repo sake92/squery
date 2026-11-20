@@ -3,7 +3,7 @@ title: How To Transactions
 description: Squery How To Transactions
 ---
 
-# {{ page.title }}
+# How To Transactions
 
 
 We use the `runTransaction` to run queries inside of a transaction:

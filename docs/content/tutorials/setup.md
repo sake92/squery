@@ -4,7 +4,7 @@ description: Squery Setup Tutorial
 ---
 
 
-# {{ page.title }}
+# Setup
 
 Squery is published for Scala 3. Add the core module and the JDBC driver for your
 database; JDBC drivers are not bundled.
@@ -13,7 +13,7 @@ database; JDBC drivers are not bundled.
 
 ```scala
 def mvnDeps = super.mvnDeps() ++ Seq(
-  mvn"{{site.data.project.artifact.org}}::{{site.data.project.artifact.name}}:{{site.data.project.artifact.version}}"
+  mvn"ba.sake::squery:0.13.0"
 )
 ```
 
@@ -22,7 +22,7 @@ def mvnDeps = super.mvnDeps() ++ Seq(
 
 ```scala
 libraryDependencies ++= Seq(
-  "{{site.data.project.artifact.org}}" %% "{{site.data.project.artifact.name}}" % "{{site.data.project.artifact.version}}"
+  "ba.sake" %% "squery" % "0.13.0"
 )
 ```
 
@@ -32,7 +32,7 @@ libraryDependencies ++= Seq(
 modules {
   new ScalaModule {
     deps {
-      "{{site.data.project.artifact.org}}::{{site.data.project.artifact.name}}:{{site.data.project.artifact.version}}"
+      "ba.sake::squery:0.13.0"
     }
   }
 }
@@ -41,7 +41,7 @@ modules {
 ## Scala CLI
 
 ```scala
-//> using dep "{{site.data.project.artifact.org}}::{{site.data.project.artifact.name}}:{{site.data.project.artifact.version}}"
+//> using dep "ba.sake::squery:0.13.0"
 ```
 
 ## Optional modules
@@ -50,16 +50,16 @@ PostgreSQL applications using the Jawn AST can add JSON/JSONB codecs:
 
 ```scala
 // Mill
-mvn"{{site.data.project.artifact.org}}::squery-postgres-jawn:{{site.data.project.artifact.version}}"
+mvn"ba.sake::squery-postgres-jawn:0.13.0"
 
 // sbt
-"{{site.data.project.artifact.org}}" %% "squery-postgres-jawn" % "{{site.data.project.artifact.version}}"
+"ba.sake" %% "squery-postgres-jawn" % "0.13.0"
 
 // Deder
-"{{site.data.project.artifact.org}}::squery-postgres-jawn:{{site.data.project.artifact.version}}"
+"ba.sake::squery-postgres-jawn:0.13.0"
 
 // Scala CLI
-//> using dep "{{site.data.project.artifact.org}}::squery-postgres-jawn:{{site.data.project.artifact.version}}"
+//> using dep "ba.sake::squery-postgres-jawn:0.13.0"
 ```
 
 The code generator is a Scala 2.13 artifact because it is also used by the CLI. For a
@@ -67,11 +67,11 @@ standalone Scala CLI generator script:
 
 ```scala
 //> using scala "2.13.15"
-//> using dep "{{site.data.project.artifact.org}}::squery-generator:{{site.data.project.artifact.version}}"
+//> using dep "ba.sake::squery-generator:0.13.0"
 ```
 
 Scala Native is supported with a Scala Native-compatible JDBC driver. See the
-[`examples/cli/native.sc`]({{site.data.project.gh.sourcesUrl}}/examples/cli/native.sc)
+[`examples/cli/native.sc`](https://github.com/sake92/squery/tree/main/examples/cli/native.sc)
 example for a working SQLite setup.
 
 ## Scastie

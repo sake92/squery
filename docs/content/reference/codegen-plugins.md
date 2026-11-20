@@ -3,7 +3,7 @@ title: Codegen build plugins
 description: Mill, sbt, and Deder source generation configuration
 ---
 
-# {{ page.title }}
+# Codegen build plugins
 
 The build plugins launch `squery-cli_2.13` with the configured JDBC driver.
 Application dependencies on `squery`, the runtime JDBC driver, and optionally

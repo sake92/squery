@@ -3,7 +3,7 @@ title: How To Queries
 description: Squery How To Queries
 ---
 
-# {{ page.title }}
+# How To Queries
 
 ## How to Read One-Column Values?
 

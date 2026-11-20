@@ -3,7 +3,7 @@ title: How To Updates
 description: Squery How To Interpolation
 ---
 
-# {{ page.title }}
+# How To Updates
 
 
 ## How To Insert Data?

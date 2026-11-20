@@ -3,14 +3,14 @@ title: Codegen CLI
 description: Squery code generator command-line options
 ---
 
-# {{ page.title }}
+# Codegen CLI
 
 The `squery-cli_2.13` artifact runs `ba.sake.squery.cli.SqueryMain`. JDBC drivers
 must be supplied on the launch classpath. The generated code targets Scala 3.
 
 ```shell
 cs launch org.xerial:sqlite-jdbc:3.46.1.0 \
-  ba.sake:squery-cli_2.13:{{site.data.project.artifact.version}} \
+  ba.sake:squery-cli_2.13:0.13.0 \
   -M ba.sake.squery.cli.SqueryMain -- --help
 ```
 

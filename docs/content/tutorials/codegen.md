@@ -3,7 +3,7 @@ title: Generating Code
 description: Squery Generating Code Tutorial
 ---
 
-# {{ page.title }}
+# Generating Code
 
 
 
@@ -49,8 +49,8 @@ Add the application dependencies (Scala CLI syntax shown):
 
 ```scala
 //> using scala "3.9.0"
-//> using dep "ba.sake::squery:{{site.data.project.artifact.version}}"
-//> using dep "ba.sake::squery-iron:{{site.data.project.artifact.version}}"
+//> using dep "ba.sake::squery:0.13.0"
+//> using dep "ba.sake::squery-iron:0.13.0"
 //> using dep "org.xerial:sqlite-jdbc:3.46.1.0"
 ```
 
@@ -58,7 +58,7 @@ Generate models and DAOs, including Iron key newtypes:
 
 ```shell
 cs launch org.xerial:sqlite-jdbc:3.46.1.0 \
-  ba.sake:squery-cli_2.13:{{site.data.project.artifact.version}} \
+  ba.sake:squery-cli_2.13:0.13.0 \
   -M ba.sake.squery.cli.SqueryMain -- \
   --jdbc-url jdbc:sqlite:database.db \
   --base-folder src/main/scala \
@@ -133,7 +133,7 @@ script connects to a data source and writes generated source to a file:
 
 ```scala
 //> using scala "2.13.15"
-//> using dep "ba.sake::squery-generator:{{site.data.project.artifact.version}}"
+//> using dep "ba.sake::squery-generator:0.13.0"
 //> using dep "your.jdbc:driver:version"
 
 import java.nio.file.{Files, Paths}

@@ -5,7 +5,7 @@ pagination:
   enabled: false
 ---
 
-# {{ page.title }}
+# Squery
 
 Squery is a small Scala 3 library for type-safe JDBC access with plain SQL:
 no query DSL, no generated runtime layer, and no hidden connection management.
